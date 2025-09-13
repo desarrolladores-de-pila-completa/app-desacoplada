@@ -39,9 +39,14 @@ router.post("/login", async (req, res) => {
     if (!valid)
         return res.status(400).json({ error: "Credenciales inválidas" });
     const token = jsonwebtoken_1.default.sign({ userId: user.id }, SECRET, { expiresIn: "1h" });
-    // Guardar el token en la base de datos
-    await saveToken(user, token);
-    res.json({ token });
+    res.cookie("token", token, {
+        httpOnly: true,
+        secure: true, // false -> Para desarrollo local
+        sameSite: "none", // Permite envío entre puertos locales
+        maxAge: 3600000, // 1 hora
+        path: "/" // Asegura que la cookie se envía en todas las rutas
+    });
+    res.json({ message: "Login exitoso" });
 });
 exports.default = router;
 //# sourceMappingURL=authRoutes.js.map

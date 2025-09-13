@@ -7,22 +7,21 @@ exports.authMiddleware = authMiddleware;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const SECRET = process.env.JWT_SECRET || "clave-secreta";
 function authMiddleware(req, res, next) {
-    const header = req.headers.authorization;
-    if (!header)
-        return res.status(401).json({ error: "Token requerido" });
-    const token = header.split(" ")[1];
+    const token = req.cookies.token;
     if (!token)
-        return res.status(401).json({ error: "Token requerido" });
+        return res.status(401).json({ error: "No autenticado" });
     try {
-        const decoded = jsonwebtoken_1.default.verify(token, SECRET);
-        if (!decoded || typeof decoded !== "object" || !("userId" in decoded)) {
-            return res.status(401).json({ error: "Token inválido o expirado" });
+        const payload = jsonwebtoken_1.default.verify(token, SECRET);
+        if (typeof payload === "object" && payload !== null && "userId" in payload) {
+            req.userId = payload.userId;
         }
-        req.userId = decoded.userId;
+        else {
+            return res.status(401).json({ error: "Token inválido" });
+        }
         next();
     }
-    catch (error) {
-        res.status(401).json({ error: "Token inválido o expirado" });
+    catch {
+        res.status(401).json({ error: "Token inválido" });
     }
 }
 //# sourceMappingURL=auth.js.map

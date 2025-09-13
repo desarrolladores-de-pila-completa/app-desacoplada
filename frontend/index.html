@@ -166,7 +166,7 @@
       Aquí aparecerán las respuestas del servidor…
     </div>
     <script type="module">
-      const API_URL = "http://localhost:3000/api"; // Cambia a tu dominio o proxy
+      const API_URL = "https://api.yposteriormente.com/api"; // Cambia a tu dominio o proxy
 
       const output = document.getElementById("output");
 
@@ -186,6 +186,7 @@
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email, password }),
+            credentials: "include", // Importante para manejar cookies
           });
           show(await res.json());
         });
@@ -202,52 +203,63 @@
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email, password }),
+            credentials: "include", // Importante para manejar cookies
           });
           const data = await res.json();
-          if (data.token) {
-            localStorage.setItem("token", data.token);
-          }
           show(data);
         });
 
-      // Mostrar perfil personal al cargar la página
-      const token = localStorage.getItem("token");
-      fetch("http://localhost:3000/api/perfilPersonal", {
-        method: "GET",
-        headers: {
-          Authorization: "Bearer " + token,
-        },
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.error) {
-            document.getElementById("perfil-error").innerText =
-              "Error: " + data.error;
-            document.getElementById("perfil-info").style.display = "none";
-          } else {
-            document.getElementById("perfil-id").innerText = `ID: ${data.id}`;
-            document.getElementById(
-              "perfil-email"
-            ).innerText = `Email: ${data.email}`;
-            document.getElementById("perfil-error").innerText = "";
-            document.getElementById("perfil-info").style.display = "flex";
-          }
+      // Mostrar perfil personal solo cuando la sección está activa
+      function cargarPerfilPersonal() {
+        fetch(`${API_URL}/api/perfilPersonal`, {
+          method: "GET",
+          credentials: "include",
         })
-        .catch((err) => {
-          document.getElementById("perfil-error").innerText =
-            "Error de conexión";
-          document.getElementById("perfil-info").style.display = "none";
-        });
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.error) {
+              document.getElementById("perfil-error").innerText =
+                "Error: " + data.error;
+              document.getElementById("perfil-info").style.display = "none";
+            } else {
+              document.getElementById("perfil-id").innerText = `ID: ${data.id}`;
+              document.getElementById(
+                "perfil-email"
+              ).innerText = `Email: ${data.email}`;
+              document.getElementById("perfil-error").innerText = "";
+              document.getElementById("perfil-info").style.display = "flex";
+            }
+          })
+          .catch((err) => {
+            document.getElementById("perfil-error").innerText =
+              "Error de conexión";
+            document.getElementById("perfil-info").style.display = "none";
+          });
+      }
 
       function showSection(route) {
-        document.getElementById("section-register").style.display = route === "register" ? "block" : "none";
-        document.getElementById("section-login").style.display = route === "login" ? "block" : "none";
-        document.getElementById("section-perfil").style.display = route === "perfil" ? "block" : "none";
+        document.getElementById("section-register").style.display =
+          route === "register" ? "block" : "none";
+        document.getElementById("section-login").style.display =
+          route === "login" ? "block" : "none";
+        document.getElementById("section-perfil").style.display =
+          route === "perfil" ? "block" : "none";
 
         // Resaltar el enlace activo en el nav
-        document.getElementById("nav-register").classList.toggle("active", route === "register");
-        document.getElementById("nav-login").classList.toggle("active", route === "login");
-        document.getElementById("nav-perfil").classList.toggle("active", route === "perfil");
+        document
+          .getElementById("nav-register")
+          .classList.toggle("active", route === "register");
+        document
+          .getElementById("nav-login")
+          .classList.toggle("active", route === "login");
+        document
+          .getElementById("nav-perfil")
+          .classList.toggle("active", route === "perfil");
+
+        // Solo cargar perfil personal si la sección está activa
+        if (route === "perfil") {
+          cargarPerfilPersonal();
+        }
       }
 
       function handleRoute() {
