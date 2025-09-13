@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FaceNew</title>
+    <style>
+      #main-nav {
+        display: flex;
+        justify-content: center;
+        gap: 32px;
+        background: #2d7be5;
+        padding: 16px 0;
+        border-radius: 10px;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 8px rgba(44, 62, 80, 0.08);
+      }
+      #main-nav a {
+        color: #fff;
+        text-decoration: none;
+        font-size: 1.1em;
+        font-weight: 500;
+        padding: 8px 18px;
+        border-radius: 6px;
+        transition: background 0.2s, color 0.2s;
+      }
+      #main-nav a:hover,
+      #main-nav a.active {
+        background: #fff;
+        color: #2d7be5;
+      }
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 500px;
+        margin: 40px auto;
+        padding: 20px;
+        background: #f7f7f7;
+        border-radius: 10px;
+      }
+      h2 {
+        text-align: center;
+      }
+      form {
+        margin-bottom: 20px;
+        padding: 15px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+      }
+      label {
+        display: block;
+        margin-top: 10px;
+      }
+      input {
+        width: 100%;
+        padding: 8px;
+        margin-top: 5px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+      }
+      button {
+        margin-top: 15px;
+        padding: 10px;
+        width: 100%;
+        background: #3498db;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #2980b9;
+      }
+      .output {
+        margin-top: 20px;
+        padding: 10px;
+        background: #fff;
+        border-radius: 8px;
+        min-height: 50px;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        white-space: pre-wrap;
+      }
+
+      #perfil-container {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        padding: 24px 32px;
+        min-width: 280px;
+        text-align: center;
+        margin-bottom: 24px;
+      }
+      #perfil-card {
+        margin-top: 8px;
+      }
+      #perfil-info {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        font-size: 1.1em;
+        color: #34495e;
+        margin-bottom: 12px;
+      }
+      #perfil-id,
+      #perfil-email {
+        background: #f0f3f7;
+        border-radius: 6px;
+        padding: 8px 12px;
+        margin: 0 0 4px 0;
+        display: block;
+      }
+      #perfil-error {
+        color: #e74c3c;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <nav id="main-nav">
+      <a href="#/register" id="nav-register">Registro</a>
+      <a href="#/login" id="nav-login">Login</a>
+      <a href="#/perfil" id="nav-perfil">Perfil Personal</a>
+    </nav>
+    <div id="section-register" style="display: none">
+      <!-- Registro -->
+      <form id="registerForm">
+        <h3>Registro</h3>
+        <label
+          >Email:
+          <input type="email" id="regEmail" required />
+        </label>
+        <label
+          >Contraseña:
+          <input type="password" id="regPass" required />
+        </label>
+        <button type="submit">Registrar</button>
+      </form>
+    </div>
+    <div id="section-login" style="display: none">
+      <!-- Login -->
+      <form id="loginForm">
+        <h3>Login</h3>
+        <label
+          >Email:
+          <input type="email" id="logEmail" required />
+        </label>
+        <label
+          >Contraseña:
+          <input type="password" id="logPass" required />
+        </label>
+        <button type="submit">Iniciar Sesión</button>
+      </form>
+    </div>
+    <div id="section-perfil" style="display: none">
+      <!-- Perfil Personal -->
+      <h3>Perfil Personal</h3>
+      <div id="perfil-card">
+        <div id="perfil-info">
+          <span id="perfil-id"></span>
+          <span id="perfil-email"></span>
+        </div>
+        <div id="perfil-error" style="color: #e74c3c"></div>
+      </div>
+    </div>
+    <div class="output" id="output">
+      Aquí aparecerán las respuestas del servidor…
+    </div>
+    <script type="module">
+      const API_URL = "http://localhost:3000/api"; // Cambia a tu dominio o proxy
+
+      const output = document.getElementById("output");
+
+      function show(data) {
+        output.textContent = JSON.stringify(data, null, 2);
+      }
+
+      // Registro
+      document
+        .getElementById("registerForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const email = document.getElementById("regEmail").value;
+          const password = document.getElementById("regPass").value;
+
+          const res = await fetch(`${API_URL}/auth/register`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+          });
+          show(await res.json());
+        });
+
+      // Login
+      document
+        .getElementById("loginForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const email = document.getElementById("logEmail").value;
+          const password = document.getElementById("logPass").value;
+
+          const res = await fetch(`${API_URL}/auth/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+          });
+          const data = await res.json();
+          if (data.token) {
+            localStorage.setItem("token", data.token);
+          }
+          show(data);
+        });
+
+      // Mostrar perfil personal al cargar la página
+      const token = localStorage.getItem("token");
+      fetch("http://localhost:3000/api/perfilPersonal", {
+        method: "GET",
+        headers: {
+          Authorization: "Bearer " + token,
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.error) {
+            document.getElementById("perfil-error").innerText =
+              "Error: " + data.error;
+            document.getElementById("perfil-info").style.display = "none";
+          } else {
+            document.getElementById("perfil-id").innerText = `ID: ${data.id}`;
+            document.getElementById(
+              "perfil-email"
+            ).innerText = `Email: ${data.email}`;
+            document.getElementById("perfil-error").innerText = "";
+            document.getElementById("perfil-info").style.display = "flex";
+          }
+        })
+        .catch((err) => {
+          document.getElementById("perfil-error").innerText =
+            "Error de conexión";
+          document.getElementById("perfil-info").style.display = "none";
+        });
+
+      function showSection(route) {
+        document.getElementById("section-register").style.display = route === "register" ? "block" : "none";
+        document.getElementById("section-login").style.display = route === "login" ? "block" : "none";
+        document.getElementById("section-perfil").style.display = route === "perfil" ? "block" : "none";
+
+        // Resaltar el enlace activo en el nav
+        document.getElementById("nav-register").classList.toggle("active", route === "register");
+        document.getElementById("nav-login").classList.toggle("active", route === "login");
+        document.getElementById("nav-perfil").classList.toggle("active", route === "perfil");
+      }
+
+      function handleRoute() {
+        const hash = window.location.hash.replace("#/", "");
+        showSection(hash || "register"); // Por defecto muestra registro
+      }
+
+      window.addEventListener("hashchange", handleRoute);
+      window.addEventListener("DOMContentLoaded", handleRoute);
+    </script>
+  </body>
+</html>
