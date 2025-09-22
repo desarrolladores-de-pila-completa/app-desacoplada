@@ -7,27 +7,35 @@
     <style>
       #main-nav {
         display: flex;
-        justify-content: center;
-        gap: 32px;
-        background: #2d7be5;
+        flex-wrap: nowrap;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        min-width: 0;
+        overflow-x: auto;
+        background: linear-gradient(90deg, #2d7be5 60%, #1e4fa3 100%);
         padding: 16px 0;
         border-radius: 10px;
         margin-bottom: 24px;
-        box-shadow: 0 2px 8px rgba(44, 62, 80, 0.08);
+        box-shadow: 0 2px 8px rgba(44, 62, 80, 0.12);
       }
       #main-nav a {
-        color: #fff;
-        text-decoration: none;
+        flex: 1 1 0;
+        text-align: center;
+        white-space: nowrap;
+        padding: 12px 0;
         font-size: 1.1em;
         font-weight: 500;
-        padding: 8px 18px;
         border-radius: 6px;
-        transition: background 0.2s, color 0.2s;
+        margin: 0 8px;
+        transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+        box-shadow: 0 1px 4px rgba(44,62,80,0.08);
       }
       #main-nav a:hover,
       #main-nav a.active {
         background: #fff;
         color: #2d7be5;
+        box-shadow: 0 2px 8px #2d7be533;
       }
       body {
         font-family: Arial, sans-serif;
@@ -80,195 +88,560 @@
         box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
         white-space: pre-wrap;
       }
-
-      #perfil-container {
-        background: #fff;
-        border-radius: 12px;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-        padding: 24px 32px;
-        min-width: 280px;
-        text-align: center;
-        margin-bottom: 24px;
-      }
-      #perfil-card {
-        margin-top: 8px;
-      }
-      #perfil-info {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        font-size: 1.1em;
-        color: #34495e;
-        margin-bottom: 12px;
-      }
-      #perfil-id,
-      #perfil-email {
-        background: #f0f3f7;
-        border-radius: 6px;
-        padding: 8px 12px;
-        margin: 0 0 4px 0;
-        display: block;
-      }
-      #perfil-error {
-        color: #e74c3c;
-        font-weight: bold;
+      @media (max-width: 600px) {
+        #main-nav {
+          flex-direction: row;
+          gap: 0;
+          padding: 8px 0;
+        }
+        #main-nav a {
+          margin: 0 4px;
+          padding: 10px 0;
+          font-size: 1em;
+        }
       }
     </style>
   </head>
   <body>
     <nav id="main-nav">
-      <a href="#/register" id="nav-register">Registro</a>
-      <a href="#/login" id="nav-login">Login</a>
-      <a href="#/perfil" id="nav-perfil">Perfil Personal</a>
+      <a href="/register" id="nav-register">Registro</a>
+      <a href="/login" id="nav-login">Login</a>
+      <a href="/paginas" id="nav-paginas">Páginas</a>
+      <a href="/buscar-autor" id="nav-autores">Autores</a>
     </nav>
-    <div id="section-register" style="display: none">
+    <div id="section-register" style="display: none; margin-bottom: 32px">
       <!-- Registro -->
       <form id="registerForm">
         <h3>Registro</h3>
-        <label
-          >Email:
+        <label>Email:
           <input type="email" id="regEmail" required />
         </label>
-        <label
-          >Contraseña:
+        <label>Contraseña:
           <input type="password" id="regPass" required />
         </label>
         <button type="submit">Registrar</button>
       </form>
     </div>
-    <div id="section-login" style="display: none">
+    <div id="section-login" style="display: none; margin-bottom: 32px">
       <!-- Login -->
       <form id="loginForm">
         <h3>Login</h3>
-        <label
-          >Email:
+        <label>Email:
           <input type="email" id="logEmail" required />
         </label>
-        <label
-          >Contraseña:
+        <label>Contraseña:
           <input type="password" id="logPass" required />
         </label>
         <button type="submit">Iniciar Sesión</button>
       </form>
     </div>
-    <div id="section-perfil" style="display: none">
-      <!-- Perfil Personal -->
-      <h3>Perfil Personal</h3>
-      <div id="perfil-card">
-        <div id="perfil-info">
-          <span id="perfil-id"></span>
-          <span id="perfil-email"></span>
+    <div id="section-paginas" style="display: none; margin-bottom: 32px">
+      <!-- Páginas -->
+      <form id="paginaForm">
+        <h3>Crear nueva página</h3>
+        <label>Título:
+          <input type="text" id="paginaTitulo" required />
+        </label>
+        <label>Contenido:
+          <textarea id="paginaContenido" rows="4" required></textarea>
+        </label>
+        <div style="margin:16px 0">
+          <h4>Elementos arrastrables</h4>
+          <div id="drag-items" style="display:flex; gap:10px;">
+            <div draggable="true" class="drag-item" data-type="imagen" style="padding:8px; background:#eee; border-radius:5px; cursor:grab;">Imagen</div>
+            <div draggable="true" class="drag-item" data-type="video" style="padding:8px; background:#eee; border-radius:5px; cursor:grab;">Video</div>
+            <div draggable="true" class="drag-item" data-type="texto" style="padding:8px; background:#eee; border-radius:5px; cursor:grab;">Texto extra</div>
+          </div>
+          <div id="drop-area" style="margin-top:12px; min-height:40px; background:#f3f3f3; border:2px dashed #bbb; border-radius:6px; padding:10px;">Arrastra aquí para añadir a tu página</div>
         </div>
-        <div id="perfil-error" style="color: #e74c3c"></div>
+        <button type="submit">Crear Página</button>
+      </form>
+    </div>
+    <!-- Sección mis páginas movida fuera de section-paginas -->
+    <!-- Eliminada sección Mis páginas -->
+    <!-- Vista de autores -->
+    <div id="section-buscar-autor" style="display:none; margin-bottom:32px">
+      <form id="formBuscarAutor" style="margin-bottom:16px">
+        <label>Buscar por autor (username):
+          <input type="text" id="inputAutor" required />
+        </label>
+        <button type="submit">Buscar</button>
+      </form>
+      <div id="resultadoAutor">
+        <ul id="listaAutorPaginas"></ul>
+      </div>
+      <div id="todas-publicas-autores" style="margin-top:24px">
+        <h4>Páginas públicas</h4>
+        <ul id="listaPublicasAutores"></ul>
       </div>
     </div>
+
     <div class="output" id="output">
       Aquí aparecerán las respuestas del servidor…
     </div>
+    <div id="section-ver-pagina" style="display:none; margin-bottom:32px">
+      <div id="paginaPublica"></div>
+    </div>
+
+    <!-- Modal edición de elemento -->
+    <div id="modal-editar" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.3); justify-content:center; align-items:center; z-index:1000;">
+      <div style="background:#fff; padding:24px; border-radius:8px; min-width:280px; box-shadow:0 2px 8px #0002;">
+        <h3>Editar elemento</h3>
+        <form id="formEditarElemento">
+          <label>Tipo:
+            <input type="text" id="editTipo" required />
+          </label>
+          <label>Contenido:
+            <input type="text" id="editContenido" required />
+          </label>
+          <div style="margin-top:12px; display:flex; gap:8px;">
+            <button type="submit">Guardar</button>
+            <button type="button" id="cancelarEditar">Cancelar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <script type="module">
-      const API_URL = "https://api.yposteriormente.com/api"; // Cambia a tu dominio o proxy
+// Registro
+document.getElementById("registerForm").addEventListener("submit", async function(e) {
+  e.preventDefault();
+  const email = document.getElementById("regEmail").value;
+  const password = document.getElementById("regPass").value;
+  const res = await fetch(`${API_URL}/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+    credentials: "include",
+  });
+  const data = await res.json();
+  const output = document.getElementById("output");
+  if (output) {
+    if (res.ok && data.message) {
+      output.textContent = data.message;
+      output.style.color = "green";
+    } else if (data.message === "Email ya registrado") {
+      output.textContent = data.message;
+      output.style.color = "red";
+    } else if (data.error) {
+      output.textContent = data.error;
+      output.style.color = "red";
+    } else {
+      output.textContent = "Error en el registro";
+      output.style.color = "red";
+    }
+    output.style.display = "block";
+    setTimeout(() => { output.style.display = "none"; }, 4000);
+  }
+  document.getElementById("registerForm").reset();
+});
+const API_URL = "http://localhost:3000/api";
+// Drag and drop para añadir elementos a la página
+const dropArea = document.getElementById("drop-area");
+const dragItems = document.querySelectorAll(".drag-item");
+let elementosArrastrados = [];
+let editandoIdx = null;
+let usuarioAutenticado = false;
 
-      const output = document.getElementById("output");
+dragItems.forEach(item => {
+  item.addEventListener("dragstart", (e) => {
+    e.dataTransfer.setData("text/plain", item.dataset.type);
+  });
+});
 
-      function show(data) {
-        output.textContent = JSON.stringify(data, null, 2);
+dropArea.addEventListener("dragover", (e) => {
+  e.preventDefault();
+  dropArea.style.background = "#e0f7fa";
+});
+dropArea.addEventListener("dragleave", () => {
+  dropArea.style.background = "#f3f3f3";
+});
+dropArea.addEventListener("drop", (e) => {
+  e.preventDefault();
+  dropArea.style.background = "#f3f3f3";
+  const tipo = e.dataTransfer.getData("text/plain");
+  const idx = elementosArrastrados.length;
+  elementosArrastrados.push({ tipo, contenido: "" });
+  renderElementosDrop();
+});
+
+function renderElementosDrop() {
+  dropArea.innerHTML = "";
+  elementosArrastrados.forEach((el, idx) => {
+    const span = document.createElement("span");
+    span.textContent = `${el.tipo}${el.contenido ? ': ' + el.contenido : ''}`;
+    span.style.marginRight = "8px";
+    span.style.padding = "4px 8px";
+    span.style.background = "#d1e7dd";
+    span.style.borderRadius = "4px";
+    span.style.cursor = "pointer";
+    span.title = "Haz clic para editar, doble clic para eliminar";
+    span.dataset.idx = idx;
+    // Eliminar elemento
+    span.addEventListener("dblclick", function() {
+      elementosArrastrados.splice(idx, 1);
+      renderElementosDrop();
+    });
+    // Editar elemento
+    span.addEventListener("click", function() {
+      editandoIdx = idx;
+      document.getElementById("editTipo").value = el.tipo;
+      document.getElementById("editContenido").value = el.contenido;
+      document.getElementById("modal-editar").style.display = "flex";
+    });
+    dropArea.appendChild(span);
+  });
+  if (elementosArrastrados.length === 0) {
+    dropArea.innerHTML = "Arrastra aquí para añadir a tu página";
+  }
+}
+
+// Modal edición
+const modalEditar = document.getElementById("modal-editar");
+document.getElementById("formEditarElemento").addEventListener("submit", function(e) {
+  e.preventDefault();
+  if (editandoIdx !== null) {
+    elementosArrastrados[editandoIdx].tipo = document.getElementById("editTipo").value.trim();
+    elementosArrastrados[editandoIdx].contenido = document.getElementById("editContenido").value.trim();
+    renderElementosDrop();
+    modalEditar.style.display = "none";
+    editandoIdx = null;
+  }
+});
+document.getElementById("cancelarEditar").addEventListener("click", function() {
+  modalEditar.style.display = "none";
+  editandoIdx = null;
+});
+
+// Crear página (solo un listener, previene doble envío y siempre envía elementos)
+const paginaForm = document.getElementById("paginaForm");
+paginaForm.onsubmit = null;
+paginaForm.addEventListener("submit", async function(e) {
+  e.preventDefault();
+  if (window._enviandoPagina) return; // Evita doble envío
+  window._enviandoPagina = true;
+  const titulo = document.getElementById("paginaTitulo").value;
+  const contenido = document.getElementById("paginaContenido").value;
+  console.log("Elementos a guardar:", elementosArrastrados);
+  const res = await fetch(`${API_URL}/paginas`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ titulo, contenido, elementos: elementosArrastrados }),
+    credentials: "include",
+  });
+  const data = await res.json();
+  const output = document.getElementById("output");
+  if (output) {
+    output.textContent = data.message ? data.message : "Página guardada";
+    output.style.color = res.ok ? "green" : "red";
+    output.style.display = "block";
+    setTimeout(() => { output.style.display = "none"; }, 4000);
+  }
+  paginaForm.reset();
+  elementosArrastrados = [];
+  renderElementosDrop();
+  cargarPaginas();
+  window._enviandoPagina = false;
+});
+
+// Login
+document.getElementById("loginForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const email = document.getElementById("logEmail").value;
+  const password = document.getElementById("logPass").value;
+  const res = await fetch(`${API_URL}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+    credentials: "include",
+  });
+  const data = await res.json();
+  const output = document.getElementById("output");
+  if (output) {
+    if (res.ok && data.message) {
+      output.textContent = data.message;
+      output.style.color = "green";
+      usuarioAutenticado = true;
+    } else if (data.message === "Credenciales inválidas") {
+      output.textContent = data.message;
+      output.style.color = "red";
+      usuarioAutenticado = false;
+    } else if (data.error) {
+      output.textContent = data.error;
+      output.style.color = "red";
+      usuarioAutenticado = false;
+    } else {
+      output.textContent = "Error en el login";
+      output.style.color = "red";
+      usuarioAutenticado = false;
+    }
+    output.style.display = "block";
+    setTimeout(() => { output.style.display = "none"; }, 4000);
+  }
+});
+
+// Crear página
+
+// Elimino listeners duplicados:
+// (Busca y elimina cualquier otro bloque que use document.getElementById("paginaForm").addEventListener("submit", ...) o paginaForm.addEventListener("submit", ...) para crear página)
+
+// Mostrar páginas del usuario
+async function cargarPaginas() {
+  const lista = document.getElementById("listaPaginas");
+  if (!lista) return;
+  const output = document.getElementById("output");
+  try {
+    const res = await fetch(`${API_URL}/paginas/mias`, {
+      method: "GET",
+      credentials: "include",
+    });
+    if (res.status === 401) {
+      lista.innerHTML = "";
+      if (output) {
+        output.textContent = "Debes iniciar sesión para ver tus páginas.";
+        output.style.color = "red";
+        output.style.display = "block";
+        setTimeout(() => { output.style.display = "none"; }, 4000);
       }
-
-      // Registro
-      document
-        .getElementById("registerForm")
-        .addEventListener("submit", async (e) => {
-          e.preventDefault();
-          const email = document.getElementById("regEmail").value;
-          const password = document.getElementById("regPass").value;
-
-          const res = await fetch(`${API_URL}/auth/register`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password }),
-            credentials: "include", // Importante para manejar cookies
-          });
-          show(await res.json());
-        });
-
-      // Login
-      document
-        .getElementById("loginForm")
-        .addEventListener("submit", async (e) => {
-          e.preventDefault();
-          const email = document.getElementById("logEmail").value;
-          const password = document.getElementById("logPass").value;
-
-          const res = await fetch(`${API_URL}/auth/login`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password }),
-            credentials: "include", // Importante para manejar cookies
-          });
-          const data = await res.json();
-          show(data);
-        });
-
-      // Mostrar perfil personal solo cuando la sección está activa
-      function cargarPerfilPersonal() {
-        fetch(`${API_URL}/api/perfilPersonal`, {
-          method: "GET",
-          credentials: "include",
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            if (data.error) {
-              document.getElementById("perfil-error").innerText =
-                "Error: " + data.error;
-              document.getElementById("perfil-info").style.display = "none";
-            } else {
-              document.getElementById("perfil-id").innerText = `ID: ${data.id}`;
-              document.getElementById(
-                "perfil-email"
-              ).innerText = `Email: ${data.email}`;
-              document.getElementById("perfil-error").innerText = "";
-              document.getElementById("perfil-info").style.display = "flex";
-            }
-          })
-          .catch((err) => {
-            document.getElementById("perfil-error").innerText =
-              "Error de conexión";
-            document.getElementById("perfil-info").style.display = "none";
-          });
+      return;
+    }
+    const data = await res.json();
+    lista.innerHTML = "";
+    if (Array.isArray(data) && data.length > 0) {
+      data.forEach(p => {
+        const li = document.createElement("li");
+        li.innerHTML = `<a href="#/ver/${p.id}" class="ver-pagina-link"><strong>${p.titulo}</strong></a>: ${p.contenido}`;
+        lista.appendChild(li);
+      });
+    } else {
+      if (output) {
+        output.textContent = "No tienes páginas creadas.";
+        output.style.color = "orange";
+        output.style.display = "block";
+        setTimeout(() => { output.style.display = "none"; }, 4000);
       }
+    }
+  } catch {
+    lista.innerHTML = "";
+    if (output) {
+      output.textContent = "Error al cargar tus páginas.";
+      output.style.color = "red";
+      output.style.display = "block";
+      setTimeout(() => { output.style.display = "none"; }, 4000);
+    }
+  }
+}
 
-      function showSection(route) {
-        document.getElementById("section-register").style.display =
-          route === "register" ? "block" : "none";
-        document.getElementById("section-login").style.display =
-          route === "login" ? "block" : "none";
-        document.getElementById("section-perfil").style.display =
-          route === "perfil" ? "block" : "none";
+// Todas las páginas públicas
+// Eliminada carga automática de páginas públicas fuera de autores
 
-        // Resaltar el enlace activo en el nav
-        document
-          .getElementById("nav-register")
-          .classList.toggle("active", route === "register");
-        document
-          .getElementById("nav-login")
-          .classList.toggle("active", route === "login");
-        document
-          .getElementById("nav-perfil")
-          .classList.toggle("active", route === "perfil");
-
-        // Solo cargar perfil personal si la sección está activa
-        if (route === "perfil") {
-          cargarPerfilPersonal();
-        }
+// Renderizar página pública
+async function renderPaginaPublica(id) {
+  const contenedor = document.getElementById("paginaPublica");
+  contenedor.innerHTML = "Cargando...";
+  const output = document.getElementById("output");
+  try {
+    const res = await fetch(`${API_URL}/paginas/${id}`);
+    const data = await res.json();
+    if (data.error) {
+      contenedor.innerHTML = `<div style='color:red'>${data.error}</div>`;
+      if (output) {
+        output.textContent = data.error;
+        output.style.color = "red";
+        output.style.display = "block";
+        setTimeout(() => { output.style.display = "none"; }, 4000);
       }
-
-      function handleRoute() {
-        const hash = window.location.hash.replace("#/", "");
-        showSection(hash || "register"); // Por defecto muestra registro
+    } else {
+      let html = `<h2>${data.titulo}</h2><p>${data.contenido}</p><div style='font-size:0.9em;color:#888'>Autor: ${data.username}</div>`;
+      if (data.elementos) {
+        try {
+          const elementos = typeof data.elementos === "string" ? JSON.parse(data.elementos) : data.elementos;
+          if (Array.isArray(elementos) && elementos.length > 0) {
+            html += `<div style='margin-top:12px'><strong>Elementos añadidos:</strong> `;
+            html += elementos.map(e => `<span style='margin-right:8px;padding:4px 8px;background:#d1e7dd;border-radius:4px'>${e}</span>`).join("");
+            html += `</div>`;
+          }
+        } catch {}
       }
+      contenedor.innerHTML = html;
+      if (output) {
+        output.textContent = "Página pública cargada correctamente.";
+        output.style.color = "green";
+        output.style.display = "block";
+        setTimeout(() => { output.style.display = "none"; }, 4000);
+      }
+    }
+  } catch {
+    contenedor.innerHTML = "Error al cargar la página.";
+  }
+}
 
-      window.addEventListener("hashchange", handleRoute);
-      window.addEventListener("DOMContentLoaded", handleRoute);
+// Renderizar página pública (incluye elementos arrastrados)
+async function renderizarPaginaPublica(paginaId) {
+  const res = await fetch(`${API_URL}/paginas/${paginaId}`);
+  const data = await res.json();
+  let cont = document.getElementById("main");
+  if (!cont) {
+    cont = document.createElement("div");
+    cont.id = "main";
+    cont.style.marginTop = "24px";
+    document.body.appendChild(cont);
+  }
+  cont.innerHTML = `<h2>${data.titulo}</h2><p>${data.contenido}</p>`;
+  if (data.elementos && Array.isArray(data.elementos) && data.elementos.length > 0) {
+    const lista = document.createElement("div");
+    lista.innerHTML = `<h3>Elementos de la página</h3>`;
+    data.elementos.forEach(el => {
+      const item = document.createElement("div");
+      item.style.marginBottom = "8px";
+      item.style.padding = "6px 12px";
+      item.style.background = "#f8f9fa";
+      item.style.borderRadius = "4px";
+      item.style.boxShadow = "0 1px 4px #0001";
+      item.style.display = "block";
+      if (el.tipo === "imagen" && el.contenido) {
+        item.innerHTML = `<strong>Imagen:</strong><br><img src="${el.contenido}" alt="imagen" style="max-width:100%;border-radius:6px;box-shadow:0 2px 8px #0002;">`;
+      } else if (el.tipo === "video" && el.contenido) {
+        item.innerHTML = `<strong>Video:</strong><br><video src="${el.contenido}" controls style="max-width:100%;border-radius:6px;"></video>`;
+      } else if (el.tipo === "texto" || el.tipo === "texto extra") {
+        item.innerHTML = `<strong>Texto:</strong> ${el.contenido}`;
+      } else {
+        item.innerHTML = `<strong>${el.tipo}</strong>: ${el.contenido}`;
+      }
+      lista.appendChild(item);
+    });
+    cont.appendChild(lista);
+  }
+}
+
+// SPA: detectar ruta /ver/:pagina y renderizar
+window.addEventListener("hashchange", () => {
+  const hash = location.hash;
+  if (window.location.pathname === "/buscar-autor" && hash.startsWith("#/ver/")) {
+    document.getElementById("section-ver-pagina").style.display = "block";
+    const paginaId = hash.split("#/ver/")[1];
+    renderizarPaginaPublica(paginaId);
+  } else {
+    document.getElementById("section-ver-pagina").style.display = "none";
+    document.getElementById("paginaPublica").innerHTML = "";
+  }
+});
+
+// Al cargar, si la ruta es /ver/:pagina, renderizar
+  if (location.hash.startsWith("#/ver/")) {
+    if (window.location.pathname === "/buscar-autor") {
+      const paginaId = location.hash.split("#/ver/")[1];
+      document.getElementById("section-ver-pagina").style.display = "block";
+      renderizarPaginaPublica(paginaId);
+    } else {
+      document.getElementById("section-ver-pagina").style.display = "none";
+      document.getElementById("paginaPublica").innerHTML = "";
+    }
+  }
+
+function showSection(route) {
+  document.getElementById("section-register").style.display = route === "/register" ? "block" : "none";
+  document.getElementById("section-login").style.display = route === "/login" ? "block" : "none";
+  document.getElementById("section-paginas").style.display = route === "/paginas" ? "block" : "none";
+  document.getElementById("section-buscar-autor").style.display = route === "/buscar-autor" ? "block" : "none";
+  document.getElementById("section-ver-pagina").style.display = "none";
+  document.getElementById("paginaPublica").innerHTML = "";
+  const mainCont = document.getElementById("main");
+  if (mainCont) mainCont.innerHTML = "";
+  document.getElementById("nav-register").classList.toggle("active", route === "/register");
+  document.getElementById("nav-login").classList.toggle("active", route === "/login");
+  document.getElementById("nav-paginas").classList.toggle("active", route === "/paginas");
+  document.getElementById("nav-autores").classList.toggle("active", route === "/buscar-autor");
+}
+
+function handleRouteChange() {
+  showSection(window.location.pathname);
+  // Ocultar detalle de página si no estamos en autores
+  if (window.location.pathname !== "/buscar-autor") {
+    document.getElementById("section-ver-pagina").style.display = "none";
+    document.getElementById("paginaPublica").innerHTML = "";
+    if (location.hash.startsWith("#/ver/")) {
+      location.hash = "";
+    }
+  }
+}
+
+document.getElementById("nav-register").addEventListener("click", function(e) {
+  e.preventDefault();
+  window.history.pushState({}, "", "/register");
+  handleRouteChange();
+});
+document.getElementById("nav-login").addEventListener("click", function(e) {
+  e.preventDefault();
+  window.history.pushState({}, "", "/login");
+  handleRouteChange();
+});
+document.getElementById("nav-paginas").addEventListener("click", function(e) {
+  e.preventDefault();
+  window.history.pushState({}, "", "/paginas");
+  handleRouteChange();
+});
+// Eliminado listener de Mis páginas
+document.getElementById("nav-autores").addEventListener("click", function(e) {
+  e.preventDefault();
+  window.history.pushState({}, "", "/buscar-autor");
+  showSection("/buscar-autor");
+  cargarPublicasAutores();
+});
+
+// Delegación para enlaces de páginas públicas
+document.addEventListener("click", function(e) {
+  if (e.target.classList.contains("ver-pagina-link")) {
+    e.preventDefault();
+    const href = e.target.getAttribute("href");
+    window.history.pushState({}, "", href);
+    handleRouteChange();
+  }
+});
+
+window.addEventListener("popstate", handleRouteChange);
+window.addEventListener("DOMContentLoaded", handleRouteChange);
+
+// Cargar páginas públicas en sección de autores
+async function cargarPublicasAutores() {
+  const lista = document.getElementById("listaPublicasAutores");
+  if (!lista) return;
+  const output = document.getElementById("output");
+  lista.innerHTML = "Cargando...";
+  try {
+    const res = await fetch(`${API_URL}/paginas`);
+    const data = await res.json();
+    lista.innerHTML = "";
+    if (Array.isArray(data) && data.length > 0) {
+      data.forEach(p => {
+        const li = document.createElement("li");
+        li.innerHTML = `<a href="#/ver/${p.id}" class="ver-pagina-link"><strong>${p.titulo}</strong></a> <span style='color:#888'>(Autor: ${p.username})</span>`;
+        lista.appendChild(li);
+      });
+      if (output) {
+        output.textContent = "Páginas públicas cargadas correctamente.";
+        output.style.color = "green";
+        output.style.display = "block";
+        setTimeout(() => { output.style.display = "none"; }, 4000);
+      }
+    } else {
+      if (output) {
+        output.textContent = "No hay páginas públicas.";
+        output.style.color = "orange";
+        output.style.display = "block";
+        setTimeout(() => { output.style.display = "none"; }, 4000);
+      }
+    }
+  } catch {
+    lista.innerHTML = "";
+    if (output) {
+      output.textContent = "Error al cargar páginas públicas.";
+      output.style.color = "red";
+      output.style.display = "block";
+      setTimeout(() => { output.style.display = "none"; }, 4000);
+    }
+  }
+}
     </script>
   </body>
 </html>

@@ -1,42 +1,42 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import authRoutes from "./middlewares/authRoutes";
-import { authMiddleware } from "./middlewares/auth";
+import authRoutes from "./routes/authRoutes";
+import paginaRoutes from "./routes/paginaRoutes";
+import { errorHandler } from "./middlewares/errorHandler";
 import { pool } from "./middlewares/db";
 import cookieParser from "cookie-parser";
-
+import path from "path";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { authMiddleware } from "./middlewares/auth";
 
 dotenv.config();
 const app = express();
-app.use(cors({
-  origin: "https://yposteriormente.com",
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: ["http://127.0.0.1:5500", "http://localhost:5500"],
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(cookieParser());
 
 app.use("/api/auth", authRoutes);
+app.use("/api/paginas", paginaRoutes);
+app.use(errorHandler);
 
-// Ruta protegida
-app.get("/api/profile", authMiddleware, (req, res) => {
-  console.log("Cookies recibidas en /api/profile:", req.cookies);
-  res.json({ message: "Acceso autorizado", userId: (req as any).userId });
+
+// Ruta SPA: sirve index.html en rutas no API
+app.get(/^\/(?!api).*/, (req, res) => {
+  res.sendFile(path.join(__dirname, "../../frontend/index.html"));
 });
 
-// Ruta protegida para perfil personal
-app.get("/api/perfilPersonal", authMiddleware, async (req, res) => {
-  const userId = (req as any).userId;
-  console.log("Cookies recibidas en /api/perfilPersonal:", req.cookies);
 
-  try {
-    const [rows] = await pool.execute("SELECT id, email FROM users WHERE id = ?", [userId]);
-    const user = (rows as any[])[0];
-    if (!user) return res.status(404).json({ error: "Usuario no encontrado" });
-    res.json({ id: user.id, email: user.email });
-  } catch (err) {
-    res.status(500).json({ error: "Error en el servidor" });
-  }
-});
+if (require.main === module) {
+  app.listen(3000, () =>
+    console.log("Servidor backend en http://localhost:3000")
+  );
+}
 
-app.listen(3000, () => console.log("Servidor backend en http://localhost:3000"));
+export default app;

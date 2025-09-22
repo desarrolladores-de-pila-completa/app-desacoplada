@@ -2,13 +2,13 @@
   // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
     // File Layout
-     "rootDir": "./src",
+    "rootDir": "./",
      "outDir": "./dist",
 
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
     "target": "esnext",
-    "types": [],
+  "types": ["jest"],
     // For nodejs:
     // "lib": ["esnext"],
     // "types": ["node"],
@@ -41,7 +41,5 @@
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true,
-  },
-    "rootDir": "./src",
-    "outDir": "./dist",
+  }
 }

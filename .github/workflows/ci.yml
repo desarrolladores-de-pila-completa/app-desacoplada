@@ -1,0 +1,28 @@
+name: CI Backend
+
+on:
+  push:
+    branches: [ desarrollo1 ]
+  pull_request:
+    branches: [ desarrollo1 ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout código
+      uses: actions/checkout@v3
+
+    - name: Instalar Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: Instalar dependencias
+      run: npm install
+      working-directory: backend
+
+    - name: Ejecutar tests
+      run: npx jest
+      working-directory: backend
