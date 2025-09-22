@@ -23,10 +23,14 @@ jobs:
       run: npm ci
       working-directory: backend
 
+
+    - name: Ejecutar tests
+
     - name: Permisos para Jest
       run: chmod +x node_modules/.bin/jest
       working-directory: backend
 
     - name: Correr tests
+       main
       run: npx jest
       working-directory: backend
