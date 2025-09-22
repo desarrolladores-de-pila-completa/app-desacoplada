@@ -432,50 +432,6 @@ async function cargarPaginas() {
   }
 }
 
-// Todas las páginas públicas
-// Eliminada carga automática de páginas públicas fuera de autores
-
-// Renderizar página pública
-async function renderPaginaPublica(id) {
-  const contenedor = document.getElementById("paginaPublica");
-  contenedor.innerHTML = "Cargando...";
-  const output = document.getElementById("output");
-  try {
-    const res = await fetch(`${API_URL}/paginas/${id}`);
-    const data = await res.json();
-    if (data.error) {
-      contenedor.innerHTML = `<div style='color:red'>${data.error}</div>`;
-      if (output) {
-        output.textContent = data.error;
-        output.style.color = "red";
-        output.style.display = "block";
-        setTimeout(() => { output.style.display = "none"; }, 4000);
-      }
-    } else {
-      let html = `<h2>${data.titulo}</h2><p>${data.contenido}</p><div style='font-size:0.9em;color:#888'>Autor: ${data.username}</div>`;
-      if (data.elementos) {
-        try {
-          const elementos = typeof data.elementos === "string" ? JSON.parse(data.elementos) : data.elementos;
-          if (Array.isArray(elementos) && elementos.length > 0) {
-            html += `<div style='margin-top:12px'><strong>Elementos añadidos:</strong> `;
-            html += elementos.map(e => `<span style='margin-right:8px;padding:4px 8px;background:#d1e7dd;border-radius:4px'>${e}</span>`).join("");
-            html += `</div>`;
-          }
-        } catch {}
-      }
-      contenedor.innerHTML = html;
-      if (output) {
-        output.textContent = "Página pública cargada correctamente.";
-        output.style.color = "green";
-        output.style.display = "block";
-        setTimeout(() => { output.style.display = "none"; }, 4000);
-      }
-    }
-  } catch {
-    contenedor.innerHTML = "Error al cargar la página.";
-  }
-}
-
 // Renderizar página pública (incluye elementos arrastrados)
 async function renderizarPaginaPublica(paginaId) {
   const res = await fetch(`${API_URL}/paginas/${paginaId}`);
