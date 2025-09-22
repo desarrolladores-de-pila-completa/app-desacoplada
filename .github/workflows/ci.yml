@@ -20,13 +20,17 @@ jobs:
         node-version: '18'
 
     - name: Instalar dependencias
-      run: npm install
+      run: npm ci
       working-directory: backend
 
-    - name: Dar permisos de ejecución a Jest
-      run: if [ -f node_modules/.bin/jest ]; then chmod +x node_modules/.bin/jest; fi
-      working-directory: backend
 
     - name: Ejecutar tests
+
+    - name: Permisos para Jest
+      run: chmod +x node_modules/.bin/jest
+      working-directory: backend
+
+    - name: Correr tests
+       main
       run: npx jest
       working-directory: backend
