@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { pool } from "./db";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
 // Función para guardar el token en la base de datos
@@ -14,19 +14,25 @@ async function saveToken(user: any, token: string) {
 const router = Router();
 const SECRET = process.env.JWT_SECRET || "clave-secreta";
 
+import { randomUUID } from "crypto";
+
 router.post("/register", async (req, res) => {
   const { email, password } = req.body;
   try {
-    const hashed = await bcrypt.hash(password, 10);
-    await pool.execute(
-      "INSERT INTO users (email, password) VALUES (?, ?)",
-      [email, hashed]
-    );
-    res.json({ message: "Usuario creado" });
-  } catch (err: any) {
-    if (err.code === "ER_DUP_ENTRY") {
+    // Verificar si el email ya existe
+    const [rows] = await pool.execute("SELECT id FROM users WHERE email = ?", [email]);
+    if ((rows as any[]).length > 0) {
       return res.status(400).json({ error: "El email ya está registrado" });
     }
+    const hashed = await bcrypt.hash(password, 10);
+  // Generar username único usando solo uuid4
+  const username = randomUUID().replace(/-/g, "");
+    await pool.execute(
+      "INSERT INTO users (email, password, username) VALUES (?, ?, ?)",
+      [email, hashed, username]
+    );
+    res.json({ message: "Usuario creado", username });
+  } catch (err: any) {
     console.error(err);
     res.status(500).json({ error: "Error en el servidor" });
   }
@@ -44,14 +50,14 @@ router.post("/login", async (req, res) => {
   if (!valid) return res.status(400).json({ error: "Credenciales inválidas" });
 
   const token = jwt.sign({ userId: user.id }, SECRET, { expiresIn: "1h" });
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: true, // false -> Para desarrollo local
-      sameSite: "none", // Permite envío entre puertos locales
-      maxAge: 3600000, // 1 hora
-      path: "/" // Asegura que la cookie se envía en todas las rutas
-    });
-  res.json({ message: "Login exitoso" });
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: true, // false -> Para desarrollo local
+    sameSite: "none", // Permite envío entre puertos locales
+    maxAge: 3600000, // 1 hora
+    path: "/" // Asegura que la cookie se envía en todas las rutas
+  });
+  res.json({ message: "Login exitoso", username: user.username });
 });
 
 export default router;
