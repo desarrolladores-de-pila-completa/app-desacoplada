@@ -18,27 +18,3 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: '18'
-
-    - name: Instalar dependencias
-<<<<<<< HEAD
-      run: cd backend && npm install
-=======
-      run: npm ci
-      working-directory: backend
->>>>>>> 2bf587ec982530978d77a7fe161a2573b52a56ad
-
-
-    - name: Ejecutar tests
-<<<<<<< HEAD
-      run: cd backend && npx jest
-=======
-
-    - name: Permisos para Jest
-      run: chmod +x node_modules/.bin/jest
-      working-directory: backend
-
-    - name: Correr tests
-       main
-      run: npx jest
-      working-directory: backend
->>>>>>> 2bf587ec982530978d77a7fe161a2573b52a56ad
