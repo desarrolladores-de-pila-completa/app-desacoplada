@@ -4,8 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-
-    "start": "tsc && node ./dist/index.js"
+    "start": "tsc && node ./dist/index.js",
+    "start:backend": "tsc --project backend/tsconfig.json && node backend/dist/index.js",
+    "start:frontend": "cd frontend && npm run start || true",
+    "test:backend": "jest --config backend/jest.config.js",
+    "test:frontend": "cd frontend && npm test || true"
   },
   "keywords": [],
   "author": "",
@@ -32,5 +35,9 @@
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.14.5"
-  }
+  },
+  "workspaces": [
+    "backend",
+    "frontend"
+  ]
 }

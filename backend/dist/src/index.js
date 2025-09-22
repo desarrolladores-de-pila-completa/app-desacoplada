@@ -19,6 +19,7 @@ app.use((0, cors_1.default)({
 }));
 app.use(express_1.default.json());
 app.use((0, cookie_parser_1.default)());
+app.use(express_1.default.static(path_1.default.join(__dirname, '../../frontend')));
 app.use("/api/auth", authRoutes_1.default);
 app.use("/api/paginas", paginaRoutes_1.default);
 app.use(errorHandler_1.errorHandler);
