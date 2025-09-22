@@ -203,39 +203,17 @@
     </div>
 
     <script type="module">
+import { register, login, createPage, getMyPages, getPublicPages, getPageById, searchPagesByAuthor } from './sdk.js';
+
 // Registro
 document.getElementById("registerForm").addEventListener("submit", async function(e) {
   e.preventDefault();
   const email = document.getElementById("regEmail").value;
   const password = document.getElementById("regPass").value;
-  const res = await fetch(`${API_URL}/auth/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
-    credentials: "include",
-  });
-  const data = await res.json();
-  const output = document.getElementById("output");
-  if (output) {
-    if (res.ok && data.message) {
-      output.textContent = data.message;
-      output.style.color = "green";
-    } else if (data.message === "Email ya registrado") {
-      output.textContent = data.message;
-      output.style.color = "red";
-    } else if (data.error) {
-      output.textContent = data.error;
-      output.style.color = "red";
-    } else {
-      output.textContent = "Error en el registro";
-      output.style.color = "red";
-    }
-    output.style.display = "block";
-    setTimeout(() => { output.style.display = "none"; }, 4000);
-  }
+  
+  await register(email, password);
   document.getElementById("registerForm").reset();
 });
-const API_URL = "http://localhost:3000/api";
 // Drag and drop para añadir elementos a la página
 const dropArea = document.getElementById("drop-area");
 const dragItems = document.querySelectorAll(".drag-item");
@@ -320,23 +298,13 @@ paginaForm.addEventListener("submit", async function(e) {
   e.preventDefault();
   if (window._enviandoPagina) return; // Evita doble envío
   window._enviandoPagina = true;
+  
   const titulo = document.getElementById("paginaTitulo").value;
   const contenido = document.getElementById("paginaContenido").value;
   console.log("Elementos a guardar:", elementosArrastrados);
-  const res = await fetch(`${API_URL}/paginas`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ titulo, contenido, elementos: elementosArrastrados }),
-    credentials: "include",
-  });
-  const data = await res.json();
-  const output = document.getElementById("output");
-  if (output) {
-    output.textContent = data.message ? data.message : "Página guardada";
-    output.style.color = res.ok ? "green" : "red";
-    output.style.display = "block";
-    setTimeout(() => { output.style.display = "none"; }, 4000);
-  }
+  
+  await createPage(titulo, contenido, elementosArrastrados);
+  
   paginaForm.reset();
   elementosArrastrados = [];
   renderElementosDrop();
@@ -349,35 +317,9 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const email = document.getElementById("logEmail").value;
   const password = document.getElementById("logPass").value;
-  const res = await fetch(`${API_URL}/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
-    credentials: "include",
-  });
-  const data = await res.json();
-  const output = document.getElementById("output");
-  if (output) {
-    if (res.ok && data.message) {
-      output.textContent = data.message;
-      output.style.color = "green";
-      usuarioAutenticado = true;
-    } else if (data.message === "Credenciales inválidas") {
-      output.textContent = data.message;
-      output.style.color = "red";
-      usuarioAutenticado = false;
-    } else if (data.error) {
-      output.textContent = data.error;
-      output.style.color = "red";
-      usuarioAutenticado = false;
-    } else {
-      output.textContent = "Error en el login";
-      output.style.color = "red";
-      usuarioAutenticado = false;
-    }
-    output.style.display = "block";
-    setTimeout(() => { output.style.display = "none"; }, 4000);
-  }
+  
+  const result = await login(email, password);
+  usuarioAutenticado = result.authenticated;
 });
 
 // Crear página
@@ -389,46 +331,18 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
 async function cargarPaginas() {
   const lista = document.getElementById("listaPaginas");
   if (!lista) return;
-  const output = document.getElementById("output");
-  try {
-    const res = await fetch(`${API_URL}/paginas/mias`, {
-      method: "GET",
-      credentials: "include",
+  
+  const result = await getMyPages();
+  
+  lista.innerHTML = "";
+  if (result.success && result.data.length > 0) {
+    result.data.forEach(p => {
+      const li = document.createElement("li");
+      li.innerHTML = `<a href="#/ver/${p.id}" class="ver-pagina-link"><strong>${p.titulo}</strong></a>: ${p.contenido}`;
+      lista.appendChild(li);
     });
-    if (res.status === 401) {
-      lista.innerHTML = "";
-      if (output) {
-        output.textContent = "Debes iniciar sesión para ver tus páginas.";
-        output.style.color = "red";
-        output.style.display = "block";
-        setTimeout(() => { output.style.display = "none"; }, 4000);
-      }
-      return;
-    }
-    const data = await res.json();
-    lista.innerHTML = "";
-    if (Array.isArray(data) && data.length > 0) {
-      data.forEach(p => {
-        const li = document.createElement("li");
-        li.innerHTML = `<a href="#/ver/${p.id}" class="ver-pagina-link"><strong>${p.titulo}</strong></a>: ${p.contenido}`;
-        lista.appendChild(li);
-      });
-    } else {
-      if (output) {
-        output.textContent = "No tienes páginas creadas.";
-        output.style.color = "orange";
-        output.style.display = "block";
-        setTimeout(() => { output.style.display = "none"; }, 4000);
-      }
-    }
-  } catch {
-    lista.innerHTML = "";
-    if (output) {
-      output.textContent = "Error al cargar tus páginas.";
-      output.style.color = "red";
-      output.style.display = "block";
-      setTimeout(() => { output.style.display = "none"; }, 4000);
-    }
+  } else if (result.unauthorized) {
+    // El mensaje ya se mostró en el SDK
   }
 }
 
@@ -439,47 +353,32 @@ async function cargarPaginas() {
 async function renderPaginaPublica(id) {
   const contenedor = document.getElementById("paginaPublica");
   contenedor.innerHTML = "Cargando...";
-  const output = document.getElementById("output");
-  try {
-    const res = await fetch(`${API_URL}/paginas/${id}`);
-    const data = await res.json();
-    if (data.error) {
-      contenedor.innerHTML = `<div style='color:red'>${data.error}</div>`;
-      if (output) {
-        output.textContent = data.error;
-        output.style.color = "red";
-        output.style.display = "block";
-        setTimeout(() => { output.style.display = "none"; }, 4000);
-      }
-    } else {
-      let html = `<h2>${data.titulo}</h2><p>${data.contenido}</p><div style='font-size:0.9em;color:#888'>Autor: ${data.username}</div>`;
-      if (data.elementos) {
-        try {
-          const elementos = typeof data.elementos === "string" ? JSON.parse(data.elementos) : data.elementos;
-          if (Array.isArray(elementos) && elementos.length > 0) {
-            html += `<div style='margin-top:12px'><strong>Elementos añadidos:</strong> `;
-            html += elementos.map(e => `<span style='margin-right:8px;padding:4px 8px;background:#d1e7dd;border-radius:4px'>${e}</span>`).join("");
-            html += `</div>`;
-          }
-        } catch {}
-      }
-      contenedor.innerHTML = html;
-      if (output) {
-        output.textContent = "Página pública cargada correctamente.";
-        output.style.color = "green";
-        output.style.display = "block";
-        setTimeout(() => { output.style.display = "none"; }, 4000);
-      }
+  
+  const result = await getPageById(id);
+  
+  if (result.success) {
+    const data = result.data;
+    let html = `<h2>${data.titulo}</h2><p>${data.contenido}</p><div style='font-size:0.9em;color:#888'>Autor: ${data.username}</div>`;
+    if (data.elementos) {
+      try {
+        const elementos = typeof data.elementos === "string" ? JSON.parse(data.elementos) : data.elementos;
+        if (Array.isArray(elementos) && elementos.length > 0) {
+          html += `<div style='margin-top:12px'><strong>Elementos añadidos:</strong> `;
+          html += elementos.map(e => `<span style='margin-right:8px;padding:4px 8px;background:#d1e7dd;border-radius:4px'>${e}</span>`).join("");
+          html += `</div>`;
+        }
+      } catch {}
     }
-  } catch {
-    contenedor.innerHTML = "Error al cargar la página.";
+    contenedor.innerHTML = html;
+  } else {
+    contenedor.innerHTML = `<div style='color:red'>${result.data?.error || "Error al cargar la página"}</div>`;
   }
 }
 
 // Renderizar página pública (incluye elementos arrastrados)
 async function renderizarPaginaPublica(paginaId) {
-  const res = await fetch(`${API_URL}/paginas/${paginaId}`);
-  const data = await res.json();
+  const result = await getPageById(paginaId);
+  
   let cont = document.getElementById("main");
   if (!cont) {
     cont = document.createElement("div");
@@ -487,30 +386,36 @@ async function renderizarPaginaPublica(paginaId) {
     cont.style.marginTop = "24px";
     document.body.appendChild(cont);
   }
-  cont.innerHTML = `<h2>${data.titulo}</h2><p>${data.contenido}</p>`;
-  if (data.elementos && Array.isArray(data.elementos) && data.elementos.length > 0) {
-    const lista = document.createElement("div");
-    lista.innerHTML = `<h3>Elementos de la página</h3>`;
-    data.elementos.forEach(el => {
-      const item = document.createElement("div");
-      item.style.marginBottom = "8px";
-      item.style.padding = "6px 12px";
-      item.style.background = "#f8f9fa";
-      item.style.borderRadius = "4px";
-      item.style.boxShadow = "0 1px 4px #0001";
-      item.style.display = "block";
-      if (el.tipo === "imagen" && el.contenido) {
-        item.innerHTML = `<strong>Imagen:</strong><br><img src="${el.contenido}" alt="imagen" style="max-width:100%;border-radius:6px;box-shadow:0 2px 8px #0002;">`;
-      } else if (el.tipo === "video" && el.contenido) {
-        item.innerHTML = `<strong>Video:</strong><br><video src="${el.contenido}" controls style="max-width:100%;border-radius:6px;"></video>`;
-      } else if (el.tipo === "texto" || el.tipo === "texto extra") {
-        item.innerHTML = `<strong>Texto:</strong> ${el.contenido}`;
-      } else {
-        item.innerHTML = `<strong>${el.tipo}</strong>: ${el.contenido}`;
-      }
-      lista.appendChild(item);
-    });
-    cont.appendChild(lista);
+  
+  if (result.success) {
+    const data = result.data;
+    cont.innerHTML = `<h2>${data.titulo}</h2><p>${data.contenido}</p>`;
+    if (data.elementos && Array.isArray(data.elementos) && data.elementos.length > 0) {
+      const lista = document.createElement("div");
+      lista.innerHTML = `<h3>Elementos de la página</h3>`;
+      data.elementos.forEach(el => {
+        const item = document.createElement("div");
+        item.style.marginBottom = "8px";
+        item.style.padding = "6px 12px";
+        item.style.background = "#f8f9fa";
+        item.style.borderRadius = "4px";
+        item.style.boxShadow = "0 1px 4px #0001";
+        item.style.display = "block";
+        if (el.tipo === "imagen" && el.contenido) {
+          item.innerHTML = `<strong>Imagen:</strong><br><img src="${el.contenido}" alt="imagen" style="max-width:100%;border-radius:6px;box-shadow:0 2px 8px #0002;">`;
+        } else if (el.tipo === "video" && el.contenido) {
+          item.innerHTML = `<strong>Video:</strong><br><video src="${el.contenido}" controls style="max-width:100%;border-radius:6px;"></video>`;
+        } else if (el.tipo === "texto" || el.tipo === "texto extra") {
+          item.innerHTML = `<strong>Texto:</strong> ${el.contenido}`;
+        } else {
+          item.innerHTML = `<strong>${el.tipo}</strong>: ${el.contenido}`;
+        }
+        lista.appendChild(item);
+      });
+      cont.appendChild(lista);
+    }
+  } else {
+    cont.innerHTML = `<div style='color:red'>${result.data?.error || "Error al cargar la página"}</div>`;
   }
 }
 
@@ -602,44 +507,42 @@ document.addEventListener("click", function(e) {
 window.addEventListener("popstate", handleRouteChange);
 window.addEventListener("DOMContentLoaded", handleRouteChange);
 
+// Buscar páginas por autor
+document.getElementById("formBuscarAutor").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const username = document.getElementById("inputAutor").value.trim();
+  if (!username) return;
+  
+  const lista = document.getElementById("listaAutorPaginas");
+  lista.innerHTML = "Buscando...";
+  
+  const result = await searchPagesByAuthor(username);
+  
+  lista.innerHTML = "";
+  if (result.success && result.data.length > 0) {
+    result.data.forEach(p => {
+      const li = document.createElement("li");
+      li.innerHTML = `<a href="#/ver/${p.id}" class="ver-pagina-link"><strong>${p.titulo}</strong></a>: ${p.contenido}`;
+      lista.appendChild(li);
+    });
+  }
+});
+
 // Cargar páginas públicas en sección de autores
 async function cargarPublicasAutores() {
   const lista = document.getElementById("listaPublicasAutores");
   if (!lista) return;
-  const output = document.getElementById("output");
+  
   lista.innerHTML = "Cargando...";
-  try {
-    const res = await fetch(`${API_URL}/paginas`);
-    const data = await res.json();
-    lista.innerHTML = "";
-    if (Array.isArray(data) && data.length > 0) {
-      data.forEach(p => {
-        const li = document.createElement("li");
-        li.innerHTML = `<a href="#/ver/${p.id}" class="ver-pagina-link"><strong>${p.titulo}</strong></a> <span style='color:#888'>(Autor: ${p.username})</span>`;
-        lista.appendChild(li);
-      });
-      if (output) {
-        output.textContent = "Páginas públicas cargadas correctamente.";
-        output.style.color = "green";
-        output.style.display = "block";
-        setTimeout(() => { output.style.display = "none"; }, 4000);
-      }
-    } else {
-      if (output) {
-        output.textContent = "No hay páginas públicas.";
-        output.style.color = "orange";
-        output.style.display = "block";
-        setTimeout(() => { output.style.display = "none"; }, 4000);
-      }
-    }
-  } catch {
-    lista.innerHTML = "";
-    if (output) {
-      output.textContent = "Error al cargar páginas públicas.";
-      output.style.color = "red";
-      output.style.display = "block";
-      setTimeout(() => { output.style.display = "none"; }, 4000);
-    }
+  const result = await getPublicPages();
+  
+  lista.innerHTML = "";
+  if (result.success && result.data.length > 0) {
+    result.data.forEach(p => {
+      const li = document.createElement("li");
+      li.innerHTML = `<a href="#/ver/${p.id}" class="ver-pagina-link"><strong>${p.titulo}</strong></a> <span style='color:#888'>(Autor: ${p.username})</span>`;
+      lista.appendChild(li);
+    });
   }
 }
     </script>
