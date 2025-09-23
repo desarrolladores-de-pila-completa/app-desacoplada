@@ -1,14 +1,12 @@
-
 name: "CodeQL"
 
 on:
   push:
     branches: [main]
   pull_request:
-    # El workflow se ejecuta en pull requests dirigidos a las ramas especificadas.
     branches: [main]
   schedule:
-    - cron: '0 0 * * 0' # Ejecuta semanalmente
+    - cron: '0 0 * * 0' # semanal
 
 jobs:
   analyze:
@@ -23,19 +21,28 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [javascript, typescript] # Cambia según el lenguaje de tu proyecto
+        language: [javascript, typescript]
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
-      with:
-        languages: ${{ matrix.language }}
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18' # Usa la versión que tu proyecto requiera
 
-    - name: Autobuild
-      uses: github/codeql-action/autobuild@v3
+      - name: Install dependencies
+        run: |
+          npm install || yarn install
 
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v3
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+
+      - name: Autobuild (for JS/TS)
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
