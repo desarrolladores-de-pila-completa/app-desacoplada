@@ -53,10 +53,10 @@ router.post("/login", async (req, res) => {
     const token = jsonwebtoken_1.default.sign({ userId: user.id }, SECRET, { expiresIn: "1h" });
     res.cookie("token", token, {
         httpOnly: true,
-        secure: true, // false -> Para desarrollo local
-        sameSite: "none", // Permite envío entre puertos locales
+        secure: process.env.NODE_ENV === "production", // Solo true en producción
+        sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
         maxAge: 3600000, // 1 hora
-        path: "/" // Asegura que la cookie se envía en todas las rutas
+        path: "/"
     });
     res.json({ message: "Login exitoso", username: user.username });
 });
