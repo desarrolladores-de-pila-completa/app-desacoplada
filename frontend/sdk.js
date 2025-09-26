@@ -12,12 +12,6 @@ function showOutput(message, type = "info") {
   }
 }
 
-// Helper function to handle API responses
-async function handleApiResponse(response) {
-  const data = await response.json();
-  return { response, data };
-}
-
 // Register user
 export async function register(email, password) {
   try {
