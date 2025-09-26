@@ -1,9 +1,0 @@
-{
-  "name": "pragmatic-drag-and-drop-demo",
-  "version": "1.0.0",
-  "description": "Demo de drag and drop usando pragmatic-drag-and-drop",
-  "main": "index.js",
-  "dependencies": {
-    "pragmatic-drag-and-drop": "latest"
-  }
-}

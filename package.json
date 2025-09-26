@@ -7,7 +7,7 @@
     "start": "tsc && node ./dist/index.js",
     "start:backend": "tsc --project backend/tsconfig.json && node backend/dist/index.js",
     "start:frontend": "cd frontend && npm run start || true",
-    "test:backend": "jest --config backend/jest.config.js",
+    "test:backend": "jest --config jest.config.js",
     "test:frontend": "cd frontend && npm test || true"
   },
   "keywords": [],
