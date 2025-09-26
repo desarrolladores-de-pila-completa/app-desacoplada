@@ -3,139 +3,126 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FaceNew</title>
-    <script src="sdk.js"></script>
-    <style>
-      #main-nav {
-        display: flex;
-        flex-wrap: nowrap;
-        justify-content: space-between;
-        align-items: center;
-        width: 100%;
-        min-width: 0;
-        overflow-x: auto;
-        background: linear-gradient(90deg, #2d7be5 60%, #1e4fa3 100%);
-        padding: 16px 0;
-        border-radius: 10px;
-        margin-bottom: 24px;
-        box-shadow: 0 2px 8px rgba(44, 62, 80, 0.12);
-      }
-      #main-nav a {
-        flex: 1 1 0;
-        text-align: center;
-        white-space: nowrap;
-        padding: 12px 0;
-        font-size: 1.1em;
-        font-weight: 500;
-        border-radius: 6px;
-        margin: 0 8px;
-        transition: background 0.2s, color 0.2s, box-shadow 0.2s;
-        box-shadow: 0 1px 4px rgba(44,62,80,0.08);
-      }
-      #main-nav a:hover,
-      #main-nav a.active {
-        background: #fff;
-        color: #2d7be5;
-        box-shadow: 0 2px 8px #2d7be533;
-      }
-      body {
-        font-family: Arial, sans-serif;
-        max-width: 500px;
-        margin: 40px auto;
-        padding: 20px;
-        background: #f7f7f7;
-        border-radius: 10px;
-      }
-      h2 {
-        text-align: center;
-      }
-      form {
-        margin-bottom: 20px;
-        padding: 15px;
-        background: white;
-        border-radius: 8px;
-        box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
-      }
-      label {
-        display: block;
-        margin-top: 10px;
-      }
-      input {
-        width: 100%;
-        padding: 8px;
-        margin-top: 5px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-      }
-      button {
-        margin-top: 15px;
-        padding: 10px;
-        width: 100%;
-        background: #3498db;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-      }
-      button:hover {
-        background: #2980b9;
-      }
-      .output {
-        margin-top: 20px;
-        padding: 10px;
-        background: #fff;
-        border-radius: 8px;
-        min-height: 50px;
-        box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
-        white-space: pre-wrap;
-      }
-      @media (max-width: 600px) {
-        #main-nav {
-          flex-direction: row;
-          gap: 0;
-          padding: 8px 0;
-        }
-        #main-nav a {
-          margin: 0 4px;
-          padding: 10px 0;
-          font-size: 1em;
-        }
-      }
-    </style>
+  <title>FaceNew</title>
+  <!-- Imports duplicados eliminados: heroicons.js y sdk.js -->
+    <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <nav id="main-nav">
-      <a href="/register" id="nav-register">Registro</a>
-      <a href="/login" id="nav-login">Login</a>
+    <nav>
       <a href="/paginas" id="nav-paginas">Páginas</a>
       <a href="/buscar-autor" id="nav-autores">Autores</a>
+      <div style="margin-left:auto; display:flex; align-items:center; gap:12px;">
+        <span id="user-icon-container" style="cursor:pointer;">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="28" height="28">
+            <circle cx="12" cy="8" r="4" stroke-width="2"/>
+            <path stroke-width="2" d="M4 20c0-3.314 3.134-6 7-6s7 2.686 7 6"/>
+          </svg>
+        </span>
+      </div>
+    <!-- Popup modal para registro y login -->
+    <div id="user-popup-bg" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.25); z-index:999;"></div>
+    <div id="user-popup" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; color:#222; box-shadow:0 4px 24px #0004; border-radius:12px; min-width:280px; z-index:1000; padding:32px 24px; transition:opacity 0.2s; opacity:0;">
+      <div id="dropdown-register" style="margin-bottom:24px;">
+        <form id="registerForm">
+          <h3 style="margin-top:0">Registro</h3>
+          <label>Email:
+            <input type="email" id="regEmail" required />
+          </label>
+          <label>Contraseña:
+            <input type="password" id="regPass" required />
+          </label>
+          <button type="submit">Registrar</button>
+        </form>
+      </div>
+      <div id="dropdown-login">
+        <form id="loginForm">
+          <h3 style="margin-top:0">Login</h3>
+          <label>Email:
+            <input type="email" id="logEmail" required />
+          </label>
+          <label>Contraseña:
+            <input type="password" id="logPass" required />
+          </label>
+          <button type="submit">Iniciar Sesión</button>
+        </form>
+      </div>
+    </div>
+    <script type="module">
+    import { register, login } from './sdk.js';
+    // Mostrar popup al hacer clic en el icono de usuario y manejar registro/login con mensajes en el output
+    document.addEventListener('DOMContentLoaded', function() {
+      const icon = document.getElementById('user-icon-container');
+      const popup = document.getElementById('user-popup');
+      const popupBg = document.getElementById('user-popup-bg');
+      if (icon && popup && popupBg) {
+        icon.addEventListener('click', function(e) {
+          e.stopPropagation();
+          popup.style.display = 'block';
+          popupBg.style.display = 'block';
+          setTimeout(() => { popup.style.opacity = '1'; }, 10);
+        });
+        // Ocultar popup al hacer clic fuera
+        popupBg.addEventListener('click', function() {
+          popup.style.opacity = '0';
+          setTimeout(() => {
+            popup.style.display = 'none';
+            popupBg.style.display = 'none';
+          }, 200);
+        });
+        // Ocultar popup al presionar Escape
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'Escape' && popup.style.display === 'block') {
+            popup.style.opacity = '0';
+            setTimeout(() => {
+              popup.style.display = 'none';
+              popupBg.style.display = 'none';
+            }, 200);
+          }
+        });
+        // Registro
+        const regForm = document.getElementById('registerForm');
+        if (regForm) {
+          regForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPass').value;
+            if (email && password) {
+              const result = await register(email, password);
+              if (result.success) {
+                window.showOutput(result.data?.message || 'Registro exitoso', 'success');
+                regForm.reset();
+              } else {
+                window.showOutput(result.data?.message || result.data?.error || 'Error en el registro', 'error');
+              }
+            } else {
+              window.showOutput('Error en el registro', 'error');
+            }
+          });
+        }
+        // Login
+        const logForm = document.getElementById('loginForm');
+        if (logForm) {
+          logForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const email = document.getElementById('logEmail').value;
+            const password = document.getElementById('logPass').value;
+            if (email && password) {
+              const result = await login(email, password);
+              if (result.success) {
+                window.showOutput(result.data?.message || 'Login exitoso', 'success');
+                logForm.reset();
+              } else {
+                window.showOutput(result.data?.message || result.data?.error || 'Error en el login', 'error');
+              }
+            } else {
+              window.showOutput('Error en el login', 'error');
+            }
+          });
+        }
+      }
+    });
+    </script>
     </nav>
-    <div id="section-register" style="display: none; margin-bottom: 32px">
-      <!-- Registro -->
-      <form id="registerForm">
-        <h3>Registro</h3>
-        <label>Email:
-          <input type="email" id="regEmail" required />
-        </label>
-        <label>Contraseña:
-          <input type="password" id="regPass" required />
-        </label>
-        <button type="submit">Registrar</button>
-      </form>
-    </div>
-    <div id="section-login" style="display: none; margin-bottom: 32px">
-      <!-- Login -->
-      <form id="loginForm">
-        <h3>Login</h3>
-        <label>Email:
-          <input type="email" id="logEmail" required />
-        </label>
-        <label>Contraseña:
-          <input type="password" id="logPass" required />
-        </label>
-        <button type="submit">Iniciar Sesión</button>
-      </form>
-    </div>
     <div id="section-paginas" style="display: none; margin-bottom: 32px">
       <!-- Páginas -->
       <form id="paginaForm">
@@ -162,23 +149,22 @@
     <!-- Eliminada sección Mis páginas -->
     <!-- Vista de autores -->
     <div id="section-buscar-autor" style="display:none; margin-bottom:32px">
-      <form id="formBuscarAutor" style="margin-bottom:16px">
-        <label>Buscar por autor (username):
-          <input type="text" id="inputAutor" required />
-        </label>
-        <button type="submit">Buscar</button>
-      </form>
-      <div id="resultadoAutor">
-        <ul id="listaAutorPaginas"></ul>
-      </div>
-      <div id="todas-publicas-autores" style="margin-top:24px">
-        <h4>Páginas públicas</h4>
-        <ul id="listaPublicasAutores"></ul>
-      </div>
+  <!-- Sección de búsqueda de autor eliminada -->
+  <h3>Páginas públicas de autores</h3>
+  <ul id="listaPublicasAutores"></ul>
     </div>
 
-    <div class="output" id="output">
-      Aquí aparecerán las respuestas del servidor…
+    <!-- Output global, siempre visible en la parte inferior -->
+    <div id="output-menu-container" style="position:fixed; left:0; bottom:0; width:100vw; z-index:1200; pointer-events:none;">
+      <div id="output-menu" style="width:100vw; max-width:480px; margin:0 auto; background:#fff; color:#222; box-shadow:0 -4px 24px #0004; border-radius:16px 16px 0 0; padding:24px 16px 32px 16px; position:relative; bottom:0; opacity:1; transition:bottom 0.3s, opacity 0.3s; pointer-events:auto;">
+        <button id="output-min-btn" style="position:absolute; right:12px; top:16px; background:transparent; color:#222; border:none; border-radius:50%; padding:0; width:16px; height:16px; font-size:1em; cursor:pointer; pointer-events:auto; box-shadow:none; display:flex; align-items:center; justify-content:center;">
+          <span id="output-arrow-hide" style="display:inline; font-size:16px; color:#222; width:16px; height:16px; line-height:16px; text-align:center;">&#x25BC;</span>
+        </button>
+        <button id="output-restore-btn" style="position:fixed; left:50%; transform:translateX(-50%); bottom:0; z-index:1300; background:#eee; color:#222; border:none; border-radius:16px 16px 0 0; padding:6px 18px; font-size:1.7em; cursor:pointer; box-shadow:0 -2px 8px #0002; display:none;">
+          <span id="output-arrow-show" style="font-size:1em; color:#222;">&#x25B2;</span>
+        </button>
+        <div id="output-area" style="min-height:32px; font-size:1em; color:#222; margin-top:8px;"></div>
+      </div>
     </div>
     <div id="section-ver-pagina" style="display:none; margin-bottom:32px">
       <div id="paginaPublica"></div>
@@ -203,25 +189,56 @@
       </div>
     </div>
 
-    <script type="module" src="/sdk.js"></script>
+    <script type="module" src="sdk.js"></script>
     <script type="module">
-import { register, login, createPage, getMyPages, getPublicPages, getPageById, searchPagesByAuthor } from './sdk.js';
+// Menú de consola siempre visible con botón para minimizar/restaurar
+const outputMenu = document.getElementById('output-menu');
+const outputMinBtn = document.getElementById('output-min-btn');
+const arrowHide = document.getElementById('output-arrow-hide');
+const outputRestoreBtn = document.getElementById('output-restore-btn');
+let outputMinimized = false;
+function toggleOutputMinimize() {
+  outputMinimized = !outputMinimized;
+  if (outputMinimized) {
+    outputMenu.style.bottom = '-120px';
+    outputMenu.style.opacity = '0.5';
+    arrowHide.style.display = 'none';
+    outputRestoreBtn.style.display = 'block';
+  } else {
+    outputMenu.style.bottom = '0';
+    outputMenu.style.opacity = '1';
+    arrowHide.style.display = 'inline';
+    outputRestoreBtn.style.display = 'none';
+  }
+}
+outputMinBtn.addEventListener('click', toggleOutputMinimize);
+outputRestoreBtn.addEventListener('click', toggleOutputMinimize);
+
+// El output permanece siempre fijo en la parte inferior, nunca se mueve al popup
+
+// ...existing code...
+import { register, login, createPage, getMyPages, getPublicPages, getPageById, importHeroicon } from './sdk.js';
+// Sobrescribir showOutput para mantener el output visible en el menú
+window.showOutput = function(message, type = "info") {
+  const output = document.getElementById("output-area");
+  if (output) {
+    if (Array.isArray(message)) {
+      output.innerHTML = message.map(m => `<div>${m}</div>`).join("");
+    } else {
+      output.textContent = message;
+    }
+    output.style.color = type === "success" ? "green" : type === "error" ? "red" : "orange";
+    output.style.display = "block";
+  }
+}
 
 // Registro
-document.getElementById("registerForm").addEventListener("submit", async function(e) {
-  e.preventDefault();
-  const email = document.getElementById("regEmail").value;
-  const password = document.getElementById("regPass").value;
-  
-  await register(email, password);
-  document.getElementById("registerForm").reset();
-});
 // Drag and drop para añadir elementos a la página
 const dropArea = document.getElementById("drop-area");
 const dragItems = document.querySelectorAll(".drag-item");
 let elementosArrastrados = [];
 let editandoIdx = null;
-let usuarioAutenticado = false;
+// ...existing code...
 
 dragItems.forEach(item => {
   item.addEventListener("dragstart", (e) => {
@@ -300,13 +317,14 @@ paginaForm.addEventListener("submit", async function(e) {
   e.preventDefault();
   if (window._enviandoPagina) return; // Evita doble envío
   window._enviandoPagina = true;
-  
   const titulo = document.getElementById("paginaTitulo").value;
   const contenido = document.getElementById("paginaContenido").value;
-  console.log("Elementos a guardar:", elementosArrastrados);
-  
-  await createPage(titulo, contenido, elementosArrastrados);
-  
+  const result = await createPage(titulo, contenido, elementosArrastrados);
+  if (result.success) {
+    window.showOutput(result.data.message || "Página creada correctamente", "success");
+  } else {
+    window.showOutput(result.data?.message || result.data?.error || "Error al crear la página", "error");
+  }
   paginaForm.reset();
   elementosArrastrados = [];
   renderElementosDrop();
@@ -314,39 +332,7 @@ paginaForm.addEventListener("submit", async function(e) {
   window._enviandoPagina = false;
 });
 
-// Login
-document.getElementById("loginForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const email = document.getElementById("logEmail").value;
-  const password = document.getElementById("logPass").value;
-  
-  const result = await login(email, password);
-  usuarioAutenticado = result.authenticated;
-});
-
-// Crear página
-
-// Elimino listeners duplicados:
-// (Busca y elimina cualquier otro bloque que use document.getElementById("paginaForm").addEventListener("submit", ...) o paginaForm.addEventListener("submit", ...) para crear página)
-
-// Mostrar páginas del usuario
-async function cargarPaginas() {
-  const lista = document.getElementById("listaPaginas");
-  if (!lista) return;
-  
-  const result = await getMyPages();
-  
-  lista.innerHTML = "";
-  if (result.success && result.data.length > 0) {
-    result.data.forEach(p => {
-      const li = document.createElement("li");
-      li.innerHTML = `<a href="#/ver/${p.id}" class="ver-pagina-link"><strong>${p.titulo}</strong></a>: ${p.contenido}`;
-      lista.appendChild(li);
-    });
-  } else if (result.unauthorized) {
-    // El mensaje ya se mostró en el SDK
-  }
-}
+// ...existing code...
       
 // Renderizar página pública (incluye elementos arrastrados)
 async function renderizarPaginaPublica(paginaId) {
@@ -417,19 +403,12 @@ window.addEventListener("hashchange", () => {
     }
   }
 
+// showSection solo activa/desactiva secciones existentes
 function showSection(route) {
-  document.getElementById("section-register").style.display = route === "/register" ? "block" : "none";
-  document.getElementById("section-login").style.display = route === "/login" ? "block" : "none";
-  document.getElementById("section-paginas").style.display = route === "/paginas" ? "block" : "none";
-  document.getElementById("section-buscar-autor").style.display = route === "/buscar-autor" ? "block" : "none";
-  document.getElementById("section-ver-pagina").style.display = "none";
-  document.getElementById("paginaPublica").innerHTML = "";
-  const mainCont = document.getElementById("main");
-  if (mainCont) mainCont.innerHTML = "";
-  document.getElementById("nav-register").classList.toggle("active", route === "/register");
-  document.getElementById("nav-login").classList.toggle("active", route === "/login");
-  document.getElementById("nav-paginas").classList.toggle("active", route === "/paginas");
-  document.getElementById("nav-autores").classList.toggle("active", route === "/buscar-autor");
+  const sectionPaginas = document.getElementById("section-paginas");
+  if (sectionPaginas) sectionPaginas.style.display = route === "/paginas" ? "block" : "none";
+  const sectionBuscarAutor = document.getElementById("section-buscar-autor");
+  if (sectionBuscarAutor) sectionBuscarAutor.style.display = route === "/buscar-autor" ? "block" : "none";
 }
 
 function handleRouteChange() {
@@ -444,28 +423,25 @@ function handleRouteChange() {
   }
 }
 
-document.getElementById("nav-register").addEventListener("click", function(e) {
-  e.preventDefault();
-  window.history.pushState({}, "", "/register");
-  handleRouteChange();
-});
-document.getElementById("nav-login").addEventListener("click", function(e) {
-  e.preventDefault();
-  window.history.pushState({}, "", "/login");
-  handleRouteChange();
-});
-document.getElementById("nav-paginas").addEventListener("click", function(e) {
-  e.preventDefault();
-  window.history.pushState({}, "", "/paginas");
-  handleRouteChange();
-});
-// Eliminado listener de Mis páginas
-document.getElementById("nav-autores").addEventListener("click", function(e) {
-  e.preventDefault();
-  window.history.pushState({}, "", "/buscar-autor");
-  showSection("/buscar-autor");
-  cargarPublicasAutores();
-});
+// Eliminados listeners para nav-register y nav-login (no existen en el HTML)
+const navPaginas = document.getElementById("nav-paginas");
+if (navPaginas) {
+  navPaginas.addEventListener("click", function(e) {
+    e.preventDefault();
+    window.history.pushState({}, "", "/paginas");
+    handleRouteChange();
+  });
+}
+// Listener de Mis páginas ya eliminado
+const navAutores = document.getElementById("nav-autores");
+if (navAutores) {
+  navAutores.addEventListener("click", function(e) {
+    e.preventDefault();
+    window.history.pushState({}, "", "/buscar-autor");
+    showSection("/buscar-autor");
+    cargarPublicasAutores();
+  });
+}
 
 // Delegación para enlaces de páginas públicas
 document.addEventListener("click", function(e) {
@@ -478,46 +454,36 @@ document.addEventListener("click", function(e) {
 });
 
 window.addEventListener("popstate", handleRouteChange);
-window.addEventListener("DOMContentLoaded", handleRouteChange);
-
-// Buscar páginas por autor
-document.getElementById("formBuscarAutor").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const username = document.getElementById("inputAutor").value.trim();
-  if (!username) return;
-  
-  const lista = document.getElementById("listaAutorPaginas");
-  lista.innerHTML = "Buscando...";
-  
-  const result = await searchPagesByAuthor(username);
-  
-  lista.innerHTML = "";
-  if (result.success && result.data.length > 0) {
-    result.data.forEach(p => {
-      const li = document.createElement("li");
-      li.innerHTML = `<a href="#/ver/${p.id}" class="ver-pagina-link"><strong>${p.titulo}</strong></a>: ${p.contenido}`;
-      lista.appendChild(li);
-    });
+window.addEventListener("DOMContentLoaded", () => {
+  window.history.replaceState({}, "", "/buscar-autor");
+  handleRouteChange();
+  // Si la ruta es /buscar-autor, cargar páginas públicas automáticamente
+  if (window.location.pathname === "/buscar-autor") {
+    cargarPublicasAutores();
   }
 });
+
 
 // Cargar páginas públicas en sección de autores
 async function cargarPublicasAutores() {
   const lista = document.getElementById("listaPublicasAutores");
   if (!lista) return;
-  
   lista.innerHTML = "Cargando...";
   const result = await getPublicPages();
-  
   lista.innerHTML = "";
   if (result.success && result.data.length > 0) {
+    window.showOutput(`Autores cargados: ${result.data.length}`, "success");
     result.data.forEach(p => {
       const li = document.createElement("li");
       li.innerHTML = `<a href="#/ver/${p.id}" class="ver-pagina-link"><strong>${p.titulo}</strong></a> <span style='color:#888'>(Autor: ${p.username})</span>`;
       lista.appendChild(li);
     });
+  } else {
+    window.showOutput(result.data?.message || result.data?.error || "Error al cargar autores", "error");
   }
 }
+
+
     </script>
   </body>
 </html>
