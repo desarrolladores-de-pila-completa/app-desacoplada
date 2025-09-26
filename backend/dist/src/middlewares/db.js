@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.pool = void 0;
 const promise_1 = __importDefault(require("mysql2/promise"));
 const dotenv_1 = __importDefault(require("dotenv"));
-dotenv_1.default.config();
+dotenv_1.default.config({ path: "c:/Users/diego/OneDrive/Desktop/NAMESPACE/app-desacoplada/backend/.env" });
 exports.pool = promise_1.default.createPool({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
