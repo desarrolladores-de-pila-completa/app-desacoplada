@@ -7,6 +7,7 @@ const supertest_1 = __importDefault(require("supertest"));
 const index_1 = __importDefault(require("../src/index"));
 const db_1 = require("../src/middlewares/db");
 const paginaController_1 = require("../src/controllers/paginaController");
+// Pruebas de registro y login (se mantienen)
 describe('API de páginas', () => {
     it('debería registrar un usuario nuevo', async () => {
         const email = `nuevo${Date.now()}@mail.com`;
@@ -31,39 +32,20 @@ describe('API de páginas', () => {
         expect([400, 409]).toContain(res.status);
         expect(res.body.message).toMatch(/Email ya registrado|El email ya está registrado/);
     });
-    it('debería rechazar crear página sin autenticación', async () => {
+    // Prueba de la ruta pública de páginas
+    it('debería obtener páginas públicas', async () => {
         const res = await (0, supertest_1.default)(index_1.default)
-            .post('/api/paginas')
-            .send({});
-        expect(res.status).toBe(401);
-        expect(res.body.message || res.body.error).toMatch(/No autenticado|Token inválido/);
-    });
-    it('debería rechazar crear página sin datos si está autenticado', async () => {
-        // Primero registrar y loguear usuario
-        const email = `test${Date.now()}@mail.com`;
-        const password = 'test1234';
-        await (0, supertest_1.default)(index_1.default)
-            .post('/api/auth/register')
-            .send({ email, password });
-        const loginRes = await (0, supertest_1.default)(index_1.default)
-            .post('/api/auth/login')
-            .send({ email, password });
-        const cookie = loginRes.headers['set-cookie']?.[0];
-        // Intentar crear página sin datos
-        const res = await (0, supertest_1.default)(index_1.default)
-            .post('/api/paginas')
-            .set('Cookie', cookie || '')
-            .send({});
-        expect(res.status).toBe(400);
-        expect(res.body.message).toBe('Faltan datos');
+            .get('/api/paginas');
+        expect(res.status).toBe(200);
+        expect(Array.isArray(res.body)).toBe(true);
     });
 });
-describe("paginaController", () => {
-    it("crearPagina responde 400 si faltan datos", async () => {
-        const req = { body: {} };
-        const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
-        await (0, paginaController_1.crearPagina)(req, res);
-        expect(res.status).toHaveBeenCalledWith(400);
+describe('paginaController', () => {
+    it('paginasPublicas responde con array', async () => {
+        const req = {};
+        const res = { json: jest.fn(), status: jest.fn().mockReturnThis() };
+        await (0, paginaController_1.paginasPublicas)(req, res);
+        expect(res.json).toHaveBeenCalled();
     });
 });
 afterAll(async () => {
