@@ -12,12 +12,25 @@ function showOutput(message, type = "info") {
   }
 }
 
+// Obtener el token CSRF
+export async function getCsrfToken() {
+  const res = await fetch("http://localhost:3000/api/csrf-token", {
+    credentials: "include"
+  });
+  const data = await res.json();
+  return data.csrfToken;
+}
+
 // Register user
 export async function register(email, password) {
+  const csrfToken = await getCsrfToken();
   try {
     const res = await fetch(`${API_URL}/auth/register`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrfToken
+      },
       body: JSON.stringify({ email, password }),
       credentials: "include",
     });
@@ -44,10 +57,14 @@ export async function register(email, password) {
 
 // Login user
 export async function login(email, password) {
+  const csrfToken = await getCsrfToken();
   try {
     const res = await fetch(`${API_URL}/auth/login`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrfToken
+      },
       body: JSON.stringify({ email, password }),
       credentials: "include",
     });
@@ -74,10 +91,14 @@ export async function login(email, password) {
 
 // Create page
 export async function createPage(titulo, contenido, elementos = []) {
+  const csrfToken = await getCsrfToken();
   try {
     const res = await fetch(`${API_URL}/paginas`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrfToken
+      },
       body: JSON.stringify({ titulo, contenido, elementos }),
       credentials: "include",
     });
@@ -95,9 +116,13 @@ export async function createPage(titulo, contenido, elementos = []) {
 
 // Get user's own pages  
 export async function getMyPages() {
+  const csrfToken = await getCsrfToken();
   try {
     const res = await fetch(`${API_URL}/paginas/mias`, {
       method: "GET",
+      headers: {
+        "X-CSRF-Token": csrfToken
+      },
       credentials: "include",
     });
     
@@ -122,8 +147,14 @@ export async function getMyPages() {
 
 // Get all public pages
 export async function getPublicPages() {
+  const csrfToken = await getCsrfToken();
   try {
-    const res = await fetch(`${API_URL}/paginas`);
+    const res = await fetch(`${API_URL}/paginas`, {
+      method: "GET",
+      headers: {
+        "X-CSRF-Token": csrfToken
+      },
+    });
     const data = await res.json();
     
     if (Array.isArray(data) && data.length > 0) {
@@ -141,8 +172,14 @@ export async function getPublicPages() {
 
 // Get page by ID
 export async function getPageById(id) {
+  const csrfToken = await getCsrfToken();
   try {
-    const res = await fetch(`${API_URL}/paginas/${id}`);
+    const res = await fetch(`${API_URL}/paginas/${id}`, {
+      method: "GET",
+      headers: {
+        "X-CSRF-Token": csrfToken
+      },
+    });
     const data = await res.json();
     
     if (data.error) {
@@ -160,8 +197,14 @@ export async function getPageById(id) {
 
 // Search pages by author username
 export async function searchPagesByAuthor(username) {
+  const csrfToken = await getCsrfToken();
   try {
-    const res = await fetch(`${API_URL}/paginas/autor/${username}`);
+    const res = await fetch(`${API_URL}/paginas/autor/${username}`, {
+      method: "GET",
+      headers: {
+        "X-CSRF-Token": csrfToken
+      },
+    });
     const data = await res.json();
     
     if (Array.isArray(data) && data.length > 0) {
