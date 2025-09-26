@@ -1,237 +1,248 @@
+// Función global para mostrar secciones SPA
+window.showSection = function(route) {
+  const sectionFeed = document.getElementById("section-feed");
+  if (sectionFeed) sectionFeed.style.display = route === "/feed" ? "block" : "none";
+};
 
-// Centralized SDK for API communication
-const API_URL = "http://localhost:3000/api";
-
-
-import { heroicons } from './heroicons.js';
-// Importar un icono de Heroicons por nombre y tipo (outline/solid)
-export function importHeroicon(name, type = "outline") {
-  const icons = heroicons[type];
-  if (!icons || !icons[name]) {
-    console.error(`Icono '${name}' no encontrado en Heroicons (${type})`);
-    return null;
+// Inicializa la lógica de usuario (popup, registro, login)
+window.initUserPopup = function() {
+  const icon = document.getElementById('user-icon-container');
+  const popup = document.getElementById('user-popup');
+  const popupBg = document.getElementById('user-popup-bg');
+  if (icon && popup && popupBg) {
+    icon.addEventListener('click', function(e) {
+      e.stopPropagation();
+      popup.style.display = 'block';
+      popupBg.style.display = 'block';
+      setTimeout(() => { popup.style.opacity = '1'; }, 10);
+    });
+    popupBg.addEventListener('click', function() {
+      popup.style.opacity = '0';
+      setTimeout(() => {
+        popup.style.display = 'none';
+        popupBg.style.display = 'none';
+      }, 200);
+    });
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && popup.style.display === 'block') {
+        popup.style.opacity = '0';
+        setTimeout(() => {
+          popup.style.display = 'none';
+          popupBg.style.display = 'none';
+        }, 200);
+      }
+    });
+    const regForm = document.getElementById('registerForm');
+    if (regForm) {
+      regForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const email = document.getElementById('regEmail').value;
+        const password = document.getElementById('regPass').value;
+        if (email && password) {
+          const result = await window.register(email, password);
+          if (result.success) {
+            window.showOutput(result.data?.message || 'Registro exitoso', 'success');
+            regForm.reset();
+          } else {
+            window.showOutput(result.data?.message || result.data?.error || 'Error en el registro', 'error');
+          }
+        } else {
+          window.showOutput('Error en el registro', 'error');
+        }
+      });
+    }
+    const logForm = document.getElementById('loginForm');
+    if (logForm) {
+      logForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const email = document.getElementById('logEmail').value;
+        const password = document.getElementById('logPass').value;
+        if (email && password) {
+          const result = await window.login(email, password);
+          if (result.success) {
+            window.showOutput(result.data?.message || 'Login exitoso', 'success');
+            logForm.reset();
+          } else {
+            window.showOutput(result.data?.message || result.data?.error || 'Error en el login', 'error');
+          }
+        } else {
+          window.showOutput('Error en el login', 'error');
+        }
+      });
+    }
   }
-  const div = document.createElement("div");
-  div.innerHTML = icons[name];
-  return div.firstElementChild;
-}
+};
 
+window.initFeedNav = function() {
+  const navFeed = document.getElementById('nav-feed');
+  if (navFeed) {
+    navFeed.addEventListener('click', function(e) {
+      e.preventDefault();
+      window.history.pushState({}, '', '/feed');
+      window.showSection('/feed');
+      window.cargarFeed();
+    });
+  }
+};
 
-// Helper function to show messages in the output box
-function showOutput(message, type = "info") {
-  const output = document.getElementById("output");
+window.showOutput = function(message, type = "info") {
+  const output = document.getElementById("output-area");
   if (output) {
-    output.textContent = message;
+    if (Array.isArray(message)) {
+      output.innerHTML = message.map(m => `<div>${m}</div>`).join("");
+    } else {
+      output.textContent = message;
+    }
     output.style.color = type === "success" ? "green" : type === "error" ? "red" : "orange";
     output.style.display = "block";
-    setTimeout(() => { output.style.display = "none"; }, 4000);
   }
-}
+};
 
-// Obtener el token CSRF
-export async function getCsrfToken() {
+window.setupOutputMenuMinimize = function() {
+  const outputMenu = document.getElementById('output-menu');
+  const outputMinBtn = document.getElementById('output-min-btn');
+  const arrowHide = document.getElementById('output-arrow-hide');
+  const outputRestoreBtn = document.getElementById('output-restore-btn');
+  let outputMinimized = false;
+  function toggleOutputMinimize() {
+    outputMinimized = !outputMinimized;
+    if (outputMinimized) {
+      outputMenu.style.bottom = '-120px';
+      outputMenu.style.opacity = '0.5';
+      arrowHide.style.display = 'none';
+      outputRestoreBtn.style.display = 'block';
+    } else {
+      outputMenu.style.bottom = '0';
+      outputMenu.style.opacity = '1';
+      arrowHide.style.display = 'inline';
+      outputRestoreBtn.style.display = 'none';
+    }
+  }
+  outputMinBtn.addEventListener('click', toggleOutputMinimize);
+  outputRestoreBtn.addEventListener('click', toggleOutputMinimize);
+};
+
+// --- API ---
+const API_URL = "http://localhost:3000/api";
+
+window.apiCall = async function(url, method = "GET", options = {}) {
+  const csrfToken = await window.getCsrfToken();
+  const fetchOptions = {
+    method,
+    headers: {
+      "X-CSRF-Token": csrfToken,
+      ...(method !== "GET" ? { "Content-Type": "application/json" } : {})
+    },
+    credentials: "include"
+  };
+  if (options.body) fetchOptions.body = JSON.stringify(options.body);
+  try {
+    const res = await fetch(url, fetchOptions);
+    const data = await res.json();
+    if (res.ok) {
+      if (options.successMsg) window.showOutput(typeof options.successMsg === "function" ? options.successMsg(data) : options.successMsg, "success");
+      if (options.infoMsg && (!data || (Array.isArray(data) && data.length === 0))) window.showOutput(options.infoMsg, "info");
+      return { success: true, data };
+    } else {
+      window.showOutput(data.message || data.error || options.errorMsg || "Error", "error");
+      return { success: false, data };
+    }
+  } catch (error) {
+    window.showOutput(options.errorMsg || "Error de conexión", "error");
+    return { success: false, error };
+  }
+};
+
+window.getCsrfToken = async function() {
   const res = await fetch("http://localhost:3000/api/csrf-token", {
     credentials: "include"
   });
   const data = await res.json();
   return data.csrfToken;
-}
+};
 
-// Register user
-export async function register(email, password) {
-  const csrfToken = await getCsrfToken();
+window.register = async function(email, password) {
+  return await window.apiCall(`${API_URL}/auth/register`, "POST", {
+    body: { email, password },
+    successMsg: d => d.message || "Registro exitoso",
+    errorMsg: "Error en el registro"
+  });
+};
+
+window.login = async function(email, password) {
+  const loginResult = await window.apiCall(`${API_URL}/auth/login`, "POST", {
+    body: { email, password },
+    successMsg: d => d.message || "Login exitoso",
+    errorMsg: "Error en el login"
+  });
+  return { ...loginResult, authenticated: !!loginResult.success };
+};
+
+window.cargarFeed = async function() {
+  const sectionFeed = document.getElementById("section-feed");
+  if (!sectionFeed || sectionFeed.style.display === "none") {
+    window.showOutput("Solo disponible en la sección feed.", "info");
+    return;
+  }
+  const lista = document.getElementById("listaFeed");
+  if (!lista) {
+    window.showOutput("No se encontró el área para mostrar el feed (id 'listaFeed').", "error");
+    return;
+  }
+  lista.innerHTML = "Cargando...";
   try {
-    const res = await fetch(`${API_URL}/auth/register`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": csrfToken
-      },
-      body: JSON.stringify({ email, password }),
-      credentials: "include",
+    const res = await window.apiCall("http://localhost:3000/api/paginas", "GET", {
+      successMsg: "Feed cargado correctamente.",
+      errorMsg: "Error al cargar el feed"
     });
-    const data = await res.json();
-    
-    if (res.ok && data.message) {
-      showOutput(data.message, "success");
-      return { success: true, data };
-    } else if (data.message === "Email ya registrado") {
-      showOutput(data.message, "error");
-      return { success: false, data };
-    } else if (data.error) {
-      showOutput(data.error, "error");
-      return { success: false, data };
+    lista.innerHTML = "";
+    if (res.success && Array.isArray(res.data) && res.data.length > 0) {
+      const table = document.createElement("table");
+      table.style.width = "100%";
+      table.style.borderCollapse = "collapse";
+      table.innerHTML = `<thead>
+        <tr>
+          <th>ID</th>
+          <th>User ID</th>
+          <th>Título</th>
+          <th>Contenido</th>
+          <th>Creado en</th>
+          <th>Elementos</th>
+        </tr>
+      </thead><tbody></tbody>`;
+      const tbody = table.querySelector("tbody");
+      res.data.forEach(row => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${row.id}</td>
+          <td>${row.user_id}</td>
+          <td>${row.titulo}</td>
+          <td>${row.contenido}</td>
+          <td>${row.creado_en}</td>
+          <td>${row.elementos ? JSON.stringify(row.elementos) : ""}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+      table.querySelectorAll("th, td").forEach(cell => {
+        cell.style.border = "1px solid #ccc";
+        cell.style.padding = "4px";
+      });
+      lista.appendChild(table);
+      window.showOutput(`Feed cargado: ${res.data.length}`, "success");
     } else {
-      showOutput("Error en el registro", "error");
-      return { success: false, data };
+      window.showOutput("No hay textos completos disponibles en el feed.", "info");
+      lista.innerHTML = "No hay textos completos disponibles en el feed.";
     }
   } catch (error) {
-    showOutput("Error de conexión en el registro", "error");
+    window.showOutput("Error de conexión", "error");
     return { success: false, error };
   }
-}
+};
 
-// Login user
-export async function login(email, password) {
-  const csrfToken = await getCsrfToken();
-  try {
-    const res = await fetch(`${API_URL}/auth/login`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": csrfToken
-      },
-      body: JSON.stringify({ email, password }),
-      credentials: "include",
-    });
-    const data = await res.json();
-    
-    if (res.ok && data.message) {
-      showOutput(data.message, "success");
-      return { success: true, data, authenticated: true };
-    } else if (data.message === "Credenciales inválidas") {
-      showOutput(data.message, "error");
-      return { success: false, data, authenticated: false };
-    } else if (data.error) {
-      showOutput(data.error, "error");
-      return { success: false, data, authenticated: false };
-    } else {
-      showOutput("Error en el login", "error");
-      return { success: false, data, authenticated: false };
-    }
-  } catch (error) {
-    showOutput("Error de conexión en el login", "error");
-    return { success: false, error, authenticated: false };
-  }
-}
-
-// Create page
-export async function createPage(titulo, contenido, elementos = []) {
-  const csrfToken = await getCsrfToken();
-  try {
-    const res = await fetch(`${API_URL}/paginas`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": csrfToken
-      },
-      body: JSON.stringify({ titulo, contenido, elementos }),
-      credentials: "include",
-    });
-    const data = await res.json();
-    
-    const message = data.message ? data.message : "Página guardada";
-    showOutput(message, res.ok ? "success" : "error");
-    
-    return { success: res.ok, data };
-  } catch (error) {
-    showOutput("Error de conexión al crear página", "error");
-    return { success: false, error };
-  }
-}
-
-// Get user's own pages  
-export async function getMyPages() {
-  const csrfToken = await getCsrfToken();
-  try {
-    const res = await fetch(`${API_URL}/paginas/mias`, {
-      method: "GET",
-      headers: {
-        "X-CSRF-Token": csrfToken
-      },
-      credentials: "include",
-    });
-    
-    if (res.status === 401) {
-      showOutput("Debes iniciar sesión para ver tus páginas.", "error");
-      return { success: false, unauthorized: true, data: [] };
-    }
-    
-    const data = await res.json();
-    
-    if (Array.isArray(data) && data.length > 0) {
-      return { success: true, data };
-    } else {
-      showOutput("No tienes páginas creadas.", "info");
-      return { success: true, data: [] };
-    }
-  } catch (error) {
-    showOutput("Error al cargar tus páginas.", "error");
-    return { success: false, error, data: [] };
-  }
-}
-
-// Get all public pages
-export async function getPublicPages() {
-  const csrfToken = await getCsrfToken();
-  try {
-    const res = await fetch(`${API_URL}/paginas`, {
-      method: "GET",
-      headers: {
-        "X-CSRF-Token": csrfToken
-      },
-    });
-    const data = await res.json();
-    
-    if (Array.isArray(data) && data.length > 0) {
-      showOutput("Páginas públicas cargadas correctamente.", "success");
-      return { success: true, data };
-    } else {
-      showOutput("No hay páginas públicas.", "info");
-      return { success: true, data: [] };
-    }
-  } catch (error) {
-    showOutput("Error al cargar páginas públicas.", "error");
-    return { success: false, error, data: [] };
-  }
-}
-
-// Get page by ID
-export async function getPageById(id) {
-  const csrfToken = await getCsrfToken();
-  try {
-    const res = await fetch(`${API_URL}/paginas/${id}`, {
-      method: "GET",
-      headers: {
-        "X-CSRF-Token": csrfToken
-      },
-    });
-    const data = await res.json();
-    
-    if (data.error) {
-      showOutput(data.error, "error");
-      return { success: false, data };
-    } else {
-      showOutput("Página pública cargada correctamente.", "success");
-      return { success: true, data };
-    }
-  } catch (error) {
-    showOutput("Error al cargar la página.", "error");
-    return { success: false, error };
-  }
-}
-
-// Search pages by author username
-export async function searchPagesByAuthor(username) {
-  const csrfToken = await getCsrfToken();
-  try {
-    const res = await fetch(`${API_URL}/paginas/autor/${username}`, {
-      method: "GET",
-      headers: {
-        "X-CSRF-Token": csrfToken
-      },
-    });
-    const data = await res.json();
-    
-    if (Array.isArray(data) && data.length > 0) {
-      showOutput(`Encontradas ${data.length} páginas del autor ${username}.`, "success");
-      return { success: true, data };
-    } else {
-      showOutput(`No se encontraron páginas del autor ${username}.`, "info");
-      return { success: true, data: [] };
-    }
-  } catch (error) {
-    showOutput("Error al buscar páginas por autor.", "error");
-    return { success: false, error, data: [] };
-  }
-}
+// --- Inicialización automática ---
+window.addEventListener('DOMContentLoaded', function() {
+  window.initUserPopup();
+  window.initFeedNav();
+  window.showSection('/feed');
+  window.cargarFeed();
+});
