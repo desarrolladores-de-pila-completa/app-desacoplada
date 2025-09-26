@@ -1,4 +1,5 @@
 import { Router } from "express";
+import rateLimit from "express-rate-limit";
 import { pool } from "./db";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -12,6 +13,14 @@ async function saveToken(user: any, token: string) {
 }
 
 const router = Router();
+
+const limiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minuto
+  max: 20, // máximo 20 peticiones por IP por minuto
+  message: { error: "Demasiadas peticiones, intenta más tarde." }
+});
+
+router.use(limiter);
 const SECRET = process.env.JWT_SECRET || "clave-secreta";
 
 import { randomUUID } from "crypto";
