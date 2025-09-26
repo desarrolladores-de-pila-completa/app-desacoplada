@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "tsc && node ./dist/index.js",
-    "start:backend": "tsc --project backend/tsconfig.json && node backend/dist/index.js",
+    "start": "tsc && node ./dist/src/index.js",
+    "start:backend": "tsc --project backend/tsconfig.json && node backend/dist/src/index.js",
     "start:frontend": "cd frontend && npm run start || true",
     "test:backend": "jest --config jest.config.js",
     "test:frontend": "cd frontend && npm test || true"

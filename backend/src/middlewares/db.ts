@@ -5,8 +5,15 @@ import mysql from "mysql2/promise";
 import dotenv from "dotenv";
 import path from "path";
 
-const rootPath = path.resolve(__dirname, '../../../');
-dotenv.config({ path: path.join(rootPath, 'backend/.env') });
+// Carga .env desde la ruta absoluta de backend/.env, funciona en src y dist
+// Carga dotenv usando ruta relativa a la raíz del proyecto
+import fs from "fs";
+const envPath = path.resolve(process.cwd(), "backend/.env");
+if (fs.existsSync(envPath)) {
+  dotenv.config({ path: envPath });
+} else {
+  dotenv.config(); // fallback: busca .env en el cwd
+}
 
 
 let pool: mysql.Pool;

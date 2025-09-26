@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const supertest_1 = __importDefault(require("supertest"));
 const index_1 = __importDefault(require("../src/index"));
 const db_1 = require("../src/middlewares/db");
+const paginaController_1 = require("../src/controllers/paginaController");
 describe('API de páginas', () => {
     it('debería registrar un usuario nuevo', async () => {
         const email = `nuevo${Date.now()}@mail.com`;
@@ -55,6 +56,14 @@ describe('API de páginas', () => {
             .send({});
         expect(res.status).toBe(400);
         expect(res.body.message).toBe('Faltan datos');
+    });
+});
+describe("paginaController", () => {
+    it("crearPagina responde 400 si faltan datos", async () => {
+        const req = { body: {} };
+        const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+        await (0, paginaController_1.crearPagina)(req, res);
+        expect(res.status).toHaveBeenCalledWith(400);
     });
 });
 afterAll(async () => {

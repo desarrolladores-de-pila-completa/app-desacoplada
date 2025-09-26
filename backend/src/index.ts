@@ -1,6 +1,5 @@
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import authRoutes from "./routes/authRoutes";
 import paginaRoutes from "./routes/paginaRoutes";
 import { errorHandler } from "./middlewares/errorHandler";
@@ -11,7 +10,6 @@ import csurf from "csurf";
 
 const rootPath = path.resolve(__dirname, '../../../');
 
-dotenv.config();
 const app = express();
 app.use(
   cors({
