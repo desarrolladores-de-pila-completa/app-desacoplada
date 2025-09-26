@@ -3,6 +3,7 @@ import rateLimit from "express-rate-limit";
 import { pool } from "./db";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import crypto, { randomUUID } from "crypto";
 
 // Función para guardar el token en la base de datos
 async function saveToken(user: any, token: string) {
@@ -22,8 +23,15 @@ const limiter = rateLimit({
 
 router.use(limiter);
 const SECRET = process.env.JWT_SECRET || "clave-secreta";
+const ENC_SECRET = process.env.ENC_SECRET || "0123456789abcdef0123456789abcdef"; // 32 chars para AES-256
 
-import { randomUUID } from "crypto";
+function encrypt(text: string): string {
+  const iv = crypto.randomBytes(16);
+  const cipher = crypto.createCipheriv("aes-256-cbc", Buffer.from(ENC_SECRET, "utf8"), iv);
+  let encrypted = cipher.update(text, "utf8", "hex");
+  encrypted += cipher.final("hex");
+  return iv.toString("hex") + ":" + encrypted;
+}
 
 router.post("/register", async (req, res) => {
   const { email, password } = req.body;
@@ -59,7 +67,8 @@ router.post("/login", async (req, res) => {
   if (!valid) return res.status(400).json({ error: "Credenciales inválidas" });
 
   const token = jwt.sign({ userId: user.id }, SECRET, { expiresIn: "1h" });
-  res.cookie("token", token, {
+  const encryptedToken = encrypt(token);
+  res.cookie("token", encryptedToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production", // Solo true en producción
     sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
