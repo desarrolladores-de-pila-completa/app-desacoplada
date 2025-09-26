@@ -1,5 +1,21 @@
+
 // Centralized SDK for API communication
 const API_URL = "http://localhost:3000/api";
+
+
+import { heroicons } from './heroicons.js';
+// Importar un icono de Heroicons por nombre y tipo (outline/solid)
+export function importHeroicon(name, type = "outline") {
+  const icons = heroicons[type];
+  if (!icons || !icons[name]) {
+    console.error(`Icono '${name}' no encontrado en Heroicons (${type})`);
+    return null;
+  }
+  const div = document.createElement("div");
+  div.innerHTML = icons[name];
+  return div.firstElementChild;
+}
+
 
 // Helper function to show messages in the output box
 function showOutput(message, type = "info") {
