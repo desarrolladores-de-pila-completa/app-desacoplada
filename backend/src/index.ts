@@ -1,5 +1,3 @@
-
-
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -9,6 +7,7 @@ import { errorHandler } from "./middlewares/errorHandler";
 import cookieParser from "cookie-parser";
 import path from "path";
 import { pool } from "./middlewares/db";
+import csurf from "csurf";
 
 const rootPath = path.resolve(__dirname, '../../../');
 
@@ -23,6 +22,16 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.static(path.join(rootPath, 'frontend')));
+
+const csrfProtection = csurf({ cookie: true });
+
+// Ruta para obtener el token CSRF
+app.get("/api/csrf-token", csrfProtection, (req, res) => {
+  res.json({ csrfToken: req.csrfToken() });
+});
+
+// Aplica CSRF a rutas que modifican estado
+app.use(["/api/paginas", "/api/auth"], csrfProtection);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/paginas", paginaRoutes);
