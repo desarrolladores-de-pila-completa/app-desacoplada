@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
+const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
 const db_1 = require("./db");
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
@@ -12,6 +13,12 @@ async function saveToken(user, token) {
     await db_1.pool.execute("INSERT INTO tokens (user_id, token, created_at) VALUES (?, ?, NOW())", [user.id, token]);
 }
 const router = (0, express_1.Router)();
+const limiter = (0, express_rate_limit_1.default)({
+    windowMs: 1 * 60 * 1000, // 1 minuto
+    max: 20, // máximo 20 peticiones por IP por minuto
+    message: { error: "Demasiadas peticiones, intenta más tarde." }
+});
+router.use(limiter);
 const SECRET = process.env.JWT_SECRET || "clave-secreta";
 const crypto_1 = require("crypto");
 router.post("/register", async (req, res) => {
