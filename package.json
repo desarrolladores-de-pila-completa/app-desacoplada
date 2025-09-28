@@ -10,7 +10,8 @@
     "start:frontend": "cd frontend && npm run dev",
     "dev:frontend": "cd frontend && npm run dev",
     "test:backend": "jest --config jest.config.js",
-    "test:frontend": "cd frontend && npm test || true"
+    "test:frontend": "cd frontend/app-desacoplada-react && npm test",
+    "test:watch": "npm run test:backend -- --watch"
   },
   "keywords": [],
   "author": "",
@@ -24,6 +25,8 @@
     "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/supertest": "^6.0.3",
+    "concurrently": "^9.2.1",
+    "jest": "^30.2.0",
     "concurrently": "^7.6.0",
     "jest": "^30.1.3",
     "supertest": "^7.1.4",
