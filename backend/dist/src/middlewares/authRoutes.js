@@ -65,16 +65,15 @@ function encrypt(text) {
 router.post("/register", async (req, res) => {
     const { email, password } = req.body;
     try {
-        // Verificar si el email ya existe
         const [rows] = await db_1.pool.execute("SELECT id FROM users WHERE email = ?", [email]);
         if (rows.length > 0) {
             return res.status(400).json({ error: "El email ya está registrado" });
         }
         const hashed = await bcryptjs_1.default.hash(password, 10);
-        // Generar username único usando solo uuid4
+        const id = (0, crypto_1.randomUUID)(); // Genera el UUID único
         const username = (0, crypto_1.randomUUID)().replace(/-/g, "");
-        await db_1.pool.execute("INSERT INTO users (email, password, username) VALUES (?, ?, ?)", [email, hashed, username]);
-        res.json({ message: "Usuario creado", username });
+        await db_1.pool.execute("INSERT INTO users (id, email, password, username) VALUES (?, ?, ?, ?)", [id, email, hashed, username]);
+        res.json({ message: "Usuario creado", id, username });
     }
     catch (err) {
         console.error(err);

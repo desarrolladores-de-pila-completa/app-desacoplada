@@ -15,7 +15,10 @@ const csurf_1 = __importDefault(require("csurf"));
 const rootPath = path_1.default.resolve(__dirname, '../../../');
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)({
-    origin: ["http://127.0.0.1:5500", "http://localhost:5500"],
+    origin: [
+        "http://127.0.0.1:5173",
+        "http://localhost:5173"
+    ],
     credentials: true,
 }));
 app.use(express_1.default.json());
