@@ -17,7 +17,6 @@ module.exports = {
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
-  setupFilesAfterEnv: ['<rootDir>/backend/tests/setup.ts'],
   moduleFileExtensions: ['ts', 'js', 'json', 'node'],
   verbose: true
 };
