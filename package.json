@@ -5,11 +5,10 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc --project backend/tsconfig.json",
-    "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
+    "start": "npm run build && concurrently \"npm run start:backend\" \"npm run dev:frontend\"",
     "start:backend": "npm run build && node backend/dist/src/index.js",
-    "start:frontend": "cd frontend/app-desacoplada-react && npm run dev",
-    "dev:frontend": "cd frontend/app-desacoplada-react && npm run dev",
-    "test": "npm run test:backend && npm run test:frontend",
+    "start:frontend": "cd frontend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
     "test:backend": "jest --config jest.config.js",
     "test:frontend": "cd frontend/app-desacoplada-react && npm test",
     "test:watch": "npm run test:backend -- --watch"
@@ -28,6 +27,8 @@
     "@types/supertest": "^6.0.3",
     "concurrently": "^9.2.1",
     "jest": "^30.2.0",
+    "concurrently": "^7.6.0",
+    "jest": "^30.1.3",
     "supertest": "^7.1.4",
     "ts-jest": "^29.4.4",
     "typescript": "^5.9.2"
@@ -42,7 +43,8 @@
     "express": "^5.1.0",
     "express-rate-limit": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
-    "mysql2": "^3.14.5"
+    "mysql2": "^3.14.5",
+    "react-router-dom": "^7.9.3"
   },
   "workspaces": [
     "backend",

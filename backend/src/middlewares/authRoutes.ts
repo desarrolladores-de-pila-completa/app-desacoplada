@@ -36,19 +36,18 @@ function encrypt(text: string): string {
 router.post("/register", async (req, res) => {
   const { email, password } = req.body;
   try {
-    // Verificar si el email ya existe
     const [rows] = await pool.execute("SELECT id FROM users WHERE email = ?", [email]);
     if ((rows as any[]).length > 0) {
       return res.status(400).json({ error: "El email ya está registrado" });
     }
     const hashed = await bcrypt.hash(password, 10);
-  // Generar username único usando solo uuid4
-  const username = randomUUID().replace(/-/g, "");
+    const id = randomUUID(); // Genera el UUID único
+    const username = randomUUID().replace(/-/g, "");
     await pool.execute(
-      "INSERT INTO users (email, password, username) VALUES (?, ?, ?)",
-      [email, hashed, username]
+      "INSERT INTO users (id, email, password, username) VALUES (?, ?, ?, ?)",
+      [id, email, hashed, username]
     );
-    res.json({ message: "Usuario creado", username });
+    res.json({ message: "Usuario creado", id, username });
   } catch (err: any) {
     console.error(err);
     res.status(500).json({ error: "Error en el servidor" });
