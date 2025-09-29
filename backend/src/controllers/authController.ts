@@ -4,53 +4,72 @@ import jwt from "jsonwebtoken";
 import { pool } from "../middlewares/db";
 import { RowDataPacket } from "mysql2";
 
+function sendError(res: Response, code: number, msg: string) {
+  return res.status(code).json({ error: msg });
+}
+
 export async function register(req: Request, res: Response) {
   const { email, password } = req.body;
-  if (!email || !password) {
-    return res.status(400).json({ error: "Faltan datos requeridos" });
-  }
+  if (!email || !password) return sendError(res, 400, "Faltan datos requeridos");
   try {
     const [rows] = await pool.query("SELECT id FROM users WHERE email = ?", [email]);
-    if (Array.isArray(rows) && rows.length > 0) {
-      return res.status(409).json({ error: "Email ya registrado" });
-    }
+    if (Array.isArray(rows) && rows.length > 0) return sendError(res, 409, "Email ya registrado");
     const hashedPassword = await bcrypt.hash(password, 10);
-    const result: any = await pool.query(
-      "INSERT INTO users (email, password) VALUES (?, ?)",
-      [email, hashedPassword]
+    const uuid = require('crypto').randomUUID();
+    const username = uuid.replace(/-/g, "");
+    await pool.query(
+      "INSERT INTO users (id, email, password, username) VALUES (?, ?, ?, ?)",
+      [uuid, email, hashedPassword, username]
     );
-    const userId = result.insertId;
-    res.json({ message: "Usuario creado", id: userId });
+
+    // Crear página personal para el usuario con el mismo UUID
+    const titulo = "Página personal";
+    const contenido = `Bienvenido ${email} a tu página personal.`;
+    await pool.query(
+      "INSERT INTO paginas (user_id, titulo, contenido) VALUES (?, ?, ?)",
+      [uuid, titulo, contenido]
+    );
+
+    // Obtener la página recién creada
+    const [pages]: any = await pool.query(
+      "SELECT id, user_id, titulo, contenido FROM paginas WHERE user_id = ? ORDER BY id DESC LIMIT 1",
+      [uuid]
+    );
+    const paginaPersonal = Array.isArray(pages) && pages.length > 0 ? pages[0] : null;
+
+    // Generar token JWT y establecer cookie
+    const token = jwt.sign(
+      { userId: uuid },
+      process.env.JWT_SECRET!,
+      { expiresIn: "1h" }
+    );
+    res.cookie("token", token, { httpOnly: true, secure: false, sameSite: "lax" });
+    res.json({ message: "Usuario creado y página personal en línea", id: uuid, paginaPersonal });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Error al registrar usuario" });
+    sendError(res, 500, "Error al registrar usuario");
   }
 }
 
 export async function login(req: Request, res: Response) {
   const { email, password } = req.body;
-  if (!email || !password) {
-    return res.status(400).json({ error: "Faltan datos requeridos" });
-  }
+  if (!email || !password) return sendError(res, 400, "Faltan datos requeridos");
   try {
     const [rows] = await pool.query<RowDataPacket[]>("SELECT * FROM users WHERE email = ?", [email]);
-    if (!rows || (Array.isArray(rows) && rows.length === 0)) {
-      return res.status(401).json({ error: "Credenciales inválidas" });
-    }
-    const user = Array.isArray(rows) ? rows[0] as { password: string; id: number; email: string } : rows as { password: string; id: number; email: string };
+    if (!rows || rows.length === 0) return sendError(res, 401, "Credenciales inválidas");
+    const user = rows[0] as { password: string; id: number; email: string };
     const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return res.status(401).json({ error: "Credenciales inválidas" });
-    }
+    if (!isPasswordValid) return sendError(res, 401, "Credenciales inválidas");
     const token = jwt.sign(
       { userId: user.id },
       process.env.JWT_SECRET!,
       { expiresIn: "1h" }
     );
-    res.cookie("token", token, { httpOnly: true, secure: false, sameSite: "lax" });
-    res.json({ message: "Inicio de sesión exitoso", id: user.id, email: user.email });
+  res.cookie("token", token, { httpOnly: true, secure: false, sameSite: "lax" });
+  res.json({ message: "Login exitoso", id: user.id });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Error al iniciar sesión" });
+    sendError(res, 500, "Error al iniciar sesión");
   }
 }
+// ...existing code...

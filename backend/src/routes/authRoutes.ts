@@ -1,47 +1,45 @@
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import { register, login } from "../controllers/authController";
+import { authMiddleware } from "../middlewares/auth";
 import { pool } from "../middlewares/db";
 import { randomUUID } from "crypto";
 import bcrypt from "bcryptjs";
 
 const router = Router();
-
 const limiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minuto
-  max: 20, // máximo 20 peticiones por IP por minuto
+  windowMs: 60 * 1000,
+  max: 20,
   message: { error: "Demasiadas peticiones, intenta más tarde." }
 });
 
 router.use(limiter);
-router.post("/register", async (req, res) => {
-  const { email, password } = req.body;
+router.post("/register", register);
+router.post("/login", login);
+
+router.get("/me", authMiddleware, async (req, res) => {
+  const userId = (req as any).userId;
+  if (!userId) return res.status(401).json({ error: "No autenticado" });
   try {
-    const [rows] = await pool.execute("SELECT id FROM users WHERE email = ?", [email]);
-    if ((rows as any[]).length > 0) {
-      return res.status(400).json({ error: "El email ya está registrado" });
-    }
-    const hashed = await bcrypt.hash(password, 10);
-    const id = randomUUID(); // Genera el UUID único
-    const username = randomUUID().replace(/-/g, "");
-    await pool.execute(
-      "INSERT INTO users (id, email, password, username) VALUES (?, ?, ?, ?)",
-      [id, email, hashed, username]
+    const [rows] = await pool.execute(
+      "SELECT id, email, username FROM users WHERE id = ?",
+      [userId]
     );
-    res.json({ message: "Usuario creado", id, username });
-  } catch (err: any) {
-    console.error(err);
+    if ((rows as any[]).length === 0) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+    res.json((rows as any[])[0]);
+  } catch (err) {
     res.status(500).json({ error: "Error en el servidor" });
   }
 });
-router.post("/login", login);
 
-router.get("/user/:value", async (req, res) => {
-  const { value } = req.params;
+router.get("/user/:id", async (req, res) => {
+  const { id } = req.params;
   try {
     const [rows] = await pool.execute(
-      "SELECT id, email, username FROM users WHERE id = ? OR email = ?",
-      [value, value]
+      "SELECT id, email, username FROM users WHERE id = ?",
+      [id]
     );
     if ((rows as any[]).length === 0) {
       return res.status(404).json({ error: "Usuario no encontrado" });
