@@ -31,8 +31,20 @@ app.get("/api/csrf-token", csrfProtection, (req, res) => {
   res.json({ csrfToken: req.csrfToken() });
 });
 
-// Aplica CSRF a rutas que modifican estado
-app.use(["/api/paginas", "/api/auth"], csrfProtection);
+
+// Aplica CSRF solo a métodos que modifican estado
+app.use("/api/paginas", (req, res, next) => {
+  if (["POST", "PUT", "DELETE", "PATCH"].includes(req.method)) {
+    return csrfProtection(req, res, next);
+  }
+  next();
+});
+app.use("/api/auth", (req, res, next) => {
+  if (["POST", "PUT", "DELETE", "PATCH"].includes(req.method)) {
+    return csrfProtection(req, res, next);
+  }
+  next();
+});
 
 app.use("/api/auth", authRoutes);
 app.use("/api/paginas", paginaRoutes);
@@ -43,8 +55,6 @@ app.use(errorHandler);
 app.get(/^\/(?!api).*/, (req, res) => {
   res.sendFile(path.join(rootPath, 'frontend/index.html'));
 });
-
-
 
 if (require.main === module) {
   (async () => {
