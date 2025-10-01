@@ -1,16 +1,67 @@
+// Endpoint para obtener todas las páginas públicas
 import { Router } from "express";
-import rateLimit from "express-rate-limit";
-import { paginasPublicas, guardarComentario, obtenerPagina } from "../controllers/paginaController";
+// import rateLimit from "express-rate-limit";
+
+import { paginasPublicas, guardarComentario, obtenerPagina, actualizarVisibilidad, consultarVisibilidad, actualizarPropietario, actualizarDescripcion, actualizarUsuarioPagina, actualizarComentariosPagina, consultarPropietario, consultarDescripcion, consultarUsuarioPagina, consultarComentariosPagina } from "../controllers/paginaController";
 import { authMiddleware } from "../middlewares/auth";
 
+
+
+
 const router = Router();
-const limiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 30,
-  message: { error: "Demasiadas peticiones, intenta más tarde." }
+import { consultarVisibilidadCampos, actualizarVisibilidadCampos } from "../controllers/paginaController";
+// Endpoint para obtener todas las páginas públicas (visible=1 y oculto=0)
+router.get('/', async (req, res) => {
+  try {
+    const [rows]: any = await require("../middlewares/db").pool.query(
+      "SELECT * FROM paginas WHERE oculto = 0 ORDER BY creado_en DESC"
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: "Error al obtener páginas públicas" });
+  }
 });
 
-// Endpoint para obtener comentarios de una página
+// Endpoint para obtener la página por user_id
+router.get('/usuario/:userId', async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const [rows]: any = await require("../middlewares/db").pool.query(
+      "SELECT * FROM paginas WHERE user_id = ? ORDER BY id DESC LIMIT 1",
+      [userId]
+    );
+    if (!rows || rows.length === 0) {
+      return res.status(404).json({ error: "Página no encontrada" });
+    }
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: "Error al obtener página por usuario" });
+  }
+});
+
+// Endpoint para obtener todas las páginas públicas
+
+// Endpoint para obtener todas las páginas públicas
+
+// Endpoints GET para consultar los nuevos campos
+// Visibilidad por campo
+router.get('/:id/visibilidad-campos', consultarVisibilidadCampos);
+router.post('/:id/visibilidad-campos', authMiddleware, actualizarVisibilidadCampos);
+router.get('/:id/propietario', consultarPropietario);
+router.get('/:id/descripcion', consultarDescripcion);
+router.get('/:id/usuario', consultarUsuarioPagina);
+router.get('/:id/comentarios-resumen', consultarComentariosPagina);
+
+router.post("/:id/propietario", authMiddleware, actualizarPropietario);
+router.post("/:id/descripcion", authMiddleware, actualizarDescripcion);
+router.post("/:id/usuario", authMiddleware, actualizarUsuarioPagina);
+// Eliminado el limitador de peticiones
+router.post("/:id/comentarios-resumen", authMiddleware, actualizarComentariosPagina);
+
+router.get("/:id/visibilidad", consultarVisibilidad);
+router.post("/:id/visibilidad", authMiddleware, actualizarVisibilidad);
+
+
 router.get("/:id/comentarios", async (req, res) => {
   const { id } = req.params;
   try {
@@ -20,34 +71,8 @@ router.get("/:id/comentarios", async (req, res) => {
     );
     res.json(rows);
   } catch (err) {
-    console.error("[GET /api/paginas/:id/comentarios] Error:", err);
     res.status(500).json({ error: "Error al obtener comentarios" });
   }
 });
-
-router.get("/", limiter, paginasPublicas);
-router.get("/:id", obtenerPagina);
-// Nuevo endpoint para obtener página por user_id (UUID)
-router.get("/usuario/:userId", async (req, res) => {
-  const { userId } = req.params;
-  console.log("[GET /api/paginas/usuario/:userId] userId:", userId);
-  try {
-    const [rows]: any = await require("../middlewares/db").pool.query(
-      "SELECT * FROM paginas WHERE user_id = ? ORDER BY id DESC LIMIT 1",
-      [userId]
-    );
-    console.log("[GET /api/paginas/usuario/:userId] Resultado:", rows);
-    if (!rows || rows.length === 0) {
-      console.log("[GET /api/paginas/usuario/:userId] Página no encontrada para userId:", userId);
-      return res.status(404).json({ error: "Página no encontrada" });
-    }
-    res.json(rows[0]);
-  } catch (err) {
-    console.error("[GET /api/paginas/usuario/:userId] Error:", err);
-    res.status(500).json({ error: "Error al obtener página por usuario" });
-  }
-});
-// Eliminado: ruta de edición de página
-router.post("/:id/comentarios", authMiddleware, guardarComentario);
 
 export default router;
