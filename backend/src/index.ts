@@ -14,8 +14,10 @@ const app = express();
 app.use(
   cors({
     origin: [
-      "http://127.0.0.1:5173",
-      "http://localhost:5173"
+      "http://127.0.0.1:5500", 
+      "http://localhost:5500",
+      "http://localhost:5173",  // Vite dev server
+      "http://127.0.0.1:5173"   // Vite dev server (127.0.0.1)
     ],
     credentials: true,
   })
@@ -31,20 +33,8 @@ app.get("/api/csrf-token", csrfProtection, (req, res) => {
   res.json({ csrfToken: req.csrfToken() });
 });
 
-
-// Aplica CSRF solo a métodos que modifican estado
-app.use("/api/paginas", (req, res, next) => {
-  if (["POST", "PUT", "DELETE", "PATCH"].includes(req.method)) {
-    return csrfProtection(req, res, next);
-  }
-  next();
-});
-app.use("/api/auth", (req, res, next) => {
-  if (["POST", "PUT", "DELETE", "PATCH"].includes(req.method)) {
-    return csrfProtection(req, res, next);
-  }
-  next();
-});
+// Aplica CSRF a rutas que modifican estado
+app.use(["/api/paginas", "/api/auth"], csrfProtection);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/paginas", paginaRoutes);
@@ -55,6 +45,8 @@ app.use(errorHandler);
 app.get(/^\/(?!api).*/, (req, res) => {
   res.sendFile(path.join(rootPath, 'frontend/index.html'));
 });
+
+
 
 if (require.main === module) {
   (async () => {
