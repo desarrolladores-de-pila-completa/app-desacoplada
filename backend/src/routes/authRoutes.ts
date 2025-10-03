@@ -1,6 +1,6 @@
 
 import { Router } from "express";
-import { register, login, cambiarUsername, cambiarEmail, logout, eliminarUsuario } from "../controllers/authController";
+import { register, login, cambiarEmail, logout, eliminarUsuario } from "../controllers/authController";
 import { authMiddleware } from "../middlewares/auth";
 import { pool } from "../middlewares/db";
 import { randomUUID } from "crypto";
@@ -12,7 +12,7 @@ const router = Router();
 
 router.post("/register", register);
 router.post("/login", login);
-router.post("/username", authMiddleware, cambiarUsername);
+// router.post("/username", authMiddleware, cambiarUsername); // Función no implementada
 router.post("/email", authMiddleware, cambiarEmail);
 router.post("/logout", logout);
 

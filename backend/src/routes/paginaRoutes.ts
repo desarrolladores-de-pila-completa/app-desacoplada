@@ -6,11 +6,16 @@ import { paginasPublicas, guardarComentario, obtenerPagina, actualizarVisibilida
 import { authMiddleware } from "../middlewares/auth";
 import multer from "multer";
 
+import rateLimit from "express-rate-limit";
+const limiter = rateLimit({ windowMs: 60 * 1000, max: 100 });
+
+const router = Router();
+
 
 const upload = multer();
 
 // Endpoint para obtener comentarios de una página
-router.get("/:id/comentarios", async (req, res) => {
+router.get("/:id/comentarios", async (req: any, res: any) => {
   const { id } = req.params;
   try {
     const [rows]: any = await require("../middlewares/db").pool.query(
@@ -28,7 +33,7 @@ router.get("/:id", obtenerPagina);
 router.post("/:id/comentarios", authMiddleware, guardarComentario);
 
 // Endpoint para subir imágenes a una página (BLOB)
-router.post("/:id/imagenes", upload.single("imagen"), async (req: any, res) => {
+router.post("/:id/imagenes", upload.single("imagen"), async (req: any, res: any) => {
   const paginaId = req.params.id;
   const { index } = req.body;
   const file = req.file;
@@ -56,7 +61,7 @@ router.post("/:id/imagenes", upload.single("imagen"), async (req: any, res) => {
 });
 
 // Endpoint para obtener todas las imágenes de una página
-router.get("/:id/imagenes", async (req, res) => {
+router.get("/:id/imagenes", async (req: any, res: any) => {
   const paginaId = req.params.id;
   try {
     const [rows]: any = await require("../middlewares/db").pool.query(
