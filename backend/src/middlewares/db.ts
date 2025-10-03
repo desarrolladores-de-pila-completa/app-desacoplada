@@ -78,38 +78,25 @@ async function initDatabase() {
       await pool.query(`CREATE TABLE IF NOT EXISTS comentarios (
         id INT AUTO_INCREMENT PRIMARY KEY,
         pagina_id INT NOT NULL,
-        user_id VARCHAR(36) NOT NULL,
+        user_id VARCHAR(36) NULL,
         comentario TEXT NOT NULL,
         creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (pagina_id) REFERENCES paginas(id) ON DELETE CASCADE
       )`);
       console.log("Tabla 'comentarios' verificada/creada correctamente.");
-    } catch (tableErr) {
-      console.error("Error al crear/verificar tablas:", tableErr);
-      throw tableErr;
-    }
 
-    // Verificar y agregar columnas de visibilidad por campo si faltan (ahora pool está inicializado)
-    const camposVisibilidad = [
-      { nombre: 'visible_titulo', def: "ALTER TABLE paginas ADD COLUMN visible_titulo TINYINT(1) DEFAULT 1" },
-      { nombre: 'visible_contenido', def: "ALTER TABLE paginas ADD COLUMN visible_contenido TINYINT(1) DEFAULT 1" },
-      { nombre: 'visible_descripcion', def: "ALTER TABLE paginas ADD COLUMN visible_descripcion TINYINT(1) DEFAULT 1" },
-      { nombre: 'visible_usuario', def: "ALTER TABLE paginas ADD COLUMN visible_usuario TINYINT(1) DEFAULT 1" },
-      { nombre: 'visible_comentarios', def: "ALTER TABLE paginas ADD COLUMN visible_comentarios TINYINT(1) DEFAULT 1" }
-    ];
-    for (const campo of camposVisibilidad) {
-      const [col]: any = await pool.query(`SHOW COLUMNS FROM paginas LIKE '${campo.nombre}'`);
-      if (!col || col.length === 0) {
-        await pool.query(campo.def);
-        console.log(`Columna '${campo.nombre}' agregada a la tabla 'paginas'.`);
-      }
-    }
-
-    // Verificar y agregar columna 'oculto' si falta (ahora pool está inicializado)
-    const [columnsOculto]: any = await pool.query("SHOW COLUMNS FROM paginas LIKE 'oculto'");
-    if (!columnsOculto || columnsOculto.length === 0) {
-      await pool.query("ALTER TABLE paginas ADD COLUMN oculto TINYINT(1) DEFAULT 0");
-      console.log("Columna 'oculto' agregada a la tabla 'paginas'.");
+      // Crear tabla 'imagenes' para la galería de cada página
+      await pool.query(`CREATE TABLE IF NOT EXISTS imagenes (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        pagina_id INT NOT NULL,
+        idx INT NOT NULL,
+        imagen LONGBLOB,
+        creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (pagina_id) REFERENCES paginas(id) ON DELETE CASCADE
+      )`);
+      console.log("Tabla 'imagenes' verificada/creada correctamente.");
+    } catch (err) {
+      console.error("Error al crear/verificar las tablas:", err);
     }
   } catch (err) {
     console.error("Error al inicializar la base de datos y tablas:", err);

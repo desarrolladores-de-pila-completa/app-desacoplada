@@ -1,5 +1,9 @@
-  import React from "react";
-  import { useParams } from "react-router-dom";
+
+
+
+import React from "react";
+import ImageGrid from "./ImageGrid";
+import { useParams } from "react-router-dom";
 
 function UserPage() {
   // Handler para eliminar usuario y página
@@ -127,15 +131,11 @@ function UserPage() {
   React.useEffect(() => {
     async function fetchPagina() {
       try {
-        const res = await fetch(`/api/paginas/usuario/${id}`);
+        const res = await fetch(`/api/paginas?user_id=${id}`);
         if (res.ok) {
           const data = await res.json();
-          setPagina(data);
-           // Sincronizar estados editables con los datos de la página
-           setPropietario(!!data.propietario);
-           setDescripcion(data.descripcion || "visible");
-           setUsuario(data.usuario || "");
-           setComentariosResumen(data.comentarios || "");
+          // El endpoint devuelve un array, tomamos el primero
+          setPagina(Array.isArray(data) && data.length > 0 ? data[0] : null);
         }
       } catch (err) {
         console.error("Error al obtener página:", err);
@@ -317,223 +317,14 @@ function UserPage() {
       {esDueno && (
         <div style={{ color: 'green', fontWeight: 'bold', marginTop: '8px' }}>ERES EL DUEÑO</div>
       )}
-          {pagina && (
+  {/* Cuadrícula de imágenes 3x6 */}
+  <ImageGrid paginaId={pagina?.id} />
+      {pagina && (
         <div style={{ marginTop: 32 }}>
-          {visCampos.visible_titulo && <h3>{pagina.titulo}</h3>}
-          {visCampos.visible_contenido && <p>{pagina.contenido}</p>}
-          {visCampos.visible_usuario && <p><strong>Usuario:</strong> {pagina.usuario || user?.username}</p>}
-          <p><strong>Propietario:</strong> {pagina.propietario ? "Sí" : "No"}</p>
-          {visCampos.visible_descripcion && <p><strong>Descripción:</strong> {pagina.descripcion}</p>}
-          {/* Edición de campos solo para el dueño */}
-          {esDueno && (
-            <form
-              onSubmit={async (e) => {
-                e.preventDefault();
-                setVisError("");
-                setVisSuccess("");
-                try {
-                  const csrfRes = await fetch("/api/csrf-token", { credentials: "include" });
-                  const csrfData = await csrfRes.json();
-                  const csrfToken = csrfData.csrfToken;
-                  // Actualizar descripción
-                  await fetch(`/api/paginas/${pagina.id}/descripcion`, {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                      "X-CSRF-Token": csrfToken
-                    },
-                    body: JSON.stringify({ descripcion }),
-                    credentials: "include"
-                  });
-                  // Actualizar usuario
-                  await fetch(`/api/paginas/${pagina.id}/usuario`, {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                      "X-CSRF-Token": csrfToken
-                    },
-                    body: JSON.stringify({ usuario }),
-                    credentials: "include"
-                  });
-                  // Actualizar comentarios resumen
-                  await fetch(`/api/paginas/${pagina.id}/comentarios-resumen`, {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                      "X-CSRF-Token": csrfToken
-                    },
-                    body: JSON.stringify({ comentarios }),
-                    credentials: "include"
-                  });
-                  // Actualizar oculto
-                  await fetch(`/api/paginas/${pagina.id}/visibilidad`, {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                      "X-CSRF-Token": csrfToken
-                    },
-                    body: JSON.stringify({ oculto }),
-                    credentials: "include"
-                  });
-                  setVisSuccess("Campos actualizados correctamente.");
-                } catch {
-                  setVisError("Error de red o servidor.");
-                }
-              }}
-              style={{ marginBottom: 16, marginTop: 16 }}
-            >
-              {/* Selectores de visibilidad por campo */}
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ marginRight: 16 }}>
-                  Título visible:
-                  <select value={visCampos.visible_titulo ? "1" : "0"} onChange={async e => {
-                    const nuevo = { ...visCampos, visible_titulo: e.target.value === "1" };
-                    setVisCampos(nuevo);
-                    if (pagina && pagina.id) {
-                      const csrfRes = await fetch("/api/csrf-token", { credentials: "include" });
-                      const csrfData = await csrfRes.json();
-                      const csrfToken = csrfData.csrfToken;
-                      await fetch(`/api/paginas/${pagina.id}/visibilidad-campos`, {
-                        method: "POST",
-                        headers: {
-                          "Content-Type": "application/json",
-                          "X-CSRF-Token": csrfToken
-                        },
-                        body: JSON.stringify(nuevo),
-                        credentials: "include"
-                      });
-                    }
-                  }} style={{ marginLeft: 8 }}>
-                    <option value="1">Sí</option>
-                    <option value="0">No</option>
-                  </select>
-                </label>
-                <label style={{ marginRight: 16 }}>
-                  Contenido visible:
-                  <select value={visCampos.visible_contenido ? "1" : "0"} onChange={async e => {
-                    const nuevo = { ...visCampos, visible_contenido: e.target.value === "1" };
-                    setVisCampos(nuevo);
-                    if (pagina && pagina.id) {
-                      const csrfRes = await fetch("/api/csrf-token", { credentials: "include" });
-                      const csrfData = await csrfRes.json();
-                      const csrfToken = csrfData.csrfToken;
-                      await fetch(`/api/paginas/${pagina.id}/visibilidad-campos`, {
-                        method: "POST",
-                        headers: {
-                          "Content-Type": "application/json",
-                          "X-CSRF-Token": csrfToken
-                        },
-                        body: JSON.stringify(nuevo),
-                        credentials: "include"
-                      });
-                    }
-                  }} style={{ marginLeft: 8 }}>
-                    <option value="1">Sí</option>
-                    <option value="0">No</option>
-                  </select>
-                </label>
-                <label style={{ marginRight: 16 }}>
-                  Descripción visible:
-                  <select value={visCampos.visible_descripcion ? "1" : "0"} onChange={async e => {
-                    const nuevo = { ...visCampos, visible_descripcion: e.target.value === "1" };
-                    setVisCampos(nuevo);
-                    if (pagina && pagina.id) {
-                      const csrfRes = await fetch("/api/csrf-token", { credentials: "include" });
-                      const csrfData = await csrfRes.json();
-                      const csrfToken = csrfData.csrfToken;
-                      await fetch(`/api/paginas/${pagina.id}/visibilidad-campos`, {
-                        method: "POST",
-                        headers: {
-                          "Content-Type": "application/json",
-                          "X-CSRF-Token": csrfToken
-                        },
-                        body: JSON.stringify(nuevo),
-                        credentials: "include"
-                      });
-                    }
-                  }} style={{ marginLeft: 8 }}>
-                    <option value="1">Sí</option>
-                    <option value="0">No</option>
-                  </select>
-                </label>
-                <label style={{ marginRight: 16 }}>
-                  Usuario visible:
-                  <select value={visCampos.visible_usuario ? "1" : "0"} onChange={async e => {
-                    const nuevo = { ...visCampos, visible_usuario: e.target.value === "1" };
-                    setVisCampos(nuevo);
-                    if (pagina && pagina.id) {
-                      const csrfRes = await fetch("/api/csrf-token", { credentials: "include" });
-                      const csrfData = await csrfRes.json();
-                      const csrfToken = csrfData.csrfToken;
-                      await fetch(`/api/paginas/${pagina.id}/visibilidad-campos`, {
-                        method: "POST",
-                        headers: {
-                          "Content-Type": "application/json",
-                          "X-CSRF-Token": csrfToken
-                        },
-                        body: JSON.stringify(nuevo),
-                        credentials: "include"
-                      });
-                    }
-                  }} style={{ marginLeft: 8 }}>
-                    <option value="1">Sí</option>
-                    <option value="0">No</option>
-                  </select>
-                </label>
-                <label style={{ marginRight: 16 }}>
-                  Comentarios visibles:
-                  <select value={visCampos.visible_comentarios ? "1" : "0"} onChange={async e => {
-                    const nuevo = { ...visCampos, visible_comentarios: e.target.value === "1" };
-                    setVisCampos(nuevo);
-                    if (pagina && pagina.id) {
-                      const csrfRes = await fetch("/api/csrf-token", { credentials: "include" });
-                      const csrfData = await csrfRes.json();
-                      const csrfToken = csrfData.csrfToken;
-                      await fetch(`/api/paginas/${pagina.id}/visibilidad-campos`, {
-                        method: "POST",
-                        headers: {
-                          "Content-Type": "application/json",
-                          "X-CSRF-Token": csrfToken
-                        },
-                        body: JSON.stringify(nuevo),
-                        credentials: "include"
-                      });
-                    }
-                  }} style={{ marginLeft: 8 }}>
-                    <option value="1">Sí</option>
-                    <option value="0">No</option>
-                  </select>
-                </label>
-              </div>
-              <label style={{ marginRight: 16 }}>
-                Oculto:
-                <select value={oculto ? "1" : "0"} onChange={e => setOculto(e.target.value === "1")}
-                  style={{ marginLeft: 8 }}>
-                  <option value="0">No</option>
-                  <option value="1">Sí</option>
-                </select>
-              </label>
-              <label style={{ marginRight: 16 }}>
-                <select
-                  value={descripcion}
-                  onChange={e => setDescripcion(e.target.value)}
-                  style={{ marginLeft: 8 }}
-                >
-                  <option value="visible">Visible</option>
-                  <option value="oculto">Oculto</option>
-                </select>
-                Descripción
-              </label>
-              <label style={{ marginRight: 16 }}>
-                Usuario: <input type="text" value={usuario} onChange={e => setUsuario(e.target.value)} style={{ marginLeft: 8 }} />
-              </label>
-              <label style={{ marginRight: 16 }}>
-                Comentarios resumen: <input type="text" value={comentariosResumen} onChange={e => setComentariosResumen(e.target.value)} style={{ marginLeft: 8 }} />
-              </label>
-              {visError && <div style={{ color: "red" }}>{visError}</div>}
-              {visSuccess && <div style={{ color: "green" }}>{visSuccess}</div>}
-            </form>
-          )}
+          <h3>{pagina.titulo}</h3>
+          <p>{pagina.contenido}</p>
+          {/* El formulario de comentario ahora es visible para todos */}
+          <AgregarComentario paginaId={pagina.id} />
           <div style={{ marginTop: 24 }}>
             <h4>Comentarios:</h4>
             {comentarios.length === 0 ? (
@@ -547,42 +338,6 @@ function UserPage() {
               ))
             )}
           </div>
-          {/* Botón para cerrar sesión */}
-          {esDueno && (
-            <div style={{ marginTop: 32, display: 'flex', gap: '16px' }}>
-              <button
-                onClick={async () => {
-                  try {
-                    // Obtener el token CSRF
-                    const csrfRes = await fetch("/api/csrf-token", { credentials: "include" });
-                    const csrfData = await csrfRes.json();
-                    const csrfToken = csrfData.csrfToken;
-                    await fetch("/api/auth/logout", {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRF-Token": csrfToken
-                      },
-                      credentials: "include"
-                    });
-                    setAuthUserId(null); // Limpiar autenticación
-                    window.location.href = "/";
-                  } catch {
-                    alert("Error al cerrar sesión");
-                  }
-                }}
-                style={{ marginTop: 16, padding: "8px 20px", background: "#e74c3c", color: "#fff", border: "none", borderRadius: 6, cursor: "pointer" }}
-              >
-                Cerrar sesión
-              </button>
-              <button
-                onClick={handleDeleteProfile}
-                style={{ marginTop: 16, padding: "8px 20px", background: "#b71c1c", color: "#fff", border: "none", borderRadius: 6, cursor: "pointer" }}
-              >
-                Eliminar perfil y página
-              </button>
-            </div>
-          )}
         </div>
       )}
     </div>

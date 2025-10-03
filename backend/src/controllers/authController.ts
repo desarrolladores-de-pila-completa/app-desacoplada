@@ -112,25 +112,3 @@ export async function login(req: Request, res: Response) {
     sendError(res, 500, "Error al iniciar sesión");
   }
 }
-
-export async function cambiarUsername(req: Request, res: Response) {
-  const userId = (req as any).userId;
-  const { username } = req.body;
-  if (!userId) return sendError(res, 401, "No autenticado");
-  if (!username || typeof username !== "string" || username.trim().length < 3) {
-    return sendError(res, 400, "Nombre de usuario inválido");
-  }
-  try {
-    // Verificar si el username ya está en uso
-    const [rows] = await pool.query("SELECT id FROM users WHERE username = ?", [username]);
-    if (Array.isArray(rows) && rows.length > 0) {
-      return sendError(res, 409, "El nombre de usuario ya está en uso");
-    }
-    // Actualizar el username
-    await pool.query("UPDATE users SET username = ? WHERE id = ?", [username, userId]);
-    res.json({ message: "Nombre de usuario actualizado" });
-  } catch (error) {
-    console.error(error);
-    sendError(res, 500, "Error al actualizar nombre de usuario");
-  }
-}
