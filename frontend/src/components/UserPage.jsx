@@ -323,8 +323,14 @@ function UserPage() {
         <div style={{ marginTop: 32 }}>
           <h3>{pagina.titulo}</h3>
           <p>{pagina.contenido}</p>
-          {/* El formulario de comentario ahora es visible para todos */}
-          <AgregarComentario paginaId={pagina.id} />
+          {/* El formulario de comentario solo es visible para usuarios autenticados */}
+          {authUserId ? (
+            <AgregarComentario paginaId={pagina.id} />
+          ) : (
+            <div style={{ color: '#888', marginTop: 16 }}>
+              Debes iniciar sesión para agregar un comentario.
+            </div>
+          )}
           <div style={{ marginTop: 24 }}>
             <h4>Comentarios:</h4>
             {comentarios.length === 0 ? (
