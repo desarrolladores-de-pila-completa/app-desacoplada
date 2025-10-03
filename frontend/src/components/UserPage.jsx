@@ -67,7 +67,8 @@ function UserPage() {
     e.preventDefault();
     setEmailError("");
     setEmailSuccess("");
-    if (!nuevoEmail || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(nuevoEmail)) {
+    // Regex simple y segura para email (evita polinomios)
+    if (!nuevoEmail || !/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(nuevoEmail)) {
       setEmailError("Correo electrónico inválido.");
       return;
     }
@@ -323,8 +324,14 @@ function UserPage() {
         <div style={{ marginTop: 32 }}>
           <h3>{pagina.titulo}</h3>
           <p>{pagina.contenido}</p>
-          {/* El formulario de comentario ahora es visible para todos */}
-          <AgregarComentario paginaId={pagina.id} />
+          {/* El formulario de comentario solo es visible para usuarios autenticados */}
+          {authUserId ? (
+            <AgregarComentario paginaId={pagina.id} />
+          ) : (
+            <div style={{ color: '#888', marginTop: 16 }}>
+              Debes iniciar sesión para agregar un comentario.
+            </div>
+          )}
           <div style={{ marginTop: 24 }}>
             <h4>Comentarios:</h4>
             {comentarios.length === 0 ? (
