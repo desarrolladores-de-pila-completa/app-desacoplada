@@ -67,7 +67,8 @@ function UserPage() {
     e.preventDefault();
     setEmailError("");
     setEmailSuccess("");
-    if (!nuevoEmail || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(nuevoEmail)) {
+    // Regex simple y segura para email (evita polinomios)
+    if (!nuevoEmail || !/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(nuevoEmail)) {
       setEmailError("Correo electrónico inválido.");
       return;
     }
