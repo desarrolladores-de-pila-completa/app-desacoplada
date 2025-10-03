@@ -2,6 +2,7 @@
 
 
 import React from "react";
+import ImageGrid from "./ImageGrid";
 import { useParams } from "react-router-dom";
 
 function UserPage() {
@@ -44,10 +45,11 @@ function UserPage() {
   React.useEffect(() => {
     async function fetchPagina() {
       try {
-        const res = await fetch(`/api/paginas/usuario/${id}`);
+        const res = await fetch(`/api/paginas?user_id=${id}`);
         if (res.ok) {
           const data = await res.json();
-          setPagina(data);
+          // El endpoint devuelve un array, tomamos el primero
+          setPagina(Array.isArray(data) && data.length > 0 ? data[0] : null);
         }
       } catch (err) {
         console.error("Error al obtener página:", err);
@@ -90,29 +92,27 @@ function UserPage() {
       ) : (
         <div style={{ color: 'red', fontWeight: 'bold', marginTop: '8px' }}>NO ERES EL DUEÑO</div>
       )}
+  {/* Cuadrícula de imágenes 3x6 */}
+  <ImageGrid paginaId={pagina?.id} />
       {pagina && (
         <div style={{ marginTop: 32 }}>
           <h3>{pagina.titulo}</h3>
           <p>{pagina.contenido}</p>
-          {esDueno && (
-            <>
-              <AgregarComentario paginaId={pagina.id} />
-              {/* Comentarios debajo del mensaje de dueño */}
-              <div style={{ marginTop: 24 }}>
-                <h4>Comentarios:</h4>
-                {comentarios.length === 0 ? (
-                  <div style={{ color: '#888' }}>No hay comentarios aún.</div>
-                ) : (
-                  comentarios.map(com => (
-                    <div key={com.id} style={{ background: '#f7f7f7', margin: '8px 0', padding: '8px', borderRadius: 6 }}>
-                      <strong>{com.comentario}</strong>
-                      <div style={{ fontSize: '0.9em', color: '#555' }}>Publicado: {new Date(com.creado_en).toLocaleString()}</div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </>
-          )}
+          {/* El formulario de comentario ahora es visible para todos */}
+          <AgregarComentario paginaId={pagina.id} />
+          <div style={{ marginTop: 24 }}>
+            <h4>Comentarios:</h4>
+            {comentarios.length === 0 ? (
+              <div style={{ color: '#888' }}>No hay comentarios aún.</div>
+            ) : (
+              comentarios.map(com => (
+                <div key={com.id} style={{ background: '#f7f7f7', margin: '8px 0', padding: '8px', borderRadius: 6 }}>
+                  <strong>{com.comentario}</strong>
+                  <div style={{ fontSize: '0.9em', color: '#555' }}>Publicado: {new Date(com.creado_en).toLocaleString()}</div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       )}
     </div>

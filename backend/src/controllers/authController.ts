@@ -72,4 +72,3 @@ export async function login(req: Request, res: Response) {
     sendError(res, 500, "Error al iniciar sesión");
   }
 }
-// ...existing code...

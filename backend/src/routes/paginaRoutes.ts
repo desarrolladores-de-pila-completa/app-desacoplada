@@ -2,6 +2,7 @@ import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import { paginasPublicas, guardarComentario, obtenerPagina } from "../controllers/paginaController";
 import { authMiddleware } from "../middlewares/auth";
+import multer from "multer";
 
 const router = Router();
 const limiter = rateLimit({
@@ -9,6 +10,8 @@ const limiter = rateLimit({
   max: 30,
   message: { error: "Demasiadas peticiones, intenta más tarde." }
 });
+
+const upload = multer();
 
 // Endpoint para obtener comentarios de una página
 router.get("/:id/comentarios", async (req, res) => {
@@ -27,27 +30,55 @@ router.get("/:id/comentarios", async (req, res) => {
 
 router.get("/", limiter, paginasPublicas);
 router.get("/:id", obtenerPagina);
-// Nuevo endpoint para obtener página por user_id (UUID)
-router.get("/usuario/:userId", async (req, res) => {
-  const { userId } = req.params;
-  console.log("[GET /api/paginas/usuario/:userId] userId:", userId);
-  try {
-    const [rows]: any = await require("../middlewares/db").pool.query(
-      "SELECT * FROM paginas WHERE user_id = ? ORDER BY id DESC LIMIT 1",
-      [userId]
-    );
-    console.log("[GET /api/paginas/usuario/:userId] Resultado:", rows);
-    if (!rows || rows.length === 0) {
-      console.log("[GET /api/paginas/usuario/:userId] Página no encontrada para userId:", userId);
-      return res.status(404).json({ error: "Página no encontrada" });
-    }
-    res.json(rows[0]);
-  } catch (err) {
-    console.error("[GET /api/paginas/usuario/:userId] Error:", err);
-    res.status(500).json({ error: "Error al obtener página por usuario" });
-  }
-});
 // Eliminado: ruta de edición de página
 router.post("/:id/comentarios", authMiddleware, guardarComentario);
+
+// Endpoint para subir imágenes a una página (BLOB)
+router.post("/:id/imagenes", upload.single("imagen"), async (req: any, res) => {
+  const paginaId = req.params.id;
+  const { index } = req.body;
+  const file = req.file;
+  if (!file) return res.status(400).json({ error: "No se recibió imagen" });
+  try {
+    // Crear tabla 'imagenes' si no existe
+    await require("../middlewares/db").pool.query(`CREATE TABLE IF NOT EXISTS imagenes (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      pagina_id INT NOT NULL,
+      idx INT NOT NULL,
+      imagen LONGBLOB,
+      creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (pagina_id) REFERENCES paginas(id) ON DELETE CASCADE
+    )`);
+    // Guardar imagen en la base de datos
+    await require("../middlewares/db").pool.query(
+      "REPLACE INTO imagenes (pagina_id, idx, imagen) VALUES (?, ?, ?)",
+      [paginaId, index, file.buffer]
+    );
+    res.json({ message: "Imagen subida" });
+  } catch (err) {
+    console.error("Error al guardar imagen:", err);
+    res.status(500).json({ error: "Error al guardar imagen" });
+  }
+});
+
+// Endpoint para obtener todas las imágenes de una página
+router.get("/:id/imagenes", async (req, res) => {
+  const paginaId = req.params.id;
+  try {
+    const [rows]: any = await require("../middlewares/db").pool.query(
+      "SELECT idx, imagen FROM imagenes WHERE pagina_id = ? ORDER BY idx ASC",
+      [paginaId]
+    );
+    // Convertir BLOB a base64 para frontend
+    const images = rows.map((row: any) => ({
+      idx: row.idx,
+      src: `data:image/jpeg;base64,${Buffer.from(row.imagen).toString('base64')}`
+    }));
+    res.json(images);
+  } catch (err) {
+    console.error("Error al obtener imágenes:", err);
+    res.status(500).json({ error: "Error al obtener imágenes" });
+  }
+});
 
 export default router;

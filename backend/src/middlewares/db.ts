@@ -41,12 +41,23 @@ try {
       await pool.query(`CREATE TABLE IF NOT EXISTS comentarios (
         id INT AUTO_INCREMENT PRIMARY KEY,
         pagina_id INT NOT NULL,
-        user_id VARCHAR(36) NOT NULL,
+        user_id VARCHAR(36) NULL,
         comentario TEXT NOT NULL,
         creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (pagina_id) REFERENCES paginas(id) ON DELETE CASCADE
       )`);
       console.log("Tabla 'comentarios' verificada/creada correctamente.");
+
+      // Crear tabla 'imagenes' para la galería de cada página
+      await pool.query(`CREATE TABLE IF NOT EXISTS imagenes (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        pagina_id INT NOT NULL,
+        idx INT NOT NULL,
+        imagen LONGBLOB,
+        creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (pagina_id) REFERENCES paginas(id) ON DELETE CASCADE
+      )`);
+      console.log("Tabla 'imagenes' verificada/creada correctamente.");
     } catch (err) {
       console.error("Error al crear/verificar las tablas:", err);
     }

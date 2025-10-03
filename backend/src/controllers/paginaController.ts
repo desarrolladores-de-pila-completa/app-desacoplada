@@ -48,7 +48,7 @@ export async function guardarComentario(req: Request, res: Response) {
   const paginaId = req.params.id;
   const { comentario } = req.body;
   const userId = (req as any).userId;
-  if (!userId) return sendError(res, 401, "No autenticado");
+  if (!userId) return sendError(res, 401, "Debes estar autenticado para comentar");
   if (!comentario || typeof comentario !== "string" || comentario.trim().length === 0) {
     return sendError(res, 400, "Comentario vacío o inválido");
   }
