@@ -1,15 +1,11 @@
+// Endpoint para obtener todas las páginas públicas
 import { Router } from "express";
-import rateLimit from "express-rate-limit";
-import { paginasPublicas, guardarComentario, obtenerPagina } from "../controllers/paginaController";
+// import rateLimit from "express-rate-limit";
+
+import { paginasPublicas, guardarComentario, obtenerPagina, actualizarVisibilidad, consultarVisibilidad, actualizarPropietario, actualizarDescripcion, actualizarUsuarioPagina, actualizarComentariosPagina, consultarPropietario, consultarDescripcion, consultarUsuarioPagina, consultarComentariosPagina } from "../controllers/paginaController";
 import { authMiddleware } from "../middlewares/auth";
 import multer from "multer";
 
-const router = Router();
-const limiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 30,
-  message: { error: "Demasiadas peticiones, intenta más tarde." }
-});
 
 const upload = multer();
 
@@ -18,13 +14,11 @@ router.get("/:id/comentarios", async (req, res) => {
   const { id } = req.params;
   try {
     const [rows]: any = await require("../middlewares/db").pool.query(
-      "SELECT * FROM comentarios WHERE pagina_id = ? ORDER BY creado_en ASC",
-      [id]
+      "SELECT * FROM paginas WHERE oculto = 0 ORDER BY creado_en DESC"
     );
     res.json(rows);
   } catch (err) {
-    console.error("[GET /api/paginas/:id/comentarios] Error:", err);
-    res.status(500).json({ error: "Error al obtener comentarios" });
+    res.status(500).json({ error: "Error al obtener páginas públicas" });
   }
 });
 

@@ -1,3 +1,198 @@
+// Consultar visibilidad de cada campo
+export async function consultarVisibilidadCampos(req: Request, res: Response) {
+  const paginaId = req.params.id;
+  try {
+    const [rows]: any = await pool.query(
+      `SELECT visible_titulo, visible_contenido, visible_descripcion, visible_usuario, visible_comentarios FROM paginas WHERE id = ?`,
+      [paginaId]
+    );
+    if (!rows || rows.length === 0) return res.status(404).json({ error: "Página no encontrada" });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al consultar visibilidad de campos" });
+  }
+}
+
+// Actualizar visibilidad de cada campo
+export async function actualizarVisibilidadCampos(req: Request, res: Response) {
+  const paginaId = req.params.id;
+  const userId = (req as any).userId;
+  const {
+    visible_titulo,
+    visible_contenido,
+    visible_descripcion,
+    visible_usuario,
+    visible_comentarios
+  } = req.body;
+  try {
+    const [rows]: any = await pool.query("SELECT user_id FROM paginas WHERE id = ?", [paginaId]);
+    if (!rows || rows.length === 0) return res.status(404).json({ error: "Página no encontrada" });
+    if (String(rows[0].user_id) !== String(userId)) return res.status(403).json({ error: "No autorizado" });
+    await pool.query(
+      `UPDATE paginas SET visible_titulo = ?, visible_contenido = ?, visible_descripcion = ?, visible_usuario = ?, visible_comentarios = ? WHERE id = ?`,
+      [visible_titulo ? 1 : 0, visible_contenido ? 1 : 0, visible_descripcion ? 1 : 0, visible_usuario ? 1 : 0, visible_comentarios ? 1 : 0, paginaId]
+    );
+    res.json({ message: "Visibilidad de campos actualizada" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al actualizar visibilidad de campos" });
+  }
+}
+// Consultar propietario
+export async function consultarPropietario(req: Request, res: Response) {
+  const paginaId = req.params.id;
+  try {
+    const [rows]: any = await pool.query("SELECT propietario FROM paginas WHERE id = ?", [paginaId]);
+    if (!rows || rows.length === 0) return res.status(404).json({ error: "Página no encontrada" });
+    res.json({ propietario: rows[0].propietario });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al consultar propietario" });
+  }
+}
+
+// Consultar descripcion
+export async function consultarDescripcion(req: Request, res: Response) {
+  const paginaId = req.params.id;
+  try {
+    const [rows]: any = await pool.query("SELECT descripcion FROM paginas WHERE id = ?", [paginaId]);
+    if (!rows || rows.length === 0) return res.status(404).json({ error: "Página no encontrada" });
+    res.json({ descripcion: rows[0].descripcion });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al consultar descripción" });
+  }
+}
+
+// Consultar usuario
+export async function consultarUsuarioPagina(req: Request, res: Response) {
+  const paginaId = req.params.id;
+  try {
+    const [rows]: any = await pool.query("SELECT usuario FROM paginas WHERE id = ?", [paginaId]);
+    if (!rows || rows.length === 0) return res.status(404).json({ error: "Página no encontrada" });
+    res.json({ usuario: rows[0].usuario });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al consultar usuario de página" });
+  }
+}
+
+// Consultar comentarios resumen
+export async function consultarComentariosPagina(req: Request, res: Response) {
+  const paginaId = req.params.id;
+  try {
+    const [rows]: any = await pool.query("SELECT comentarios FROM paginas WHERE id = ?", [paginaId]);
+    if (!rows || rows.length === 0) return res.status(404).json({ error: "Página no encontrada" });
+    res.json({ comentarios: rows[0].comentarios });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al consultar comentarios de página" });
+  }
+}
+// Actualizar propietario
+export async function actualizarPropietario(req: Request, res: Response) {
+  const paginaId = req.params.id;
+  const { propietario } = req.body;
+  const userId = (req as any).userId;
+  try {
+    const [rows]: any = await pool.query("SELECT user_id FROM paginas WHERE id = ?", [paginaId]);
+    if (!rows || rows.length === 0) return res.status(404).json({ error: "Página no encontrada" });
+    if (String(rows[0].user_id) !== String(userId)) return res.status(403).json({ error: "No autorizado" });
+    await pool.query("UPDATE paginas SET propietario = ? WHERE id = ?", [propietario ? 1 : 0, paginaId]);
+    res.json({ message: "Propietario actualizado" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al actualizar propietario" });
+  }
+}
+
+// Actualizar descripcion
+export async function actualizarDescripcion(req: Request, res: Response) {
+  const paginaId = req.params.id;
+  const { descripcion } = req.body;
+  const userId = (req as any).userId;
+  try {
+    const [rows]: any = await pool.query("SELECT user_id FROM paginas WHERE id = ?", [paginaId]);
+    if (!rows || rows.length === 0) return res.status(404).json({ error: "Página no encontrada" });
+    if (String(rows[0].user_id) !== String(userId)) return res.status(403).json({ error: "No autorizado" });
+    await pool.query("UPDATE paginas SET descripcion = ? WHERE id = ?", [descripcion, paginaId]);
+    res.json({ message: "Descripción actualizada" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al actualizar descripción" });
+  }
+}
+
+// Actualizar usuario
+export async function actualizarUsuarioPagina(req: Request, res: Response) {
+  const paginaId = req.params.id;
+  const { usuario } = req.body;
+  const userId = (req as any).userId;
+  try {
+    const [rows]: any = await pool.query("SELECT user_id FROM paginas WHERE id = ?", [paginaId]);
+    if (!rows || rows.length === 0) return res.status(404).json({ error: "Página no encontrada" });
+    if (String(rows[0].user_id) !== String(userId)) return res.status(403).json({ error: "No autorizado" });
+    await pool.query("UPDATE paginas SET usuario = ? WHERE id = ?", [usuario, paginaId]);
+    res.json({ message: "Usuario de página actualizado" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al actualizar usuario de página" });
+  }
+}
+
+// Actualizar comentarios resumen
+export async function actualizarComentariosPagina(req: Request, res: Response) {
+  const paginaId = req.params.id;
+  let { comentarios } = req.body;
+  const userId = (req as any).userId;
+  // Validar que comentarios no sea undefined, null ni tipo incorrecto
+  if (typeof comentarios !== "string") {
+    comentarios = '';
+  }
+  try {
+    const [rows]: any = await pool.query("SELECT user_id FROM paginas WHERE id = ?", [paginaId]);
+    if (!rows || rows.length === 0) return res.status(404).json({ error: "Página no encontrada" });
+    if (String(rows[0].user_id) !== String(userId)) return res.status(403).json({ error: "No autorizado" });
+    await pool.query("UPDATE paginas SET comentarios = ? WHERE id = ?", [comentarios, paginaId]);
+    res.json({ message: "Comentarios de página actualizados" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al actualizar comentarios de página" });
+  }
+}
+// Actualizar visibilidad y oculto de una página
+import { pool } from "../middlewares/db";
+import { Request, Response } from "express";
+
+export async function actualizarVisibilidad(req: Request, res: Response) {
+  const paginaId = req.params.id;
+  const { oculto } = req.body;
+  const userId = (req as any).userId;
+  try {
+    // Solo el propietario puede modificar
+    const [rows]: any = await pool.query("SELECT user_id FROM paginas WHERE id = ?", [paginaId]);
+    if (!rows || rows.length === 0) return res.status(404).json({ error: "Página no encontrada" });
+    if (String(rows[0].user_id) !== String(userId)) return res.status(403).json({ error: "No autorizado" });
+    await pool.query("UPDATE paginas SET oculto = ? WHERE id = ?", [oculto ? 1 : 0, paginaId]);
+    res.json({ message: "Visibilidad actualizada" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al actualizar visibilidad" });
+  }
+}
+// Consultar visibilidad y oculto de una página
+export async function consultarVisibilidad(req: Request, res: Response) {
+  const paginaId = req.params.id;
+  try {
+    const [rows]: any = await pool.query("SELECT oculto FROM paginas WHERE id = ?", [paginaId]);
+    if (!rows || rows.length === 0) return res.status(404).json({ error: "Página no encontrada" });
+    res.json({ oculto: rows[0].oculto });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al consultar visibilidad" });
+  }
+}
 // Obtener una página por su id
 export async function obtenerPagina(req: Request, res: Response) {
   const paginaId = req.params.id;
@@ -13,8 +208,7 @@ export async function obtenerPagina(req: Request, res: Response) {
   }
 }
 
-import { Request, Response } from "express";
-import { pool } from "../middlewares/db";
+// ...existing code...
 
 function sendError(res: Response, code: number, msg: string) {
   return res.status(code).json({ error: msg });

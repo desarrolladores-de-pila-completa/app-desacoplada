@@ -1,21 +1,20 @@
+
 import { Router } from "express";
-import rateLimit from "express-rate-limit";
-import { register, login } from "../controllers/authController";
+import { register, login, cambiarUsername, cambiarEmail, logout, eliminarUsuario } from "../controllers/authController";
 import { authMiddleware } from "../middlewares/auth";
 import { pool } from "../middlewares/db";
 import { randomUUID } from "crypto";
 import bcrypt from "bcryptjs";
 
 const router = Router();
-const limiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 20,
-  message: { error: "Demasiadas peticiones, intenta más tarde." }
-});
 
-router.use(limiter);
+// Eliminado el limitador de peticiones
+
 router.post("/register", register);
 router.post("/login", login);
+router.post("/username", authMiddleware, cambiarUsername);
+router.post("/email", authMiddleware, cambiarEmail);
+router.post("/logout", logout);
 
 router.get("/me", authMiddleware, async (req, res) => {
   const userId = (req as any).userId;
@@ -49,5 +48,8 @@ router.get("/user/:id", async (req, res) => {
     res.status(500).json({ error: "Error en el servidor" });
   }
 });
+
+// Endpoint para eliminar usuario y su página
+router.delete("/user/:id", eliminarUsuario);
 
 export default router;

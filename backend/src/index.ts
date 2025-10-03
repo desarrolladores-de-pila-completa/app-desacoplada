@@ -5,7 +5,7 @@ import paginaRoutes from "./routes/paginaRoutes";
 import { errorHandler } from "./middlewares/errorHandler";
 import cookieParser from "cookie-parser";
 import path from "path";
-import { pool } from "./middlewares/db";
+import { pool, initDatabase } from "./middlewares/db";
 import csurf from "csurf";
 
 const rootPath = path.resolve(__dirname, '../../../');
@@ -51,6 +51,8 @@ app.get(/^\/(?!api).*/, (req, res) => {
 if (require.main === module) {
   (async () => {
     try {
+      await initDatabase();
+      // pool ya está inicializado en initDatabase
       await pool.query("SELECT 1");
       console.log("Conexión a MySQL exitosa");
       app.listen(3000, () =>

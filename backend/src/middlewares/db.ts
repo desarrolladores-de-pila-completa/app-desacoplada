@@ -12,16 +12,44 @@ if (fs.existsSync(envPath)) {
 }
 
 let pool: mysql.Pool;
-try {
-  pool = mysql.createPool({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-  });
 
-  // Crear las tablas necesarias si no existen
-  (async () => {
+async function initDatabase() {
+    // ...existing code...
+  try {
+    // Conexión sin base de datos para crearla si no existe
+    const connection = await mysql.createConnection({
+      host: process.env.DB_HOST,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+    });
+    await connection.query(`CREATE DATABASE IF NOT EXISTS \`${process.env.DB_NAME}\``);
+    await connection.end();
+
+    // Ahora sí, crear el pool con la base de datos
+    pool = mysql.createPool({
+      host: process.env.DB_HOST,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
+    });
+
+    // Verificar que el pool está inicializado correctamente
+    if (!pool) {
+      throw new Error("No se pudo inicializar el pool de MySQL. Verifica la configuración de la base de datos.");
+    }
+
+    // Cambiar el campo 'descripcion' a TEXT si es VARCHAR(32)
+    try {
+      const [descCol]: any = await pool.query("SHOW COLUMNS FROM paginas LIKE 'descripcion'");
+      if (descCol && descCol.length > 0 && descCol[0].Type.startsWith('varchar')) {
+        await pool.query("ALTER TABLE paginas MODIFY COLUMN descripcion TEXT");
+        console.log("Columna 'descripcion' modificada a TEXT en la tabla 'paginas'.");
+      }
+    } catch (migrErr) {
+      console.error("Error al migrar la columna 'descripcion':", migrErr);
+    }
+
+    // Crear las tablas necesarias si no existen
     try {
       await pool.query(`CREATE TABLE IF NOT EXISTS users (
         id VARCHAR(36) PRIMARY KEY,
@@ -33,11 +61,20 @@ try {
       await pool.query(`CREATE TABLE IF NOT EXISTS paginas (
         id INT AUTO_INCREMENT PRIMARY KEY,
         user_id VARCHAR(36) NOT NULL,
+        propietario TINYINT(1) DEFAULT 0,
         titulo VARCHAR(255),
         contenido TEXT,
+        descripcion VARCHAR(32) DEFAULT 'visible',
+        usuario VARCHAR(255),
+        comentarios TEXT,
+        oculto TINYINT(1) DEFAULT 0,
         creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )`);
-      console.log("Tabla 'paginas' verificada/creada correctamente.");
+      console.log("Tabla 'paginas' verificada/creada correctamente con campos propietario, descripcion, usuario, comentarios, visible y oculto.");
+      // Mostrar estructura de la tabla 'paginas' al iniciar
+      const [descPaginas]: any = await pool.query("DESCRIBE paginas");
+      console.log("Estructura actual de la tabla 'paginas':");
+      console.table(descPaginas);
       await pool.query(`CREATE TABLE IF NOT EXISTS comentarios (
         id INT AUTO_INCREMENT PRIMARY KEY,
         pagina_id INT NOT NULL,
@@ -61,9 +98,9 @@ try {
     } catch (err) {
       console.error("Error al crear/verificar las tablas:", err);
     }
-  })();
-} catch (err) {
-  console.error("Error al crear el pool de MySQL:", err);
+  } catch (err) {
+    console.error("Error al inicializar la base de datos y tablas:", err);
+  }
 }
 
-export { pool };
+export { pool, initDatabase };
