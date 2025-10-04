@@ -17,27 +17,6 @@ export async function logout(req: Request, res: Response) {
   res.clearCookie("token", { httpOnly: true, secure: false, sameSite: "lax" });
   res.json({ message: "Sesión cerrada y token eliminado" });
 }
-export async function cambiarEmail(req: Request, res: Response) {
-  const userId = (req as any).userId;
-  const { email } = req.body;
-  if (!userId) return sendError(res, 401, "No autenticado");
-  if (!email || typeof email !== "string" || !/^.+@.+\..+$/.test(email)) {
-    return sendError(res, 400, "Correo electrónico inválido");
-  }
-  try {
-    // Verificar si el correo ya está en uso
-    const [rows] = await pool.query("SELECT id FROM users WHERE email = ?", [email]);
-    if (Array.isArray(rows) && rows.length > 0) {
-      return sendError(res, 409, "El correo ya está en uso");
-    }
-    // Actualizar el correo
-    await pool.query("UPDATE users SET email = ? WHERE id = ?", [email, userId]);
-    res.json({ message: "Correo actualizado correctamente" });
-  } catch (error) {
-    console.error(error);
-    sendError(res, 500, "Error al actualizar el correo");
-  }
-}
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";

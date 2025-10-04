@@ -6,19 +6,31 @@ import { paginasPublicas, guardarComentario, obtenerPagina, actualizarVisibilida
 import { authMiddleware } from "../middlewares/auth";
 import multer from "multer";
 
+import rateLimit from "express-rate-limit";
+const limiter = rateLimit({ windowMs: 60 * 1000, max: 100 });
+
+const router = Router();
+// Endpoint para consultar visibilidad general de la página
+router.get("/:id/visibilidad", consultarVisibilidad);
+// Endpoint para consultar visibilidad de campos de la página
+import { consultarVisibilidadCampos } from "../controllers/paginaController";
+router.get("/:id/visibilidad-campos", consultarVisibilidadCampos);
+
 
 const upload = multer();
 
 // Endpoint para obtener comentarios de una página
-router.get("/:id/comentarios", async (req, res) => {
+
+router.get("/:id/comentarios", async (req: any, res: any) => {
   const { id } = req.params;
   try {
     const [rows]: any = await require("../middlewares/db").pool.query(
-      "SELECT * FROM paginas WHERE oculto = 0 ORDER BY creado_en DESC"
+      `SELECT c.*, u.username FROM comentarios c LEFT JOIN users u ON c.user_id = u.id WHERE c.pagina_id = ? ORDER BY c.creado_en DESC`,
+      [id]
     );
     res.json(rows);
   } catch (err) {
-    res.status(500).json({ error: "Error al obtener páginas públicas" });
+    res.status(500).json({ error: "Error al obtener comentarios" });
   }
 });
 
@@ -28,12 +40,16 @@ router.get("/:id", obtenerPagina);
 router.post("/:id/comentarios", authMiddleware, guardarComentario);
 
 // Endpoint para subir imágenes a una página (BLOB)
-router.post("/:id/imagenes", upload.single("imagen"), async (req: any, res) => {
+router.post("/:id/imagenes", authMiddleware, async (req: any, res: any) => {
   const paginaId = req.params.id;
   const { index } = req.body;
   const file = req.file;
   if (!file) return res.status(400).json({ error: "No se recibió imagen" });
   try {
+    // Verificar que el usuario autenticado es el dueño de la página
+    const [rows]: any = await require("../middlewares/db").pool.query("SELECT user_id FROM paginas WHERE id = ?", [paginaId]);
+    if (!rows || rows.length === 0) return res.status(404).json({ error: "Página no encontrada" });
+    if (String(rows[0].user_id) !== String(req.user.id)) return res.status(403).json({ error: "Solo el dueño puede subir imágenes" });
     // Crear tabla 'imagenes' si no existe
     await require("../middlewares/db").pool.query(`CREATE TABLE IF NOT EXISTS imagenes (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -56,7 +72,7 @@ router.post("/:id/imagenes", upload.single("imagen"), async (req: any, res) => {
 });
 
 // Endpoint para obtener todas las imágenes de una página
-router.get("/:id/imagenes", async (req, res) => {
+router.get("/:id/imagenes", async (req: any, res: any) => {
   const paginaId = req.params.id;
   try {
     const [rows]: any = await require("../middlewares/db").pool.query(

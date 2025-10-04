@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import authRoutes from "./routes/authRoutes";
+import { router as authRoutes } from "./routes/authRoutes";
 import paginaRoutes from "./routes/paginaRoutes";
 import { errorHandler } from "./middlewares/errorHandler";
 import cookieParser from "cookie-parser";
@@ -33,8 +33,22 @@ app.get("/api/csrf-token", csrfProtection, (req, res) => {
   res.json({ csrfToken: req.csrfToken() });
 });
 
+
+// Middleware de logging para depuración CSRF
+app.use(["/api/paginas", "/api/auth"], (req, res, next) => {
+  const cookieCsrf = req.cookies['csrf'] || req.cookies['_csrf'];
+  const headerCsrf = req.headers['x-csrf-token'] || req.headers['csrf-token'];
+  console.log("[CSRF] Cookie:", cookieCsrf, "Header:", headerCsrf);
+  next();
+});
 // Aplica CSRF a rutas que modifican estado
-app.use(["/api/paginas", "/api/auth"], csrfProtection);
+// Solo aplicar CSRF a métodos que modifican datos
+app.use(["/api/paginas", "/api/auth"], (req, res, next) => {
+  if (["POST", "PUT", "DELETE"].includes(req.method)) {
+    return csrfProtection(req, res, next);
+  }
+  next();
+});
 
 app.use("/api/auth", authRoutes);
 app.use("/api/paginas", paginaRoutes);

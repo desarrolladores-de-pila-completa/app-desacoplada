@@ -1,55 +1,84 @@
-
 import { Router } from "express";
-import { register, login, cambiarUsername, cambiarEmail, logout, eliminarUsuario } from "../controllers/authController";
+import multer from "multer";
+import { register, login, logout, eliminarUsuario } from "../controllers/authController";
 import { authMiddleware } from "../middlewares/auth";
 import { pool } from "../middlewares/db";
 import { randomUUID } from "crypto";
 import bcrypt from "bcryptjs";
 
+const upload = multer();
 const router = Router();
 
-// Eliminado el limitador de peticiones
+// Ruta para obtener el usuario autenticado
+router.get("/me", authMiddleware, async (req, res) => {
+  const user = (req as any).user;
+  if (!user || !user.id) return res.status(401).json({ error: "No autenticado" });
+  res.json(user);
+});
+
+// Endpoint para actualizar foto de perfil
+router.post("/me/foto", authMiddleware, upload.single("foto"), async (req, res) => {
+  const user = (req as any).user;
+  if (!user || !user.id) return res.status(401).json({ error: "No autenticado" });
+  const file = req.file;
+  if (!file) return res.status(400).json({ error: "No se recibió imagen" });
+  try {
+    await pool.query(
+      "UPDATE users SET foto_perfil = ? WHERE id = ?",
+      [file.buffer, user.id]
+    );
+    res.json({ message: "Foto de perfil actualizada" });
+  } catch (err) {
+    console.error("Error al guardar foto de perfil:", err);
+    res.status(500).json({ error: "Error al guardar foto de perfil" });
+  }
+});
+
+// Endpoint para obtener foto de perfil
+router.get("/me/foto", authMiddleware, async (req, res) => {
+  const user = (req as any).user;
+  if (!user || !user.id) return res.status(401).json({ error: "No autenticado" });
+  try {
+    const [rows]: any = await pool.query(
+      "SELECT foto_perfil FROM users WHERE id = ?",
+      [user.id]
+    );
+    if (!rows || rows.length === 0 || !rows[0].foto_perfil) {
+      return res.status(404).json({ error: "Sin foto de perfil" });
+    }
+    res.setHeader("Content-Type", "image/jpeg");
+    res.send(rows[0].foto_perfil);
+  } catch (err) {
+    console.error("Error al obtener foto de perfil:", err);
+    res.status(500).json({ error: "Error al obtener foto de perfil" });
+  }
+});
+
+// Endpoint público para obtener foto de perfil por id de usuario
+router.get("/user/:id/foto", async (req, res) => {
+  const userId = req.params.id;
+  try {
+    const [rows]: any = await pool.query(
+      "SELECT foto_perfil FROM users WHERE id = ?",
+      [userId]
+    );
+    if (!rows || rows.length === 0 || !rows[0].foto_perfil) {
+      return res.status(404).json({ error: "Sin foto de perfil" });
+    }
+    res.setHeader("Content-Type", "image/jpeg");
+    res.send(rows[0].foto_perfil);
+  } catch (err) {
+    console.error("Error al obtener foto de perfil pública:", err);
+    res.status(500).json({ error: "Error al obtener foto de perfil" });
+  }
+});
 
 router.post("/register", register);
 router.post("/login", login);
-router.post("/username", authMiddleware, cambiarUsername);
-router.post("/email", authMiddleware, cambiarEmail);
+// router.post("/username", authMiddleware, cambiarUsername); // Función no implementada
 router.post("/logout", logout);
 
-router.get("/me", authMiddleware, async (req, res) => {
-  const userId = (req as any).userId;
-  if (!userId) return res.status(401).json({ error: "No autenticado" });
-  try {
-    const [rows] = await pool.execute(
-      "SELECT id, email, username FROM users WHERE id = ?",
-      [userId]
-    );
-    if ((rows as any[]).length === 0) {
-      return res.status(404).json({ error: "Usuario no encontrado" });
-    }
-    res.json((rows as any[])[0]);
-  } catch (err) {
-    res.status(500).json({ error: "Error en el servidor" });
-  }
-});
-
-router.get("/user/:id", async (req, res) => {
-  const { id } = req.params;
-  try {
-    const [rows] = await pool.execute(
-      "SELECT id, email, username FROM users WHERE id = ?",
-      [id]
-    );
-    if ((rows as any[]).length === 0) {
-      return res.status(404).json({ error: "Usuario no encontrado" });
-    }
-    res.json((rows as any[])[0]);
-  } catch (err) {
-    res.status(500).json({ error: "Error en el servidor" });
-  }
-});
-
-// Endpoint para eliminar usuario y su página
 router.delete("/user/:id", eliminarUsuario);
 
-export default router;
+export { router };
+

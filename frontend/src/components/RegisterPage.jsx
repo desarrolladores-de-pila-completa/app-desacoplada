@@ -31,8 +31,9 @@ function RegisterPage({ regEmail, regPass, setRegEmail, setRegPass, showOutput, 
       } else {
         setEsDueno(false);
       }
-      // Redirige a la página personal
-      navigate(`/usuario/${result.id}`);
+  // Redirige a la página personal y recarga para actualizar autenticación
+  navigate(`/usuario/${result.id}`);
+  window.location.reload();
     }
   };
 
