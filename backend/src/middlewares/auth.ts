@@ -11,7 +11,8 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
   console.log("[AUTH] Cookie token:", token);
   if (!token) {
     console.log("[AUTH] No se recibió token en la cookie");
-    return res.status(401).json({ error: "No autenticado" });
+    console.log("[AUTH] Headers:", req.headers);
+    return res.status(401).json({ error: "No autenticado (sin token)" });
   }
   try {
     const payload = jwt.verify(token, SECRET) as jwt.JwtPayload;
@@ -22,15 +23,25 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
       console.log("[AUTH] Resultado query usuario:", rows);
       if (rows && rows.length > 0) {
         (req as any).user = rows[0];
+        (req as any).userId = rows[0].id;
         return next();
       }
-      console.log("[AUTH] Usuario no encontrado en la base de datos");
-      return res.status(401).json({ error: "Usuario no encontrado" });
+      console.log("[AUTH] Usuario no encontrado en la base de datos. userId:", payload.userId);
+      return res.status(401).json({ error: "Usuario no encontrado", userId: payload.userId });
     }
-    console.log("[AUTH] Token sin userId válido");
-    return res.status(401).json({ error: "Token inválido" });
+    console.log("[AUTH] Token sin userId válido. Payload:", payload);
+    return res.status(401).json({ error: "Token inválido", payload });
   } catch (err) {
     console.log("[AUTH] Error al verificar token:", err);
-    return res.status(401).json({ error: "Token inválido" });
+    if (err && typeof err === "object" && "name" in err) {
+      const errorObj = err as { name: string; expiredAt?: Date; message?: string };
+      if (errorObj.name === "TokenExpiredError") {
+        console.log("[AUTH] Token expirado. Exp:", errorObj.expiredAt);
+        return res.status(401).json({ error: "Token expirado", expiredAt: errorObj.expiredAt });
+      }
+      console.log("[AUTH] Headers:", req.headers);
+      return res.status(401).json({ error: "Token inválido", details: errorObj.message });
+    }
+    return res.status(401).json({ error: "Token inválido", details: String(err) });
   }
 }

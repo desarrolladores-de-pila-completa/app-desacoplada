@@ -56,14 +56,22 @@ export async function register(req: Request, res: Response) {
     );
     const paginaPersonal = Array.isArray(pages) && pages.length > 0 ? pages[0] : null;
 
+      // Crear entrada en el feed con enlace a la página del usuario
+      try {
+        const { crearEntradaFeed } = require('./feedController');
+        await crearEntradaFeed(uuid, username);
+      } catch (err) {
+        console.error('No se pudo crear la entrada en el feed:', err);
+      }
+
     // Generar token JWT y establecer cookie
     const token = jwt.sign(
       { userId: uuid },
       process.env.JWT_SECRET!,
       { expiresIn: "1h" }
     );
-    res.cookie("token", token, { httpOnly: true, secure: false, sameSite: "lax" });
-    res.json({ message: "Usuario creado y página personal en línea", id: uuid, paginaPersonal });
+  res.cookie("token", token, { httpOnly: true, secure: false, sameSite: "lax" });
+  res.json({ message: "Usuario creado y página personal en línea", id: uuid, username, paginaPersonal });
   } catch (error) {
     console.error(error);
     sendError(res, 500, "Error al registrar usuario");
@@ -76,7 +84,7 @@ export async function login(req: Request, res: Response) {
   try {
     const [rows] = await pool.query<RowDataPacket[]>("SELECT * FROM users WHERE email = ?", [email]);
     if (!rows || rows.length === 0) return sendError(res, 401, "Credenciales inválidas");
-    const user = rows[0] as { password: string; id: number; email: string };
+  const user = rows[0] as { password: string; id: string; email: string; username: string };
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) return sendError(res, 401, "Credenciales inválidas");
     const token = jwt.sign(
@@ -85,7 +93,7 @@ export async function login(req: Request, res: Response) {
       { expiresIn: "1h" }
     );
   res.cookie("token", token, { httpOnly: true, secure: false, sameSite: "lax" });
-  res.json({ message: "Login exitoso", id: user.id });
+  res.json({ message: "Login exitoso", id: user.id, username: user.username });
   } catch (error) {
     console.error(error);
     sendError(res, 500, "Error al iniciar sesión");

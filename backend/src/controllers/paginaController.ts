@@ -1,3 +1,19 @@
+// Obtener página por username
+
+export async function obtenerPaginaPorUsername(req: Request, res: Response) {
+  const username = req.params.username;
+  try {
+    const [users]: any = await pool.query("SELECT id FROM users WHERE username = ?", [username]);
+    if (!users || users.length === 0) return res.status(404).json({ error: "Usuario no encontrado" });
+    const userId = users[0].id;
+    const [pages]: any = await pool.query("SELECT * FROM paginas WHERE user_id = ? ORDER BY id DESC LIMIT 1", [userId]);
+    if (!pages || pages.length === 0) return res.status(404).json({ error: "Página no encontrada" });
+    res.json(pages[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al obtener página por usuario" });
+  }
+}
 // Consultar visibilidad de cada campo
 export async function consultarVisibilidadCampos(req: Request, res: Response) {
   const paginaId = req.params.id;
@@ -134,6 +150,17 @@ export async function actualizarUsuarioPagina(req: Request, res: Response) {
     if (!rows || rows.length === 0) return res.status(404).json({ error: "Página no encontrada" });
     if (String(rows[0].user_id) !== String(userId)) return res.status(403).json({ error: "No autorizado" });
     await pool.query("UPDATE paginas SET usuario = ? WHERE id = ?", [usuario, paginaId]);
+    // Actualizar el feed para ese usuario
+    if (usuario && usuario.trim()) {
+      // Sanitizar para el enlace (reemplazar espacios por guiones)
+      const enlaceUsuario = usuario.replace(/\s+/g, '-');
+      const mensaje = `Nuevo usuario registrado: <a href='/pagina/${enlaceUsuario}'>${usuario}</a>`;
+      const enlace = `/pagina/${enlaceUsuario}`;
+      await pool.query(
+        "UPDATE feed SET mensaje = ?, enlace = ? WHERE user_id = ?",
+        [mensaje, enlace, rows[0].user_id]
+      );
+    }
     res.json({ message: "Usuario de página actualizado" });
   } catch (err) {
     console.error(err);
@@ -241,7 +268,7 @@ export async function paginasPublicas(req: Request, res: Response) {
 export async function guardarComentario(req: Request, res: Response) {
   const paginaId = req.params.id;
   const { comentario } = req.body;
-  const userId = (req as any).userId;
+  const userId = (req as any).user?.id;
   if (!userId) return sendError(res, 401, "Debes estar autenticado para comentar");
   if (!comentario || typeof comentario !== "string" || comentario.trim().length === 0) {
     return sendError(res, 400, "Comentario vacío o inválido");

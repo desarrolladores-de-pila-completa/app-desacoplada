@@ -26,7 +26,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(express.static(path.join(rootPath, 'frontend')));
 
-const csrfProtection = csurf({ cookie: true });
+const csrfProtection = csurf({ cookie: { key: '_csrf' } });
 
 // Ruta para obtener el token CSRF
 app.get("/api/csrf-token", csrfProtection, (req, res) => {
@@ -36,9 +36,9 @@ app.get("/api/csrf-token", csrfProtection, (req, res) => {
 
 // Middleware de logging para depuración CSRF
 app.use(["/api/paginas", "/api/auth"], (req, res, next) => {
-  const cookieCsrf = req.cookies['csrf'] || req.cookies['_csrf'];
+  const cookieCsrf = req.cookies['_csrf'];
   const headerCsrf = req.headers['x-csrf-token'] || req.headers['csrf-token'];
-  console.log("[CSRF] Cookie:", cookieCsrf, "Header:", headerCsrf);
+  console.log("[CSRF] Cookie (_csrf):", cookieCsrf, "Header:", headerCsrf);
   next();
 });
 // Aplica CSRF a rutas que modifican estado
@@ -50,8 +50,11 @@ app.use(["/api/paginas", "/api/auth"], (req, res, next) => {
   next();
 });
 
+
+import feedRoutes from "./routes/feedRoutes";
 app.use("/api/auth", authRoutes);
 app.use("/api/paginas", paginaRoutes);
+app.use("/api/feed", feedRoutes);
 app.use(errorHandler);
 
 

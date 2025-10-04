@@ -9,7 +9,7 @@ import useAuthUser from "../hooks/useAuthUser";
 const API_URL = "http://localhost:3000";
 
 function UserPage() {
-  const { id } = useParams();
+  const { id, username } = useParams();
   const [paginaUser, setPaginaUser] = React.useState(null);
   const [comentarios, setComentarios] = React.useState([]);
   const { authUser, authUserId } = useAuthUser();
@@ -17,26 +17,32 @@ function UserPage() {
 
   React.useEffect(() => {
     async function fetchPagina() {
-      if (!id) return;
+      let pagina = null;
       try {
-        const res = await fetch(`${API_URL}/api/paginas?id=${id}`);
-        if (res.ok) {
-          const data = await res.json();
-          const pagina = Array.isArray(data) ? data[0] : null;
-          setPaginaUser(pagina);
-          if (pagina && pagina.id) {
-            const comentariosRes = await fetch(`${API_URL}/api/paginas/${pagina.id}/comentarios`);
-            if (comentariosRes.ok) {
-              const comentariosData = await comentariosRes.json();
-              setComentarios(comentariosData);
-            } else {
-              setComentarios([]);
-            }
+        if (id) {
+          // Consulta por ID
+          const res = await fetch(`${API_URL}/api/paginas?id=${id}`);
+          if (res.ok) {
+            const data = await res.json();
+            pagina = Array.isArray(data) ? data[0] : null;
+          }
+        } else if (username) {
+          // Consulta por username (nuevo endpoint)
+          const res = await fetch(`${API_URL}/api/paginas/pagina/${username}`);
+          if (res.ok) {
+            pagina = await res.json();
+          }
+        }
+        setPaginaUser(pagina);
+        if (pagina && pagina.id) {
+          const comentariosRes = await fetch(`${API_URL}/api/paginas/${pagina.id}/comentarios`);
+          if (comentariosRes.ok) {
+            const comentariosData = await comentariosRes.json();
+            setComentarios(comentariosData);
           } else {
             setComentarios([]);
           }
         } else {
-          setPaginaUser(null);
           setComentarios([]);
         }
       } catch {
@@ -45,7 +51,7 @@ function UserPage() {
       }
     }
     fetchPagina();
-  }, [id]);
+  }, [id, username]);
 
   useEffect(() => {
     function handleResize() {
@@ -64,7 +70,7 @@ function UserPage() {
   if (!paginaUser) return (
     <div style={{ maxWidth: 600, margin: "40px auto", background: "#fff", padding: 32, borderRadius: 12, boxShadow: "0 4px 24px #0002", textAlign: "center" }}>
       <h2>Página de usuario no encontrada</h2>
-      <p>Este usuario aún no ha creado su página personal o el enlace es incorrecto.</p>
+      <p>Este usuario aún no ha creado su página o el enlace es incorrecto.</p>
       <img src="https://ui-avatars.com/api/?name=Usuario" alt="Avatar" style={{ width: 120, borderRadius: "50%", margin: "24px auto" }} />
     </div>
   );
@@ -74,8 +80,8 @@ function UserPage() {
         <strong>DEBUG:</strong> Ancho de la página: {windowSize.width}px | Margen izquierdo: {Math.round(windowSize.width * 0.1)}px | Margen derecho: {Math.round(windowSize.width * 0.1)}px
       </div>
       <div style={{ width: '100%', maxWidth: 900, margin: '0 auto', boxSizing: 'border-box', padding: '0 5vw', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-        <FotoPerfil user={authUser} setUser={() => {}} editable={String(authUserId) === String(paginaUser?.user_id)} authUserId={authUserId} id={id} />
-        <UserHeader paginaUser={paginaUser} />
+  <FotoPerfil user={authUser} setUser={() => {}} editable={String(authUserId) === String(paginaUser?.user_id)} authUserId={authUserId} id={paginaUser?.user_id || id || username} />
+  <UserHeader paginaUser={paginaUser} username={paginaUser?.usuario} authUserId={authUserId} />
         <div style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', overflowX: 'hidden' }}>
           <ImageGrid paginaId={paginaUser?.id} editable={String(authUserId) === String(paginaUser?.user_id)} />
         </div>
