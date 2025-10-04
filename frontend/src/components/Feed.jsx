@@ -13,28 +13,16 @@ function Feed({ feed }) {
   return (
     <div id="section-feed" style={{ marginBottom: "32px" }}>
       <h3>Feed público</h3>
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
-        <thead>
-          <tr>
-            <th>Enlace a página</th>
-            <th>Título</th>
-            <th>Contenido</th>
-            <th>Creado en</th>
-          </tr>
-        </thead>
-        <tbody>
-          {feed.map((row) => (
-            <tr key={row.id}>
-              <td>
-                <a href={`/usuario/${row.user_id}`}>Ver página</a>
-              </td>
-              <td>{row.visible_titulo ? row.titulo : <span style={{ color: '#888' }}>Oculto</span>}</td>
-              <td>{row.visible_contenido ? row.contenido : <span style={{ color: '#888' }}>Oculto</span>}</td>
-              <td>{row.creado_en}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <ul>
+        {feed.map((row) => (
+          <li key={row.id}>
+            <span dangerouslySetInnerHTML={{ __html: row.mensaje }} />
+            {row.creado_en && (
+              <span style={{ color: '#888', marginLeft: '8px' }}>{new Date(row.creado_en).toLocaleString()}</span>
+            )}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

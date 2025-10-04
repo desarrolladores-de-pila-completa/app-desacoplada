@@ -50,14 +50,16 @@ function ImageGrid({ paginaId, editable }) {
     })
       .then(res => res.json())
       .then(() => {
-        // Actualizar la cuadrícula tras subir
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const newImages = [...images];
-          newImages[index] = e.target.result;
-          setImages(newImages);
-        };
-        reader.readAsDataURL(file);
+        // Volver a consultar las imágenes persistidas en el backend
+        fetch(`${API_URL}/api/paginas/${paginaId}/imagenes`)
+          .then(res => res.json())
+          .then(data => {
+            const imgs = [];
+            data.forEach(img => {
+              imgs[img.idx] = img.src;
+            });
+            setImages(imgs);
+          });
       });
   };
 
@@ -73,48 +75,57 @@ function ImageGrid({ paginaId, editable }) {
           justifyContent: "center",
           width: '100%'
         }}>
-          {[...images, null].map((img, idx) => (
-            idx < TOTAL_CELLS ? (
-              <div key={idx} style={{
-                border: "2px solid #1976d2",
-                borderRadius: 8,
-                background: "#f7f7f7",
-                width: "100%",
-                height: "100%",
-                minWidth: 100,
-                minHeight: 100,
-                maxWidth: 140,
-                maxHeight: 140,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                position: "relative"
-              }}>
-                {img ? (
-                  <img src={img} alt={`Imagen ${idx + 1}`} style={{ maxWidth: "100%", maxHeight: "100%", borderRadius: 6 }} />
-                ) : (
-                  editable ? (
-                    <button
-                      style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", padding: "8px 12px", borderRadius: 6, background: "#1976d2", color: "#fff", border: "none", cursor: "pointer", fontSize: 'clamp(0.9rem, 2vw, 1.1rem)' }}
-                      onClick={() => fileInputs.current[idx].click()}
-                    >
-                      Subir
-                    </button>
-                  ) : (
-                    <span style={{ color: '#888', fontSize: 'clamp(0.85rem, 2vw, 1rem)' }}>Solo el dueño puede subir imágenes</span>
-                  )
-                )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  style={{ display: "none" }}
-                  ref={el => fileInputs.current[idx] = el}
-                  onChange={e => handleImageChange(idx, e)}
-                  disabled={!editable}
-                />
-              </div>
-            ) : null
+          {images.map((img, idx) => (
+            <div key={idx} style={{
+              border: "2px solid #1976d2",
+              borderRadius: 8,
+              background: "#f7f7f7",
+              width: "100%",
+              height: "100%",
+              minWidth: 100,
+              minHeight: 100,
+              maxWidth: 140,
+              maxHeight: 140,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              position: "relative"
+            }}>
+              <img src={img} alt={`Imagen ${idx + 1}`} style={{ maxWidth: "100%", maxHeight: "100%", borderRadius: 6 }} />
+            </div>
           ))}
+          {editable && (
+            <div style={{
+              border: "2px dashed #1976d2",
+              borderRadius: 8,
+              background: "#f7f7f7",
+              width: "100%",
+              height: "100%",
+              minWidth: 100,
+              minHeight: 100,
+              maxWidth: 140,
+              maxHeight: 140,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              position: "relative"
+            }}>
+              <button
+                style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", padding: "8px 12px", borderRadius: 6, background: "#1976d2", color: "#fff", border: "none", cursor: "pointer", fontSize: 'clamp(0.9rem, 2vw, 1.1rem)' }}
+                onClick={() => fileInputs.current[images.length]?.click()}
+              >
+                Subir
+              </button>
+              <input
+                type="file"
+                accept="image/*"
+                style={{ display: "none" }}
+                ref={el => fileInputs.current[images.length] = el}
+                onChange={e => handleImageChange(images.length, e)}
+                disabled={!editable}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

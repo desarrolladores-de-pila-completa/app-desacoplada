@@ -55,21 +55,21 @@ function FotoPerfil({ user, setUser, editable, authUserId, id }) {
         body: formData
       });
       if (res.ok) {
-        const blob = await res.blob();
-        setPreview(URL.createObjectURL(blob));
         setMsg("Foto de perfil actualizada correctamente.");
+        // Volver a consultar la foto persistida en el backend
+        if (id) {
+          const fotoRes = await fetch(`${API_URL}/api/auth/user/${id}/foto`);
+          if (fotoRes.ok) {
+            const blob = await fotoRes.blob();
+            setPreview(URL.createObjectURL(blob));
+          }
+        }
       } else {
         setError("Error al subir la foto de perfil.");
       }
     } catch {
       setError("Error de red al subir la foto.");
     }
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      setPreview(ev.target.result);
-      setUser && setUser((prev) => ({ ...prev, fotoPerfil: ev.target.result }));
-    };
-    reader.readAsDataURL(file);
     if (inputRef.current) inputRef.current.value = "";
   };
 

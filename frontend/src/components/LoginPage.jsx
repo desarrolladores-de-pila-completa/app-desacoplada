@@ -10,8 +10,8 @@ function LoginPage({ logEmail, logPass, setLogEmail, setLogPass, login, showOutp
     if (result?.error) return showOutput(result.error, "error");
     showOutput("Login exitoso", "success");
     // Redirige siempre si hay id
-    if (result?.id) {
-      navigate(`/usuario/${result.id}`);
+    if (result?.username) {
+      navigate(`/pagina/${result.username}`);
     }
   };
 

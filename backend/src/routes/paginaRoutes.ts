@@ -36,14 +36,25 @@ router.get("/:id/comentarios", async (req: any, res: any) => {
 
 router.get("/", limiter, paginasPublicas);
 router.get("/:id", obtenerPagina);
-// Eliminado: ruta de edición de página
+
+// Endpoint para obtener la página por username
+import { obtenerPaginaPorUsername } from "../controllers/paginaController";
+router.get("/pagina/:username", obtenerPaginaPorUsername);
+// Endpoint para actualizar el nombre de usuario de la página
+router.post("/:id/usuario", authMiddleware, actualizarUsuarioPagina);
+// Comentarios
 router.post("/:id/comentarios", authMiddleware, guardarComentario);
 
 // Endpoint para subir imágenes a una página (BLOB)
-router.post("/:id/imagenes", authMiddleware, async (req: any, res: any) => {
+router.post("/:id/imagenes", authMiddleware, upload.single("imagen"), async (req: any, res: any) => {
   const paginaId = req.params.id;
-  const { index } = req.body;
+  // Usar multer para procesar todos los campos del formulario
   const file = req.file;
+  // 'index' puede venir como string, asegúrate de convertirlo a número
+  let idx = req.body.index;
+  if (Array.isArray(idx)) idx = idx[0];
+  idx = Number(idx);
+  if (isNaN(idx)) return res.status(400).json({ error: "Índice de imagen inválido" });
   if (!file) return res.status(400).json({ error: "No se recibió imagen" });
   try {
     // Verificar que el usuario autenticado es el dueño de la página
@@ -62,7 +73,7 @@ router.post("/:id/imagenes", authMiddleware, async (req: any, res: any) => {
     // Guardar imagen en la base de datos
     await require("../middlewares/db").pool.query(
       "REPLACE INTO imagenes (pagina_id, idx, imagen) VALUES (?, ?, ?)",
-      [paginaId, index, file.buffer]
+      [paginaId, idx, file.buffer]
     );
     res.json({ message: "Imagen subida" });
   } catch (err) {

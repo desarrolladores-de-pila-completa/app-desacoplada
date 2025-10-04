@@ -1,7 +1,9 @@
 import React from "react";
+import useAuthUser from "../hooks/useAuthUser";
 const API_URL = "http://localhost:3000";
 
 function AgregarComentario({ paginaId }) {
+  const { authUserId } = useAuthUser();
   const [comentario, setComentario] = React.useState("");
   const [msg, setMsg] = React.useState("");
   const [error, setError] = React.useState("");
@@ -11,8 +13,10 @@ function AgregarComentario({ paginaId }) {
     setMsg("");
     setError("");
     try {
-      const csrfRes = await fetch("/api/csrf-token", { credentials: "include" });
-      const { csrfToken } = await csrfRes.json();
+      // Obtener el token CSRF desde el endpoint y usar el valor del JSON
+      const csrfRes = await fetch(`${API_URL}/api/csrf-token`, { credentials: "include" });
+      const csrfData = await csrfRes.json();
+      const csrfToken = csrfData.csrfToken;
       const res = await fetch(`${API_URL}/api/paginas/${paginaId}/comentarios`, {
         method: "POST",
         headers: {
@@ -33,6 +37,9 @@ function AgregarComentario({ paginaId }) {
     }
   };
 
+  if (!authUserId) {
+    return <div style={{ color: '#888', marginTop: 16 }}>Debes iniciar sesión para agregar un comentario.</div>;
+  }
   return (
     <form onSubmit={handleSubmit} style={{ margin: '24px auto', width: 400, height: 300, maxWidth: 400, maxHeight: 300, minWidth: 400, minHeight: 300, boxSizing: 'border-box', background: '#f7f7f7', borderRadius: 8, padding: 16, display: 'flex', flexDirection: 'column', alignItems: 'stretch', justifyContent: 'flex-start' }}>
       <label>Agregar comentario:</label>

@@ -16,14 +16,17 @@ let pool: mysql.Pool;
 
 async function initDatabase() {
   try {
-    // Conexión sin base de datos para crearla si no existe
+
+    console.log("[DB] Conectando a MySQL para crear la base de datos si no existe...");
     const connection = await mysql.createConnection({
       host: process.env.DB_HOST,
       user: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
     });
     await connection.query(`CREATE DATABASE IF NOT EXISTS \`${process.env.DB_NAME}\``);
+    console.log(`[DB] Base de datos '${process.env.DB_NAME}' verificada/creada.`);
     await connection.end();
+    console.log("[DB] Conexión inicial cerrada. Inicializando pool con la base de datos...");
 
     // Ahora sí, crear el pool con la base de datos
     pool = mysql.createPool({
@@ -37,6 +40,18 @@ async function initDatabase() {
     if (!pool) {
       throw new Error("No se pudo inicializar el pool de MySQL. Verifica la configuración de la base de datos.");
     }
+
+
+    // Crear tabla 'users' si no existe
+    await pool.query(`CREATE TABLE IF NOT EXISTS users (
+      id VARCHAR(36) PRIMARY KEY,
+      email VARCHAR(255) NOT NULL UNIQUE,
+      password VARCHAR(255) NOT NULL,
+      username VARCHAR(255) NOT NULL UNIQUE,
+      foto_perfil LONGBLOB,
+      creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+    console.log("Tabla 'users' verificada/creada correctamente.");
 
     // Migrar columnas de visibilidad y foto_perfil si no existen
     try {
@@ -88,6 +103,15 @@ async function initDatabase() {
       creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`);
     console.log("Tabla 'paginas' verificada/creada correctamente con campos propietario, descripcion, usuario, comentarios, visible y oculto.");
+    // Crear tabla 'feed' para entradas de usuarios
+    await pool.query(`CREATE TABLE IF NOT EXISTS feed (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id VARCHAR(36) NOT NULL,
+      mensaje TEXT,
+      enlace VARCHAR(255),
+      creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+    console.log("Tabla 'feed' verificada/creada correctamente.");
     // Migrar columnas de visibilidad y oculto si no existen
     try {
       const [cols]: any = await pool.query("SHOW COLUMNS FROM paginas");

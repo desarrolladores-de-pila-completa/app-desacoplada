@@ -23,17 +23,16 @@ function RegisterPage({ regEmail, regPass, setRegEmail, setRegPass, showOutput, 
     const result = await register(regEmail, regPass);
     if (result?.error) return showOutput(result.error, "error");
     showOutput("Registro exitoso", "success");
-    if (result.paginaPersonal) {
+    if (result.paginaPersonal && result.username) {
       setPaginaPersonal(result.paginaPersonal);
-      // Verifica si el usuario es dueño de la página creada
       if (String(result.paginaPersonal.user_id) === String(result.id)) {
         setEsDueno(true);
       } else {
         setEsDueno(false);
       }
-  // Redirige a la página personal y recarga para actualizar autenticación
-  navigate(`/usuario/${result.id}`);
-  window.location.reload();
+      // Redirige a la página personal por username
+      navigate(`/pagina/${result.username}`);
+      window.location.reload();
     }
   };
 

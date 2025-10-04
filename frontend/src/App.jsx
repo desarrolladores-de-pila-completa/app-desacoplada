@@ -36,7 +36,7 @@ function MainApp({ showOutput }) {
   const cargarFeed = React.useCallback(async () => {
     showOutput("Cargando feed...", "info");
     try {
-      const res = await apiCall(`${API_URL}/paginas`, "GET", {
+      const res = await apiCall(`${API_URL}/feed`, "GET", {
         successMsg: "Feed cargado correctamente.",
         errorMsg: "Error al cargar el feed",
       });
@@ -129,7 +129,7 @@ export default function App() {
     if (!response.ok) {
       return { error: data.error || data.message || "Error en el login" };
     }
-    return { message: data.message || "Login exitoso", id: data.id };
+    return { message: data.message || "Login exitoso", id: data.id, username: data.username };
   };
 
   function toggleOutputMinimize() {
@@ -173,7 +173,7 @@ export default function App() {
             />
           }
         />
-        <Route path="/usuario/:id" element={<UserPage />} />
+  <Route path="/pagina/:username" element={<UserPage />} />
       </Routes>
       <OutputMenu
         outputMsg={output.message}
