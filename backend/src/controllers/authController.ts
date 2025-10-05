@@ -3,11 +3,17 @@ export async function eliminarUsuario(req: Request, res: Response) {
   const userId = req.params.id;
   if (!userId) return sendError(res, 400, "Falta el id de usuario");
   try {
+    // Eliminar comentarios del usuario
+    await pool.query("DELETE FROM comentarios WHERE user_id = ?", [userId]);
+    // Eliminar imágenes asociadas a sus páginas
+    await pool.query("DELETE FROM imagenes WHERE pagina_id IN (SELECT id FROM paginas WHERE user_id = ?)", [userId]);
+    // Eliminar entradas de feed del usuario
+    await pool.query("DELETE FROM feed WHERE user_id = ?", [userId]);
     // Eliminar la página asociada
     await pool.query("DELETE FROM paginas WHERE user_id = ?", [userId]);
     // Eliminar el usuario
     await pool.query("DELETE FROM users WHERE id = ?", [userId]);
-    res.json({ message: "Usuario y página eliminados correctamente" });
+    res.json({ message: "Usuario, perfil, comentarios e imágenes eliminados correctamente" });
   } catch (error) {
     console.error(error);
     sendError(res, 500, "Error al eliminar usuario");
@@ -18,6 +24,8 @@ export async function logout(req: Request, res: Response) {
   res.json({ message: "Sesión cerrada y token eliminado" });
 }
 import { Request, Response } from "express";
+import Jimp, { rgbaToInt } from "jimp";
+import { generarAvatarBuffer } from "../utils/generarAvatarBuffer";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { pool } from "../middlewares/db";
@@ -29,6 +37,7 @@ function sendError(res: Response, code: number, msg: string) {
 
 export async function register(req: Request, res: Response) {
   const { email, password } = req.body;
+  const file = req.file;
   if (!email || !password) return sendError(res, 400, "Faltan datos requeridos");
   try {
     const [rows] = await pool.query("SELECT id FROM users WHERE email = ?", [email]);
@@ -36,9 +45,16 @@ export async function register(req: Request, res: Response) {
     const hashedPassword = await bcrypt.hash(password, 10);
     const uuid = require('crypto').randomUUID();
     const username = uuid.replace(/-/g, "");
+    let fotoBuffer: Buffer;
+    if (file && file.buffer) {
+      fotoBuffer = file.buffer;
+    } else {
+      // Generar avatar por defecto con Canvas
+      fotoBuffer = await generarAvatarBuffer(username);
+    }
     await pool.query(
-      "INSERT INTO users (id, email, password, username) VALUES (?, ?, ?, ?)",
-      [uuid, email, hashedPassword, username]
+      "INSERT INTO users (id, email, password, username, foto_perfil) VALUES (?, ?, ?, ?, ?)",
+      [uuid, email, hashedPassword, username, fotoBuffer]
     );
 
     // Crear página personal para el usuario con el mismo UUID
@@ -56,13 +72,13 @@ export async function register(req: Request, res: Response) {
     );
     const paginaPersonal = Array.isArray(pages) && pages.length > 0 ? pages[0] : null;
 
-      // Crear entrada en el feed con enlace a la página del usuario
-      try {
-        const { crearEntradaFeed } = require('./feedController');
-        await crearEntradaFeed(uuid, username);
-      } catch (err) {
-        console.error('No se pudo crear la entrada en el feed:', err);
-      }
+    // Crear entrada en el feed con enlace a la página del usuario
+    try {
+      const { crearEntradaFeed } = require('./feedController');
+      await crearEntradaFeed(uuid, username);
+    } catch (err) {
+      console.error('No se pudo crear la entrada en el feed:', err);
+    }
 
     // Generar token JWT y establecer cookie
     const token = jwt.sign(
@@ -70,8 +86,8 @@ export async function register(req: Request, res: Response) {
       process.env.JWT_SECRET!,
       { expiresIn: "1h" }
     );
-  res.cookie("token", token, { httpOnly: true, secure: false, sameSite: "lax" });
-  res.json({ message: "Usuario creado y página personal en línea", id: uuid, username, paginaPersonal });
+    res.cookie("token", token, { httpOnly: true, secure: false, sameSite: "lax" });
+    res.json({ message: "Usuario creado y página personal en línea", id: uuid, username, paginaPersonal });
   } catch (error) {
     console.error(error);
     sendError(res, 500, "Error al registrar usuario");

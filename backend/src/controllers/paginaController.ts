@@ -1,3 +1,15 @@
+// Obtener página por user_id (UUID sin guiones)
+export async function obtenerPaginaPorUserId(req: Request, res: Response) {
+  const userId = req.params.user_id;
+  try {
+    const [pages]: any = await pool.query("SELECT * FROM paginas WHERE user_id = ? ORDER BY id DESC LIMIT 1", [userId]);
+    if (!pages || pages.length === 0) return res.status(404).json({ error: "Página no encontrada" });
+    res.json(pages[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al obtener página por user_id" });
+  }
+}
 // Obtener página por username
 
 export async function obtenerPaginaPorUsername(req: Request, res: Response) {
@@ -149,12 +161,19 @@ export async function actualizarUsuarioPagina(req: Request, res: Response) {
     const [rows]: any = await pool.query("SELECT user_id FROM paginas WHERE id = ?", [paginaId]);
     if (!rows || rows.length === 0) return res.status(404).json({ error: "Página no encontrada" });
     if (String(rows[0].user_id) !== String(userId)) return res.status(403).json({ error: "No autorizado" });
-    await pool.query("UPDATE paginas SET usuario = ? WHERE id = ?", [usuario, paginaId]);
+  await pool.query("UPDATE paginas SET usuario = ? WHERE id = ?", [usuario, paginaId]);
+  // Sanitizar username para la URL (sin espacios, solo guiones)
+  const usernameSanitizado = usuario.replace(/\s+/g, '-');
+  // Generar nueva foto de perfil con el nuevo nombre usando Canvas
+  const { generarAvatarBuffer } = require("../utils/generarAvatarBuffer");
+  const nuevaFotoBuffer = await generarAvatarBuffer(usernameSanitizado);
+  await pool.query("UPDATE users SET username = ?, foto_perfil = ? WHERE id = ?", [usernameSanitizado, nuevaFotoBuffer, rows[0].user_id]);
     // Actualizar el feed para ese usuario
     if (usuario && usuario.trim()) {
       // Sanitizar para el enlace (reemplazar espacios por guiones)
       const enlaceUsuario = usuario.replace(/\s+/g, '-');
-      const mensaje = `Nuevo usuario registrado: <a href='/pagina/${enlaceUsuario}'>${usuario}</a>`;
+      const fotoUrl = `/api/auth/user/${rows[0].user_id}/foto`;
+      const mensaje = `Nuevo usuario registrado: <img src='${fotoUrl}' alt='foto' style='width:32px;height:32px;border-radius:50%;vertical-align:middle;margin-right:8px;' /><a href='/pagina/${enlaceUsuario}'>${usuario}</a>`;
       const enlace = `/pagina/${enlaceUsuario}`;
       await pool.query(
         "UPDATE feed SET mensaje = ?, enlace = ? WHERE user_id = ?",
@@ -236,6 +255,37 @@ export async function obtenerPagina(req: Request, res: Response) {
 }
 
 // ...existing code...
+// Eliminar usuario y todo su rastro (perfil, comentarios, imágenes, feed)
+export async function eliminarUsuarioTotal(req: Request, res: Response) {
+  const userId = req.params.id;
+  const authUserId = (req as any).userId;
+  // Solo el propio usuario puede borrar su cuenta
+  if (String(userId) !== String(authUserId)) {
+    return res.status(403).json({ error: "No autorizado" });
+  }
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+  // Eliminar comentarios
+  await conn.query("DELETE FROM comentarios WHERE user_id = ?", [userId]);
+  // Eliminar imágenes (por pagina_id)
+  await conn.query("DELETE FROM imagenes WHERE pagina_id IN (SELECT id FROM paginas WHERE user_id = ?)", [userId]);
+  // Eliminar feed
+  await conn.query("DELETE FROM feed WHERE user_id = ?", [userId]);
+  // Eliminar página(s)
+  await conn.query("DELETE FROM paginas WHERE user_id = ?", [userId]);
+  // Eliminar usuario
+  await conn.query("DELETE FROM users WHERE id = ?", [userId]);
+    await conn.commit();
+    res.json({ message: "Usuario y todos sus datos eliminados" });
+  } catch (err) {
+    await conn.rollback();
+    console.error(err);
+    res.status(500).json({ error: "Error al eliminar usuario y sus datos" });
+  } finally {
+    conn.release();
+  }
+}
 
 function sendError(res: Response, code: number, msg: string) {
   return res.status(code).json({ error: msg });

@@ -13,8 +13,6 @@ function validatePassword(password) {
 
 function RegisterPage({ regEmail, regPass, setRegEmail, setRegPass, showOutput, register }) {
   const navigate = useNavigate();
-  const [paginaPersonal, setPaginaPersonal] = React.useState(null);
-  const [esDueno, setEsDueno] = React.useState(false);
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -23,16 +21,10 @@ function RegisterPage({ regEmail, regPass, setRegEmail, setRegPass, showOutput, 
     const result = await register(regEmail, regPass);
     if (result?.error) return showOutput(result.error, "error");
     showOutput("Registro exitoso", "success");
-    if (result.paginaPersonal && result.username) {
-      setPaginaPersonal(result.paginaPersonal);
-      if (String(result.paginaPersonal.user_id) === String(result.id)) {
-        setEsDueno(true);
-      } else {
-        setEsDueno(false);
-      }
-      // Redirige a la página personal por username
-      navigate(`/pagina/${result.username}`);
-      window.location.reload();
+    // Redirigir automáticamente a la página personal del usuario
+    if (result.username) {
+      const sanitized = result.username.replace(/\s+/g, '-');
+      navigate(`/pagina/${sanitized}`);
     }
   };
 
@@ -64,17 +56,7 @@ function RegisterPage({ regEmail, regPass, setRegEmail, setRegPass, showOutput, 
         </div>
         <button type="submit">Registrar</button>
       </form>
-      {paginaPersonal && (
-        <div style={{ marginTop: 32, background: "#f7f7f7", padding: 24, borderRadius: 8 }}>
-          <h3>{paginaPersonal.titulo}</h3>
-          <p>{paginaPersonal.contenido}</p>
-          {esDueno ? (
-            <div style={{ color: 'green', fontWeight: 'bold', marginTop: '8px' }}>ERES EL DUEÑO</div>
-          ) : (
-            <div style={{ color: 'red', fontWeight: 'bold', marginTop: '8px' }}>NO ERES EL DUEÑO</div>
-          )}
-        </div>
-      )}
+      {/* Cartel de página personal oculto tras registro, solo redirige */}
     </div>
   );
 }

@@ -2,7 +2,7 @@
 import { Router } from "express";
 // import rateLimit from "express-rate-limit";
 
-import { paginasPublicas, guardarComentario, obtenerPagina, actualizarVisibilidad, consultarVisibilidad, actualizarPropietario, actualizarDescripcion, actualizarUsuarioPagina, actualizarComentariosPagina, consultarPropietario, consultarDescripcion, consultarUsuarioPagina, consultarComentariosPagina } from "../controllers/paginaController";
+import { paginasPublicas, guardarComentario, obtenerPagina, actualizarVisibilidad, consultarVisibilidad, actualizarPropietario, actualizarDescripcion, actualizarUsuarioPagina, actualizarComentariosPagina, consultarPropietario, consultarDescripcion, consultarUsuarioPagina, consultarComentariosPagina, eliminarUsuarioTotal } from "../controllers/paginaController";
 import { authMiddleware } from "../middlewares/auth";
 import multer from "multer";
 
@@ -40,6 +40,10 @@ router.get("/:id", obtenerPagina);
 // Endpoint para obtener la página por username
 import { obtenerPaginaPorUsername } from "../controllers/paginaController";
 router.get("/pagina/:username", obtenerPaginaPorUsername);
+
+// Endpoint para obtener página por user_id (UUID sin guiones)
+import { obtenerPaginaPorUserId } from "../controllers/paginaController";
+router.get("/pagina/id/:user_id", obtenerPaginaPorUserId);
 // Endpoint para actualizar el nombre de usuario de la página
 router.post("/:id/usuario", authMiddleware, actualizarUsuarioPagina);
 // Comentarios
@@ -101,5 +105,8 @@ router.get("/:id/imagenes", async (req: any, res: any) => {
     res.status(500).json({ error: "Error al obtener imágenes" });
   }
 });
+
+// Endpoint para eliminar usuario y todo su rastro
+router.delete("/usuario/:id", authMiddleware, eliminarUsuarioTotal);
 
 export default router;
