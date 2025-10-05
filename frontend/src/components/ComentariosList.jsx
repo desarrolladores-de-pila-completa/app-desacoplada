@@ -1,3 +1,7 @@
+function formatUUID(uuid) {
+  if (!uuid || uuid.length !== 32) return uuid;
+  return `${uuid.slice(0,8)}-${uuid.slice(8,12)}-${uuid.slice(12,16)}-${uuid.slice(16,20)}-${uuid.slice(20)}`;
+}
 
 import React from "react";
 import { Link } from "react-router-dom";
@@ -14,7 +18,7 @@ function ComentariosList({ comentarios }) {
             <strong>{com.comentario}</strong>
             <div style={{ fontSize: '0.9em', color: '#555' }}>
               Publicado por: {com.user_id ? (
-                <Link to={`/usuario/${com.user_id}`} style={{ color: '#007bff', textDecoration: 'underline' }}>
+                <Link to={com.username ? `/pagina/${encodeURIComponent(com.username.replace(/\s+/g, '-'))}` : `/pagina/${encodeURIComponent(com.user_id.replace(/-/g, ""))}`} style={{ color: '#007bff', textDecoration: 'underline' }}>
                   {com.username || com.user_id}
                 </Link>
               ) : 'Anónimo'}

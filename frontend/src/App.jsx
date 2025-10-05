@@ -111,7 +111,7 @@ export default function App() {
     if (!response.ok) {
       return { error: data.error || data.message || "Error en el registro" };
     }
-    return { message: data.message || "Registro exitoso", id: data.id, paginaPersonal: data.paginaPersonal };
+  return { message: data.message || "Registro exitoso", id: data.id, username: data.username, paginaPersonal: data.paginaPersonal };
   };
 
   const login = async (email, password) => {

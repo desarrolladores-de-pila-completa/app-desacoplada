@@ -3,10 +3,7 @@ const API_URL = "http://localhost:3000";
 
 function FotoPerfil({ user, setUser, editable, authUserId, id }) {
   const inputRef = React.useRef();
-  const [preview, setPreview] = React.useState(() => {
-    const nombre = user?.username || user?.email || "Usuario";
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(nombre)}`;
-  });
+  const [preview, setPreview] = React.useState("");
   const [msg, setMsg] = React.useState("");
   const [error, setError] = React.useState("");
 
@@ -19,16 +16,14 @@ function FotoPerfil({ user, setUser, editable, authUserId, id }) {
           const blob = await res.blob();
           setPreview(URL.createObjectURL(blob));
         } else {
-          const nombre = user?.username || user?.email || "Usuario";
-          setPreview(`https://ui-avatars.com/api/?name=${encodeURIComponent(nombre)}`);
+          setPreview("");
         }
       } catch {
-        const nombre = user?.username || user?.email || "Usuario";
-        setPreview(`https://ui-avatars.com/api/?name=${encodeURIComponent(nombre)}`);
+        setPreview("");
       }
     }
     fetchFoto();
-  }, [id, user?.username, user?.email]);
+  }, [id]);
 
   const handleClick = () => {
     if (editable && inputRef.current) {
@@ -75,30 +70,47 @@ function FotoPerfil({ user, setUser, editable, authUserId, id }) {
 
   return (
     <div style={{ textAlign: "center", marginBottom: 24 }}>
-      <img
-        src={preview}
-        alt="Foto de perfil"
-        style={{
+      {preview ? (
+        <img
+          src={preview}
+          alt="Foto de perfil"
+          style={{
+            width: 'clamp(80px, 22vw, 120px)',
+            height: 'clamp(80px, 22vw, 120px)',
+            objectFit: "cover",
+            borderRadius: "50%",
+            border: editable ? "3px solid #1976d2" : "2px solid #ccc",
+            boxShadow: editable ? "0 0 8px #1976d2" : undefined,
+            display: "block",
+            margin: "0 auto 12px auto",
+            cursor: editable ? "pointer" : "default",
+            transition: "box-shadow 0.2s, border 0.2s"
+          }}
+          onClick={editable ? handleClick : undefined}
+          title={editable ? "Haz clic para cambiar la foto" : undefined}
+          onMouseOver={e => {
+            if (editable) e.currentTarget.style.boxShadow = "0 0 16px #1976d2";
+          }}
+          onMouseOut={e => {
+            if (editable) e.currentTarget.style.boxShadow = "0 0 8px #1976d2";
+          }}
+        />
+      ) : (
+        <div style={{
           width: 'clamp(80px, 22vw, 120px)',
           height: 'clamp(80px, 22vw, 120px)',
-          objectFit: "cover",
           borderRadius: "50%",
-          border: editable ? "3px solid #1976d2" : "2px solid #ccc",
-          boxShadow: editable ? "0 0 8px #1976d2" : undefined,
-          display: "block",
-          margin: "0 auto 12px auto",
-          cursor: editable ? "pointer" : "default",
-          transition: "box-shadow 0.2s, border 0.2s"
-        }}
-        onClick={editable ? handleClick : undefined}
-        title={editable ? "Haz clic para cambiar la foto" : undefined}
-        onMouseOver={e => {
-          if (editable) e.currentTarget.style.boxShadow = "0 0 16px #1976d2";
-        }}
-        onMouseOut={e => {
-          if (editable) e.currentTarget.style.boxShadow = "0 0 8px #1976d2";
-        }}
-      />
+          background: '#e0e0e0',
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 32,
+          color: '#888',
+          margin: "0 auto 12px auto"
+        }}>
+          <span>👤</span>
+        </div>
+      )}
       {editable && (
         <input
           type="file"

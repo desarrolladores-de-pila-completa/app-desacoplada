@@ -4,7 +4,9 @@ import { pool } from '../middlewares/db';
 
 export async function crearEntradaFeed(userId: string, username: string) {
   const enlace = `/pagina/${username}`;
-  const mensaje = `Nuevo usuario registrado: <a href='${enlace}'>${username}</a>`;
+  // Vista previa de la foto de perfil (usar endpoint por id)
+  const fotoUrl = `/api/auth/user/${userId}/foto`;
+  const mensaje = `Nuevo usuario registrado: <img src='${fotoUrl}' alt='foto' style='width:32px;height:32px;border-radius:50%;vertical-align:middle;margin-right:8px;' /><a href='${enlace}'>${username}</a>`;
   await pool.query(
     'INSERT INTO feed (user_id, mensaje, enlace) VALUES (?, ?, ?)',
     [userId, mensaje, enlace]
