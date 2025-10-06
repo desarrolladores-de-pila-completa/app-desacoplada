@@ -6,7 +6,7 @@ import { errorHandler } from "./middlewares/errorHandler";
 import cookieParser from "cookie-parser";
 import path from "path";
 import { pool, initDatabase } from "./middlewares/db";
-import csurf from "csurf";
+import csrf from "csrf";
 
 const rootPath = path.resolve(__dirname, '../../../');
 
@@ -27,11 +27,15 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(express.static(path.join(rootPath, 'frontend')));
 
-const csrfProtection = csurf({ cookie: { key: '_csrf' } });
+// Configurar CSRF con el nuevo paquete
+const tokens = new csrf();
+const secret = tokens.secretSync();
 
 // Ruta para obtener el token CSRF
-app.get("/api/csrf-token", csrfProtection, (req, res) => {
-  res.json({ csrfToken: req.csrfToken() });
+app.get("/api/csrf-token", (req, res) => {
+  const token = tokens.create(secret);
+  res.cookie('_csrf', token, { httpOnly: false, sameSite: 'lax' });
+  res.json({ csrfToken: token });
 });
 
 
@@ -53,13 +57,15 @@ app.use(["/api/paginas", "/api/auth"], (req, res, next) => {
       // Excluir CSRF para peticiones móviles
       return next();
     } else {
-      // Si el header CSRF está presente, úsalo como fuente única
+      // Verificar token CSRF
       const headerCsrf = req.headers['x-csrf-token'] || req.headers['csrf-token'];
-      if (headerCsrf) {
-        req.cookies['_csrf'] = headerCsrf;
-        req.headers['cookie'] = '';
+      const cookieCsrf = req.cookies['_csrf'];
+      const token = headerCsrf || cookieCsrf;
+      
+      if (!token || !tokens.verify(secret, token)) {
+        return res.status(403).json({ error: 'Invalid CSRF token' });
       }
-      return csrfProtection(req, res, next);
+      return next();
     }
   }
   next();
