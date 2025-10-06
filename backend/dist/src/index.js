@@ -11,7 +11,7 @@ const errorHandler_1 = require("./middlewares/errorHandler");
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const path_1 = __importDefault(require("path"));
 const db_1 = require("./middlewares/db");
-const csurf_1 = __importDefault(require("csurf"));
+const csrf_1 = __importDefault(require("csrf"));
 const rootPath = path_1.default.resolve(__dirname, '../../../');
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)({
@@ -27,10 +27,14 @@ app.use((0, cors_1.default)({
 app.use(express_1.default.json());
 app.use((0, cookie_parser_1.default)());
 app.use(express_1.default.static(path_1.default.join(rootPath, 'frontend')));
-const csrfProtection = (0, csurf_1.default)({ cookie: { key: '_csrf' } });
+// Configurar CSRF con el nuevo paquete
+const tokens = new csrf_1.default();
+const secret = tokens.secretSync();
 // Ruta para obtener el token CSRF
-app.get("/api/csrf-token", csrfProtection, (req, res) => {
-    res.json({ csrfToken: req.csrfToken() });
+app.get("/api/csrf-token", (req, res) => {
+    const token = tokens.create(secret);
+    res.cookie('_csrf', token, { httpOnly: false, sameSite: 'lax' });
+    res.json({ csrfToken: token });
 });
 // Middleware de logging para depuración CSRF
 app.use(["/api/paginas", "/api/auth"], (req, res, next) => {
@@ -51,13 +55,14 @@ app.use(["/api/paginas", "/api/auth"], (req, res, next) => {
             return next();
         }
         else {
-            // Si el header CSRF está presente, úsalo como fuente única
+            // Verificar token CSRF
             const headerCsrf = req.headers['x-csrf-token'] || req.headers['csrf-token'];
-            if (headerCsrf) {
-                req.cookies['_csrf'] = headerCsrf;
-                req.headers['cookie'] = '';
+            const cookieCsrf = req.cookies['_csrf'];
+            const token = headerCsrf || cookieCsrf;
+            if (!token || !tokens.verify(secret, token)) {
+                return res.status(403).json({ error: 'Invalid CSRF token' });
             }
-            return csrfProtection(req, res, next);
+            return next();
         }
     }
     next();
