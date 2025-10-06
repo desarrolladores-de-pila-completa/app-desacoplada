@@ -1,15 +1,16 @@
+# Environment variables
 .env
-node_modules/
-dist/
-*.log
-package-lock.json
 
-# React Native specific ignores
+# Solo ignoramos node_modules para evitar archivos innecesarios
+node_modules/
 **/node_modules/
+
+# Archivos de build temporales que se regeneran
 **/android/build/
 **/android/.gradle/
 **/ios/build/
 **/.bundle/
-**/.idea/
 **/android/app/build/
 **/android/app/.cxx/
+# Logs
+*.log
