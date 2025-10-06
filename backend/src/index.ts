@@ -17,7 +17,8 @@ app.use(
       "http://127.0.0.1:5500", 
       "http://localhost:5500",
       "http://localhost:5173",  // Vite dev server
-      "http://127.0.0.1:5173"   // Vite dev server (127.0.0.1)
+      "http://127.0.0.1:5173",   // Vite dev server (127.0.0.1)
+      "http://10.0.2.2:3000"     // Emulador Android
     ],
     credentials: true,
   })
@@ -43,9 +44,23 @@ app.use(["/api/paginas", "/api/auth"], (req, res, next) => {
 });
 // Aplica CSRF a rutas que modifican estado
 // Solo aplicar CSRF a métodos que modifican datos
+// Middleware CSRF adaptado para aceptar solo el header en peticiones móviles
 app.use(["/api/paginas", "/api/auth"], (req, res, next) => {
   if (["POST", "PUT", "DELETE"].includes(req.method)) {
-    return csrfProtection(req, res, next);
+    const userAgent = req.headers['user-agent'] || '';
+    console.log('[CSRF] User-Agent:', userAgent);
+    if (userAgent.includes('ReactNative') || userAgent.includes('okhttp')) {
+      // Excluir CSRF para peticiones móviles
+      return next();
+    } else {
+      // Si el header CSRF está presente, úsalo como fuente única
+      const headerCsrf = req.headers['x-csrf-token'] || req.headers['csrf-token'];
+      if (headerCsrf) {
+        req.cookies['_csrf'] = headerCsrf;
+        req.headers['cookie'] = '';
+      }
+      return csrfProtection(req, res, next);
+    }
   }
   next();
 });

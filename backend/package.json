@@ -2,7 +2,7 @@
   "name": "backend",
   "version": "1.0.0",
   "scripts": {
-    "build": "tsc --project backend/tsconfig.json",
+  "build": "tsc --project tsconfig.json",
     "dev:backend": "nodemon --watch src --exec node dist/src/index.js",
     "start": "npm run build && concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev": "npm run dev:backend"

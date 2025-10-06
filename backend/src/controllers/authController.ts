@@ -96,20 +96,30 @@ export async function register(req: Request, res: Response) {
 
 export async function login(req: Request, res: Response) {
   const { email, password } = req.body;
+  console.log('[LOGIN] Email recibido:', email);
+  console.log('[LOGIN] Contraseña recibida:', password);
   if (!email || !password) return sendError(res, 400, "Faltan datos requeridos");
   try {
     const [rows] = await pool.query<RowDataPacket[]>("SELECT * FROM users WHERE email = ?", [email]);
-    if (!rows || rows.length === 0) return sendError(res, 401, "Credenciales inválidas");
-  const user = rows[0] as { password: string; id: string; email: string; username: string };
+    console.log('[LOGIN] Resultado búsqueda usuario:', rows);
+    if (!rows || rows.length === 0) {
+      console.log('[LOGIN] Usuario no encontrado para email:', email);
+      return sendError(res, 401, "Credenciales inválidas");
+    }
+    const user = rows[0] as { password: string; id: string; email: string; username: string };
     const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) return sendError(res, 401, "Credenciales inválidas");
+    console.log('[LOGIN] Contraseña válida:', isPasswordValid);
+    if (!isPasswordValid) {
+      console.log('[LOGIN] Contraseña incorrecta para email:', email);
+      return sendError(res, 401, "Credenciales inválidas");
+    }
     const token = jwt.sign(
       { userId: user.id },
       process.env.JWT_SECRET!,
       { expiresIn: "1h" }
     );
   res.cookie("token", token, { httpOnly: true, secure: false, sameSite: "lax" });
-  res.json({ message: "Login exitoso", id: user.id, username: user.username });
+  res.json({ message: "Login exitoso", id: user.id, username: user.username, token });
   } catch (error) {
     console.error(error);
     sendError(res, 500, "Error al iniciar sesión");
