@@ -1,0 +1,163 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.pool = void 0;
+exports.initDatabase = initDatabase;
+const promise_1 = __importDefault(require("mysql2/promise"));
+const dotenv_1 = __importDefault(require("dotenv"));
+const path_1 = __importDefault(require("path"));
+const fs_1 = __importDefault(require("fs"));
+const envPath = path_1.default.resolve(process.cwd(), "backend/.env");
+if (fs_1.default.existsSync(envPath)) {
+    dotenv_1.default.config({ path: envPath });
+}
+else {
+    dotenv_1.default.config();
+}
+let pool;
+async function initDatabase() {
+    try {
+        console.log("[DB] Conectando a MySQL para crear la base de datos si no existe...");
+        const connection = await promise_1.default.createConnection({
+            host: process.env.DB_HOST,
+            user: process.env.DB_USER,
+            password: process.env.DB_PASSWORD,
+        });
+        await connection.query(`CREATE DATABASE IF NOT EXISTS \`${process.env.DB_NAME}\``);
+        console.log(`[DB] Base de datos '${process.env.DB_NAME}' verificada/creada.`);
+        await connection.end();
+        console.log("[DB] Conexión inicial cerrada. Inicializando pool con la base de datos...");
+        // Ahora sí, crear el pool con la base de datos
+        exports.pool = pool = promise_1.default.createPool({
+            host: process.env.DB_HOST,
+            user: process.env.DB_USER,
+            password: process.env.DB_PASSWORD,
+            database: process.env.DB_NAME,
+        });
+        // Verificar que el pool está inicializado correctamente
+        if (!pool) {
+            throw new Error("No se pudo inicializar el pool de MySQL. Verifica la configuración de la base de datos.");
+        }
+        // Crear tabla 'users' si no existe
+        await pool.query(`CREATE TABLE IF NOT EXISTS users (
+      id VARCHAR(36) PRIMARY KEY,
+      email VARCHAR(255) NOT NULL UNIQUE,
+      password VARCHAR(255) NOT NULL,
+      username VARCHAR(255) NOT NULL UNIQUE,
+      foto_perfil LONGBLOB,
+      creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+        console.log("Tabla 'users' verificada/creada correctamente.");
+        // Migrar columnas de visibilidad y foto_perfil si no existen
+        try {
+            const [colsPaginas] = await pool.query("SHOW COLUMNS FROM paginas");
+            const colNamesPaginas = colsPaginas.map((c) => c.Field);
+            const visCols = [
+                "visible_titulo",
+                "visible_contenido",
+                "visible_descripcion",
+                "visible_usuario",
+                "visible_comentarios"
+            ];
+            const missingPaginas = visCols.filter(col => !colNamesPaginas.includes(col));
+            if (missingPaginas.length > 0) {
+                await pool.query(`ALTER TABLE paginas ${missingPaginas.map(col => `ADD COLUMN ${col} TINYINT(1) DEFAULT 1`).join(", ")}`);
+                console.log("Columnas de visibilidad añadidas automáticamente:", missingPaginas);
+            }
+            // Forzar creación de columna foto_perfil en users
+            try {
+                await pool.query("ALTER TABLE users ADD COLUMN foto_perfil LONGBLOB NULL");
+                console.log("Columna foto_perfil añadida a users (forzado)");
+            }
+            catch (err) {
+                const error = err;
+                if (error.code === 'ER_DUP_FIELDNAME') {
+                    console.log("La columna foto_perfil ya existe en users.");
+                }
+                else {
+                    console.error("Error al crear columna foto_perfil en users:", err);
+                }
+            }
+            // Mostrar estructura de la tabla 'users' al iniciar
+            const [descUsers] = await pool.query("DESCRIBE users");
+            console.log("Estructura actual de la tabla 'users':");
+            console.table(descUsers);
+        }
+        catch (err) {
+            console.error("Error al migrar columnas de visibilidad/foto_perfil:", err);
+        }
+        // Crear tabla 'paginas'
+        await pool.query(`CREATE TABLE IF NOT EXISTS paginas (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id VARCHAR(36) NOT NULL,
+      propietario TINYINT(1) DEFAULT 0,
+      titulo VARCHAR(255),
+      contenido TEXT,
+      descripcion VARCHAR(32) DEFAULT 'visible',
+      usuario VARCHAR(255),
+      comentarios TEXT,
+      oculto TINYINT(1) DEFAULT 0,
+      creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+        console.log("Tabla 'paginas' verificada/creada correctamente con campos propietario, descripcion, usuario, comentarios, visible y oculto.");
+        // Crear tabla 'feed' para entradas de usuarios
+        await pool.query(`CREATE TABLE IF NOT EXISTS feed (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id VARCHAR(36) NOT NULL,
+      mensaje TEXT,
+      enlace VARCHAR(255),
+      creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+        console.log("Tabla 'feed' verificada/creada correctamente.");
+        // Migrar columnas de visibilidad y oculto si no existen
+        try {
+            const [cols] = await pool.query("SHOW COLUMNS FROM paginas");
+            const colNames = cols.map((c) => c.Field);
+            const visCols = [
+                "visible_titulo",
+                "visible_contenido",
+                "visible_descripcion",
+                "visible_usuario",
+                "visible_comentarios",
+                "oculto"
+            ];
+            const missing = visCols.filter(col => !colNames.includes(col));
+            if (missing.length > 0) {
+                await pool.query(`ALTER TABLE paginas ${missing.map(col => `ADD COLUMN ${col} TINYINT(1) DEFAULT 1`).join(", ")}`);
+                console.log("Columnas de visibilidad/oculto añadidas automáticamente:", missing);
+            }
+        }
+        catch (err) {
+            console.error("Error al migrar columnas de visibilidad/oculto:", err);
+        }
+        // Mostrar estructura de la tabla 'paginas' al iniciar
+        const [descPaginas] = await pool.query("DESCRIBE paginas");
+        console.log("Estructura actual de la tabla 'paginas':");
+        console.table(descPaginas);
+        await pool.query(`CREATE TABLE IF NOT EXISTS comentarios (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      pagina_id INT NOT NULL,
+      user_id VARCHAR(36) NULL,
+      comentario TEXT NOT NULL,
+      creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (pagina_id) REFERENCES paginas(id) ON DELETE CASCADE
+    )`);
+        console.log("Tabla 'comentarios' verificada/creada correctamente.");
+        // Crear tabla 'imagenes' para la galería de cada página
+        await pool.query(`CREATE TABLE IF NOT EXISTS imagenes (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      pagina_id INT NOT NULL,
+      idx INT NOT NULL,
+      imagen LONGBLOB,
+      creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (pagina_id) REFERENCES paginas(id) ON DELETE CASCADE
+    )`);
+        console.log("Tabla 'imagenes' verificada/creada correctamente.");
+    }
+    catch (err) {
+        console.error("Error al crear/verificar las tablas:", err);
+    }
+}
+//# sourceMappingURL=db.js.map

@@ -1,12 +1,16 @@
+# Environment variables
 .env
-node_modules/
-dist/
-*.log
-package-lock.json
 
-react-native/mobile/node_modules/
-react-native/mobile/android/build/
-react-native/mobile/android/.gradle/
-react-native/mobile/ios/build/
-react-native/mobile/.bundle/
-react-native/mobile/.idea/
+# Solo ignoramos node_modules para evitar archivos innecesarios
+node_modules/
+**/node_modules/
+
+# Archivos de build temporales que se regeneran
+**/android/build/
+**/android/.gradle/
+**/ios/build/
+**/.bundle/
+**/android/app/build/
+**/android/app/.cxx/
+# Logs
+*.log

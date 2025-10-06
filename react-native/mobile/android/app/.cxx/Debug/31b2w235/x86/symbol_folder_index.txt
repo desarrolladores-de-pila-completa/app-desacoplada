@@ -1,0 +1,1 @@
+C:\NAMESPACE\app-desacoplada\react-native\mobile\android\app\build\intermediates\cxx\Debug\31b2w235\obj\x86

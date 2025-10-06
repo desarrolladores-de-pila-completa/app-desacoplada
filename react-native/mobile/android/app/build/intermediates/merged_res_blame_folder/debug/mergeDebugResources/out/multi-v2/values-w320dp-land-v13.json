@@ -1,0 +1,19 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.mobile.app-mergeDebugResources-2:/values-w320dp-land-v13/values-w320dp-land-v13.xml",
+            "map": [
+                {
+                    "source": "C:\\Users\\diego\\.gradle\\caches\\8.14.3\\transforms\\8376e65d9f629498da6ebe099300a7a1\\transformed\\material-1.12.0\\res\\values-w320dp-land-v13\\values-w320dp-land-v13.xml",
+                    "from": {
+                        "startLines": "2,3",
+                        "startColumns": "4,4",
+                        "startOffsets": "55,110",
+                        "endColumns": "54,61",
+                        "endOffsets": "105,167"
+                    }
+                }
+            ]
+        }
+    ]
+}
