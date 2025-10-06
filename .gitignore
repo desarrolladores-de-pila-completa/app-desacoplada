@@ -4,9 +4,12 @@ dist/
 *.log
 package-lock.json
 
-react-native/mobile/node_modules/
-react-native/mobile/android/build/
-react-native/mobile/android/.gradle/
-react-native/mobile/ios/build/
-react-native/mobile/.bundle/
-react-native/mobile/.idea/
+# React Native specific ignores
+**/node_modules/
+**/android/build/
+**/android/.gradle/
+**/ios/build/
+**/.bundle/
+**/.idea/
+**/android/app/build/
+**/android/app/.cxx/
