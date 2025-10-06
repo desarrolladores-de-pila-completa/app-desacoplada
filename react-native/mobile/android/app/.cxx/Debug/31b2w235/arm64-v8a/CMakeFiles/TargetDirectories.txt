@@ -1,0 +1,12 @@
+C:/NAMESPACE/app-desacoplada/react-native/mobile/android/app/.cxx/Debug/31b2w235/arm64-v8a/CMakeFiles/appmodules.dir
+C:/NAMESPACE/app-desacoplada/react-native/mobile/android/app/.cxx/Debug/31b2w235/arm64-v8a/CMakeFiles/edit_cache.dir
+C:/NAMESPACE/app-desacoplada/react-native/mobile/android/app/.cxx/Debug/31b2w235/arm64-v8a/CMakeFiles/rebuild_cache.dir
+C:/NAMESPACE/app-desacoplada/react-native/mobile/android/app/.cxx/Debug/31b2w235/arm64-v8a/rnasyncstorage_autolinked_build/CMakeFiles/react_codegen_rnasyncstorage.dir
+C:/NAMESPACE/app-desacoplada/react-native/mobile/android/app/.cxx/Debug/31b2w235/arm64-v8a/rnasyncstorage_autolinked_build/CMakeFiles/edit_cache.dir
+C:/NAMESPACE/app-desacoplada/react-native/mobile/android/app/.cxx/Debug/31b2w235/arm64-v8a/rnasyncstorage_autolinked_build/CMakeFiles/rebuild_cache.dir
+C:/NAMESPACE/app-desacoplada/react-native/mobile/android/app/.cxx/Debug/31b2w235/arm64-v8a/safeareacontext_autolinked_build/CMakeFiles/react_codegen_safeareacontext.dir
+C:/NAMESPACE/app-desacoplada/react-native/mobile/android/app/.cxx/Debug/31b2w235/arm64-v8a/safeareacontext_autolinked_build/CMakeFiles/edit_cache.dir
+C:/NAMESPACE/app-desacoplada/react-native/mobile/android/app/.cxx/Debug/31b2w235/arm64-v8a/safeareacontext_autolinked_build/CMakeFiles/rebuild_cache.dir
+C:/NAMESPACE/app-desacoplada/react-native/mobile/android/app/.cxx/Debug/31b2w235/arm64-v8a/rnscreens_autolinked_build/CMakeFiles/react_codegen_rnscreens.dir
+C:/NAMESPACE/app-desacoplada/react-native/mobile/android/app/.cxx/Debug/31b2w235/arm64-v8a/rnscreens_autolinked_build/CMakeFiles/edit_cache.dir
+C:/NAMESPACE/app-desacoplada/react-native/mobile/android/app/.cxx/Debug/31b2w235/arm64-v8a/rnscreens_autolinked_build/CMakeFiles/rebuild_cache.dir
