@@ -1,15 +1,13 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.router = void 0;
 const express_1 = require("express");
-const multer_1 = __importDefault(require("multer"));
+const multer = require("multer");
 const authController_1 = require("../controllers/authController");
 const auth_1 = require("../middlewares/auth");
 const db_1 = require("../middlewares/db");
-const upload = (0, multer_1.default)();
+const bcrypt = require("bcryptjs");
+const upload = multer();
 const router = (0, express_1.Router)();
 exports.router = router;
 // Ruta para obtener el usuario autenticado

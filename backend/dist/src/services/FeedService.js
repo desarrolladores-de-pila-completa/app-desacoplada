@@ -40,7 +40,7 @@ class FeedService {
         if (rows.length === 0)
             return null;
         const enrichedEntries = await this.enrichFeedWithImages(rows);
-        return enrichedEntries[0];
+        return enrichedEntries[0] ?? null;
     }
     /**
      * Crear entrada en el feed cuando se crea una página
@@ -100,10 +100,10 @@ class FeedService {
        ORDER BY entries DESC 
        LIMIT 1`);
         return {
-            totalEntries: totalRows[0].count,
-            totalUsers: usersRows[0].count,
-            entriesLast24h: recentRows[0].count,
-            mostActiveUser: activeUserRows.length > 0 ? activeUserRows[0] : null
+            totalEntries: totalRows[0]?.count ?? 0,
+            totalUsers: usersRows[0]?.count ?? 0,
+            entriesLast24h: recentRows[0]?.count ?? 0,
+            mostActiveUser: activeUserRows.length > 0 ? (activeUserRows[0] ?? null) : null
         };
     }
     /**

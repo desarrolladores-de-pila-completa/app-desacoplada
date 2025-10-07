@@ -1,10 +1,15 @@
-import { Router } from "express";
-import multer from "multer";
+import { Router, Request, Response } from "express";
+import { MulterFile } from '../types/interfaces';
+
+interface RequestWithFile extends Request {
+  file?: MulterFile;
+}
+const multer = require("multer");
 import { register, login, logout, eliminarUsuario } from "../controllers/authController";
 import { authMiddleware } from "../middlewares/auth";
 import { pool } from "../middlewares/db";
 import { randomUUID } from "crypto";
-import bcrypt from "bcryptjs";
+const bcrypt = require("bcryptjs");
 
 const upload = multer();
 const router = Router();
@@ -17,7 +22,7 @@ router.get("/me", authMiddleware, async (req, res) => {
 });
 
 // Endpoint para actualizar foto de perfil
-router.post("/me/foto", authMiddleware, upload.single("foto"), async (req, res) => {
+router.post("/me/foto", authMiddleware, upload.single("foto"), async (req: RequestWithFile, res: Response) => {
   const user = (req as any).user;
   if (!user || !user.id) return res.status(401).json({ error: "No autenticado" });
   const file = req.file;

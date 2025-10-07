@@ -30,7 +30,7 @@ class CommentService {
        FROM comentarios c 
        LEFT JOIN users u ON c.user_id = u.id 
        WHERE c.id = ?`, [commentId]);
-        return rows.length > 0 ? rows[0] : null;
+        return rows.length > 0 && rows[0] ? rows[0] : null;
     }
     /**
      * Actualizar comentario (solo el propietario)
@@ -72,7 +72,7 @@ class CommentService {
      */
     async countPageComments(pageId) {
         const [rows] = await getPool().query("SELECT COUNT(*) as count FROM comentarios WHERE pagina_id = ?", [pageId]);
-        return rows[0].count;
+        return rows[0]?.count || 0;
     }
     /**
      * Eliminar todos los comentarios de una página
@@ -85,7 +85,7 @@ class CommentService {
      */
     async isCommentOwner(commentId, userId) {
         const [rows] = await getPool().query("SELECT user_id FROM comentarios WHERE id = ?", [commentId]);
-        if (rows.length === 0)
+        if (rows.length === 0 || !rows[0])
             return false;
         return rows[0].user_id === userId;
     }
@@ -98,7 +98,7 @@ class CommentService {
        FROM comentarios c 
        INNER JOIN paginas p ON c.pagina_id = p.id 
        WHERE c.id = ?`, [commentId]);
-        if (rows.length === 0)
+        if (rows.length === 0 || !rows[0])
             return false;
         const { comment_user_id, page_user_id } = rows[0];
         // Puede eliminar si es propietario del comentario o propietario de la página

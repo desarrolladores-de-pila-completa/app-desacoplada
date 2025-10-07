@@ -1,4 +1,21 @@
 // Interfaces principales para el sistema
+
+// Define Multer File type
+import { Readable } from 'stream';
+
+export interface MulterFile {
+  fieldname: string;
+  originalname: string;
+  encoding: string;
+  mimetype: string;
+  size: number;
+  destination: string;
+  filename: string;
+  path: string;
+  buffer: Buffer;
+  stream: Readable;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -11,7 +28,7 @@ export interface UserCreateData {
   email: string;
   password: string;
   username: string;
-  file?: Express.Multer.File;
+  file?: MulterFile;
 }
 
 export interface Pagina {
@@ -103,7 +120,7 @@ export interface RegisterRequest extends Request {
     password: string;
     username: string;
   };
-  file?: Express.Multer.File;
+  file?: MulterFile;
 }
 
 export interface CreateCommentRequest extends AuthenticatedRequest {
@@ -158,7 +175,7 @@ export interface UserCreateData {
   email: string;
   password: string;
   username: string;
-  file?: Express.Multer.File;
+  file?: MulterFile;
 }
 
 // Database result types

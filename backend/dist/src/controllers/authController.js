@@ -34,10 +34,12 @@ async function logout(req, res) {
     res.clearCookie("token", { httpOnly: true, secure: false, sameSite: "lax" });
     res.json({ message: "Sesión cerrada y token eliminado" });
 }
+const Jimp = require("jimp");
 const generarAvatarBuffer_1 = require("../utils/generarAvatarBuffer");
-const bcryptjs_1 = __importDefault(require("bcryptjs"));
+const bcrypt = require("bcryptjs");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const db_1 = require("../middlewares/db");
+// const { RowDataPacket } = require("mysql2");
 function sendError(res, code, msg) {
     return res.status(code).json({ error: msg });
 }
@@ -50,7 +52,7 @@ async function register(req, res) {
         const [rows] = await db_1.pool.query("SELECT id FROM users WHERE email = ?", [email]);
         if (Array.isArray(rows) && rows.length > 0)
             return sendError(res, 409, "Email ya registrado");
-        const hashedPassword = await bcryptjs_1.default.hash(password, 10);
+        const hashedPassword = await bcrypt.hash(password, 10);
         const uuid = require('crypto').randomUUID();
         const username = uuid.replace(/-/g, "");
         let fotoBuffer;
@@ -101,7 +103,7 @@ async function login(req, res) {
             return sendError(res, 401, "Credenciales inválidas");
         }
         const user = rows[0];
-        const isPasswordValid = await bcryptjs_1.default.compare(password, user.password);
+        const isPasswordValid = await bcrypt.compare(password, user.password);
         console.log('[LOGIN] Contraseña válida:', isPasswordValid);
         if (!isPasswordValid) {
             console.log('[LOGIN] Contraseña incorrecta para email:', email);

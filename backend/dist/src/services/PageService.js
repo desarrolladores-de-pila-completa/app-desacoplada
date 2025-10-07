@@ -26,7 +26,7 @@ class PageService {
         const [rows] = await getPool().query(`SELECT p.* FROM paginas p 
        INNER JOIN users u ON p.user_id = u.id 
        WHERE u.username = ?`, [username]);
-        return rows.length > 0 ? rows[0] : null;
+        return rows.length > 0 ? (rows[0] ?? null) : null;
     }
     /**
      * Obtener todas las páginas públicas con paginación
@@ -108,14 +108,14 @@ class PageService {
      */
     async pageExists(pageId) {
         const [rows] = await getPool().query("SELECT COUNT(*) as count FROM paginas WHERE id = ?", [pageId]);
-        return rows[0].count > 0;
+        return (rows[0]?.count ?? 0) > 0;
     }
     /**
      * Obtener el propietario de una página
      */
     async getPageOwner(pageId) {
         const [rows] = await getPool().query("SELECT user_id FROM paginas WHERE id = ?", [pageId]);
-        return rows.length > 0 ? rows[0].user_id : null;
+        return rows.length > 0 ? (rows[0]?.user_id ?? null) : null;
     }
     /**
      * Actualizar página en el feed (privado)
@@ -130,11 +130,11 @@ class PageService {
         const [feedRows] = await getPool().query("SELECT id FROM feed WHERE pagina_id = ?", [pageId]);
         if (feedRows.length > 0) {
             // Actualizar entrada existente
-            await getPool().query("UPDATE feed SET titulo = ?, contenido = ?, actualizado_en = NOW() WHERE pagina_id = ?", [pagina.titulo, pagina.contenido, pageId]);
+            await getPool().query("UPDATE feed SET titulo = ?, contenido = ?, actualizado_en = NOW() WHERE pagina_id = ?", [pagina?.titulo, pagina?.contenido, pageId]);
         }
         else {
             // Crear nueva entrada en el feed
-            await getPool().query("INSERT INTO feed (user_id, pagina_id, titulo, contenido) VALUES (?, ?, ?, ?)", [pagina.user_id, pageId, pagina.titulo, pagina.contenido]);
+            await getPool().query("INSERT INTO feed (user_id, pagina_id, titulo, contenido) VALUES (?, ?, ?, ?)", [pagina?.user_id, pageId, pagina?.titulo, pagina?.contenido]);
         }
     }
     /**
@@ -145,7 +145,7 @@ class PageService {
         if (rows.length === 0) {
             throw new Error("Página no encontrada");
         }
-        const currentVisibility = rows[0].descripcion;
+        const currentVisibility = rows[0]?.descripcion ?? 'visible';
         const newVisibility = currentVisibility === 'visible' ? 'oculta' : 'visible';
         await getPool().query("UPDATE paginas SET descripcion = ? WHERE id = ?", [newVisibility, pageId]);
         return newVisibility;
@@ -157,8 +157,8 @@ class PageService {
         const [comentariosRows] = await getPool().query("SELECT COUNT(*) as count FROM comentarios WHERE pagina_id = ?", [pageId]);
         const [imagenesRows] = await getPool().query("SELECT COUNT(*) as count FROM imagenes WHERE pagina_id = ?", [pageId]);
         return {
-            comentarios: comentariosRows[0].count,
-            imagenes: imagenesRows[0].count,
+            comentarios: comentariosRows[0]?.count ?? 0,
+            imagenes: imagenesRows[0]?.count ?? 0,
             visitas: 0 // TODO: Implementar contador de visitas
         };
     }

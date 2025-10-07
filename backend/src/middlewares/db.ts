@@ -1,7 +1,7 @@
 
 
-import mysql from "mysql2/promise";
-import dotenv from "dotenv";
+const mysql = require("mysql2/promise");
+const dotenv = require("dotenv");
 import path from "path";
 import fs from "fs";
 
@@ -12,7 +12,7 @@ if (fs.existsSync(envPath)) {
   dotenv.config();
 }
 
-let pool: mysql.Pool;
+let pool: any;
 
 async function initDatabase() {
   try {

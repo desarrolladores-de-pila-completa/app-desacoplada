@@ -5,22 +5,22 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.pool = void 0;
 exports.initDatabase = initDatabase;
-const promise_1 = __importDefault(require("mysql2/promise"));
-const dotenv_1 = __importDefault(require("dotenv"));
+const mysql = require("mysql2/promise");
+const dotenv = require("dotenv");
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
 const envPath = path_1.default.resolve(process.cwd(), "backend/.env");
 if (fs_1.default.existsSync(envPath)) {
-    dotenv_1.default.config({ path: envPath });
+    dotenv.config({ path: envPath });
 }
 else {
-    dotenv_1.default.config();
+    dotenv.config();
 }
 let pool;
 async function initDatabase() {
     try {
         console.log("[DB] Conectando a MySQL para crear la base de datos si no existe...");
-        const connection = await promise_1.default.createConnection({
+        const connection = await mysql.createConnection({
             host: process.env.DB_HOST,
             user: process.env.DB_USER,
             password: process.env.DB_PASSWORD,
@@ -30,7 +30,7 @@ async function initDatabase() {
         await connection.end();
         console.log("[DB] Conexión inicial cerrada. Inicializando pool con la base de datos...");
         // Ahora sí, crear el pool con la base de datos
-        exports.pool = pool = promise_1.default.createPool({
+        exports.pool = pool = mysql.createPool({
             host: process.env.DB_HOST,
             user: process.env.DB_USER,
             password: process.env.DB_PASSWORD,

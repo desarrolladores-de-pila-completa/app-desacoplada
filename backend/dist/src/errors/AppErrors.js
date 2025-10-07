@@ -9,6 +9,10 @@ exports.isOperationalError = isOperationalError;
 exports.handleDatabaseError = handleDatabaseError;
 exports.formatErrorResponse = formatErrorResponse;
 class AppError extends Error {
+    statusCode;
+    isOperational;
+    errorCode;
+    details;
     constructor(message, statusCode = 500, errorCode = 'INTERNAL_ERROR', isOperational = true, details) {
         super(message);
         this.statusCode = statusCode;

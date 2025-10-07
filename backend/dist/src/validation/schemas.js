@@ -121,13 +121,13 @@ exports.paginationSchema = z.object({
         .string()
         .regex(/^\d+$/, 'Página debe ser un número')
         .transform(Number)
-        .refine(val => val >= 1, 'Página debe ser mayor a 0')
+        .refine((val) => val >= 1, 'Página debe ser mayor a 0')
         .default('1'),
     limit: z
         .string()
         .regex(/^\d+$/, 'Límite debe ser un número')
         .transform(Number)
-        .refine(val => val >= 1 && val <= 100, 'Límite debe estar entre 1 y 100')
+        .refine((val) => val >= 1 && val <= 100, 'Límite debe estar entre 1 y 100')
         .default('20'),
 });
 // === SEARCH SCHEMAS ===
@@ -141,14 +141,14 @@ exports.searchSchema = z.object({
         .string()
         .regex(/^\d+$/, 'Página debe ser un número')
         .transform(Number)
-        .refine(val => val >= 1, 'Página debe ser mayor a 0')
+        .refine((val) => val >= 1, 'Página debe ser mayor a 0')
         .default('1')
         .optional(),
     limit: z
         .string()
         .regex(/^\d+$/, 'Límite debe ser un número')
         .transform(Number)
-        .refine(val => val >= 1 && val <= 50, 'Límite debe estar entre 1 y 50')
+        .refine((val) => val >= 1 && val <= 50, 'Límite debe estar entre 1 y 50')
         .default('20')
         .optional(),
 });
@@ -175,7 +175,7 @@ exports.idSchema = z.object({
         .string()
         .regex(/^\d+$/, 'ID debe ser un número válido')
         .transform(Number)
-        .refine(val => val > 0, 'ID debe ser mayor a 0'),
+        .refine((val) => val > 0, 'ID debe ser mayor a 0'),
 });
 exports.userIdSchema = z.object({
     userId: z

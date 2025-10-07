@@ -8,7 +8,7 @@ const express_1 = require("express");
 // import rateLimit from "express-rate-limit";
 const paginaController_1 = require("../controllers/paginaController");
 const auth_1 = require("../middlewares/auth");
-const multer_1 = __importDefault(require("multer"));
+const multer = require("multer");
 const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
 const limiter = (0, express_rate_limit_1.default)({ windowMs: 60 * 1000, max: 100 });
 const router = (0, express_1.Router)();
@@ -17,7 +17,7 @@ router.get("/:id/visibilidad", paginaController_1.consultarVisibilidad);
 // Endpoint para consultar visibilidad de campos de la página
 const paginaController_2 = require("../controllers/paginaController");
 router.get("/:id/visibilidad-campos", paginaController_2.consultarVisibilidadCampos);
-const upload = (0, multer_1.default)();
+const upload = multer();
 // Endpoint para obtener comentarios de una página
 router.get("/:id/comentarios", async (req, res) => {
     const { id } = req.params;

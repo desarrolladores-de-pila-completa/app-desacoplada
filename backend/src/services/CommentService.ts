@@ -48,7 +48,7 @@ export class CommentService {
       [commentId]
     );
 
-    return rows.length > 0 ? rows[0] : null;
+    return rows.length > 0 && rows[0] ? rows[0] : null;
   }
 
   /**
@@ -107,7 +107,7 @@ export class CommentService {
       [pageId]
     );
 
-    return rows[0].count;
+    return rows[0]?.count || 0;
   }
 
   /**
@@ -126,7 +126,7 @@ export class CommentService {
       [commentId]
     );
 
-    if (rows.length === 0) return false;
+    if (rows.length === 0 || !rows[0]) return false;
     return rows[0].user_id === userId;
   }
 
@@ -143,7 +143,7 @@ export class CommentService {
       [commentId]
     );
 
-    if (rows.length === 0) return false;
+    if (rows.length === 0 || !rows[0]) return false;
 
     const { comment_user_id, page_user_id } = rows[0];
     
