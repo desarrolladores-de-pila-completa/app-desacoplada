@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -7,6 +7,210 @@
     <title>app-desacoplada-react</title>
   </head>
   <body>
+    <!-- ✅ Banner de Cookies - Y Posteriormente -->
+    <style>
+      #cookie-banner {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #ffffff;
+        color: #111827;
+        border-top: 1px solid #e5e7eb;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial;
+        z-index: 10000;
+        display: none;
+      }
+      #cookie-banner .inner {
+        max-width: 900px;
+        margin: auto;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      #cookie-banner p {
+        margin: 0;
+        font-size: 0.95rem;
+        line-height: 1.4;
+      }
+      #cookie-banner .buttons {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      #cookie-banner button {
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        padding: 8px 14px;
+        font-size: 0.9rem;
+      }
+      #cookie-accept {
+        background: #0ea5a4;
+        color: white;
+      }
+      #cookie-reject {
+        background: #e5e7eb;
+        color: #111827;
+      }
+      #cookie-settings {
+        background: transparent;
+        color: #0ea5a4;
+        text-decoration: underline;
+      }
+
+      #cookie-settings-modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.4);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 10001;
+      }
+      #cookie-settings-modal .modal-content {
+        background: white;
+        padding: 24px;
+        border-radius: 12px;
+        max-width: 420px;
+        text-align: left;
+      }
+      #cookie-settings-modal h3 {
+        margin-top: 0;
+      }
+    </style>
+
+    <div id="cookie-banner">
+      <div class="inner">
+        <p>
+          Usamos cookies propias y de terceros (como Google Analytics) para
+          mejorar tu experiencia y analizar el tráfico. Puedes aceptarlas,
+          rechazarlas o configurar tus preferencias. Más información en nuestra
+          <a href="/politica-de-cookies.html" target="_blank"
+            >Política de Cookies</a
+          > y 
+          <a href="/privacidad.html" target="_blank"
+            >Política de Privacidad</a
+          >.
+        </p>
+        <div class="buttons">
+          <button id="cookie-accept">Aceptar</button>
+          <button id="cookie-reject">Rechazar</button>
+          <button id="cookie-settings">Configurar</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="cookie-settings-modal">
+      <div class="modal-content">
+        <h3>Configuración de Cookies</h3>
+        <p>Selecciona qué cookies deseas permitir:</p>
+        <label
+          ><input type="checkbox" id="cookie-necessary" checked disabled />
+          Cookies necesarias (obligatorias)</label
+        ><br />
+        <label
+          ><input type="checkbox" id="cookie-analytics" /> Cookies de análisis
+          (Google Analytics)</label
+        ><br /><br />
+        <div class="buttons">
+          <button id="cookie-save">Guardar preferencias</button>
+          <button id="cookie-cancel">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ====== Banner de Cookies (RGPD) ======
+      const banner = document.getElementById("cookie-banner");
+      const modal = document.getElementById("cookie-settings-modal");
+
+      const acceptBtn = document.getElementById("cookie-accept");
+      const rejectBtn = document.getElementById("cookie-reject");
+      const settingsBtn = document.getElementById("cookie-settings");
+
+      const saveBtn = document.getElementById("cookie-save");
+      const cancelBtn = document.getElementById("cookie-cancel");
+      const analyticsCheckbox = document.getElementById("cookie-analytics");
+
+      function setCookieConsent(consent) {
+        localStorage.setItem("cookieConsent", JSON.stringify(consent));
+      }
+
+      function getCookieConsent() {
+        const stored = localStorage.getItem("cookieConsent");
+        return stored ? JSON.parse(stored) : null;
+      }
+
+      function loadGoogleAnalytics() {
+        if (window.gaLoaded) return;
+        window.gaLoaded = true;
+        const s = document.createElement("script");
+        s.src = "https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"; // 👉 Reemplaza con tu ID de GA4
+        s.async = true;
+        document.head.appendChild(s);
+
+        window.dataLayer = window.dataLayer || [];
+        function gtag() {
+          dataLayer.push(arguments);
+        }
+        window.gtag = gtag;
+        gtag("js", new Date());
+        gtag("config", "G-XXXXXXXXXX", { anonymize_ip: true });
+      }
+
+      function handleConsent(consent) {
+        if (consent.accepted) {
+          if (consent.analytics) loadGoogleAnalytics();
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const consent = getCookieConsent();
+        if (!consent) {
+          banner.style.display = "block";
+        } else {
+          handleConsent(consent);
+        }
+      });
+
+      acceptBtn.addEventListener("click", () => {
+        const consent = { accepted: true, analytics: true };
+        setCookieConsent(consent);
+        banner.style.display = "none";
+        handleConsent(consent);
+      });
+
+      rejectBtn.addEventListener("click", () => {
+        const consent = { accepted: false, analytics: false };
+        setCookieConsent(consent);
+        banner.style.display = "none";
+      });
+
+      settingsBtn.addEventListener("click", () => {
+        modal.style.display = "flex";
+      });
+
+      saveBtn.addEventListener("click", () => {
+        const consent = {
+          accepted: true,
+          analytics: analyticsCheckbox.checked,
+        };
+        setCookieConsent(consent);
+        modal.style.display = "none";
+        banner.style.display = "none";
+        handleConsent(consent);
+      });
+
+      cancelBtn.addEventListener("click", () => {
+        modal.style.display = "none";
+      });
+    </script>
+    <!-- ✅ Fin del banner de cookies -->
+
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
