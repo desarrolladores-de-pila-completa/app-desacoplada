@@ -27,11 +27,11 @@ public class ReactNativeApplicationEntryPoint {
       throw new RuntimeException(error);
     }
     
-    if (com.mobile.BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {
+    if (com.zarkius.appdesacoplada.BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {
       DefaultNewArchitectureEntryPoint.load();
     }
     
-    if (com.mobile.BuildConfig.IS_EDGE_TO_EDGE_ENABLED) {
+    if (com.zarkius.appdesacoplada.BuildConfig.IS_EDGE_TO_EDGE_ENABLED) {
       WindowUtilKt.setEdgeToEdgeFeatureFlagOn();
     }
   }

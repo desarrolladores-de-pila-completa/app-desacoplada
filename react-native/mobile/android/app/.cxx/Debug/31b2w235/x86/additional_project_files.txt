@@ -1,7 +1,0 @@
-C:\NAMESPACE\app-desacoplada\react-native\mobile\android\app\.cxx\Debug\31b2w235\x86\rnasyncstorage_autolinked_build\CMakeFiles\react_codegen_rnasyncstorage.dir\react\renderer\components\rnasyncstorage\ComponentDescriptors.cpp.o
-C:\NAMESPACE\app-desacoplada\react-native\mobile\android\app\.cxx\Debug\31b2w235\x86\rnasyncstorage_autolinked_build\CMakeFiles\react_codegen_rnasyncstorage.dir\react\renderer\components\rnasyncstorage\EventEmitters.cpp.o
-C:\NAMESPACE\app-desacoplada\react-native\mobile\android\app\.cxx\Debug\31b2w235\x86\rnasyncstorage_autolinked_build\CMakeFiles\react_codegen_rnasyncstorage.dir\react\renderer\components\rnasyncstorage\Props.cpp.o
-C:\NAMESPACE\app-desacoplada\react-native\mobile\android\app\.cxx\Debug\31b2w235\x86\rnasyncstorage_autolinked_build\CMakeFiles\react_codegen_rnasyncstorage.dir\react\renderer\components\rnasyncstorage\ShadowNodes.cpp.o
-C:\NAMESPACE\app-desacoplada\react-native\mobile\android\app\.cxx\Debug\31b2w235\x86\rnasyncstorage_autolinked_build\CMakeFiles\react_codegen_rnasyncstorage.dir\react\renderer\components\rnasyncstorage\States.cpp.o
-C:\NAMESPACE\app-desacoplada\react-native\mobile\android\app\.cxx\Debug\31b2w235\x86\rnasyncstorage_autolinked_build\CMakeFiles\react_codegen_rnasyncstorage.dir\react\renderer\components\rnasyncstorage\rnasyncstorageJSI-generated.cpp.o
-C:\NAMESPACE\app-desacoplada\react-native\mobile\android\app\.cxx\Debug\31b2w235\x86\rnasyncstorage_autolinked_build\CMakeFiles\react_codegen_rnasyncstorage.dir\rnasyncstorage-generated.cpp.o

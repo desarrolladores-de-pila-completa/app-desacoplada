@@ -1,3 +1,0 @@
--- Configuring done
--- Generating done
--- Build files have been written to: C:/NAMESPACE/app-desacoplada/react-native/mobile/android/app/.cxx/Debug/31b2w235/x86
