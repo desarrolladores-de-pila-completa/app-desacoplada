@@ -24,18 +24,23 @@ export async function logout(req: Request, res: Response) {
   res.json({ message: "Sesión cerrada y token eliminado" });
 }
 import { Request, Response } from "express";
-import Jimp, { rgbaToInt } from "jimp";
+import { MulterFile } from '../types/interfaces';
+
+interface RequestWithFile extends Request {
+  file?: MulterFile;
+}
+const Jimp = require("jimp");
 import { generarAvatarBuffer } from "../utils/generarAvatarBuffer";
-import bcrypt from "bcryptjs";
+const bcrypt = require("bcryptjs");
 import jwt from "jsonwebtoken";
 import { pool } from "../middlewares/db";
-import { RowDataPacket } from "mysql2";
+// const { RowDataPacket } = require("mysql2");
 
 function sendError(res: Response, code: number, msg: string) {
   return res.status(code).json({ error: msg });
 }
 
-export async function register(req: Request, res: Response) {
+export async function register(req: RequestWithFile, res: Response) {
   const { email, password } = req.body;
   const file = req.file;
   if (!email || !password) return sendError(res, 400, "Faltan datos requeridos");
@@ -100,7 +105,7 @@ export async function login(req: Request, res: Response) {
   console.log('[LOGIN] Contraseña recibida:', password);
   if (!email || !password) return sendError(res, 400, "Faltan datos requeridos");
   try {
-    const [rows] = await pool.query<RowDataPacket[]>("SELECT * FROM users WHERE email = ?", [email]);
+    const [rows] = await pool.query("SELECT * FROM users WHERE email = ?", [email]);
     console.log('[LOGIN] Resultado búsqueda usuario:', rows);
     if (!rows || rows.length === 0) {
       console.log('[LOGIN] Usuario no encontrado para email:', email);

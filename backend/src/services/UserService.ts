@@ -45,7 +45,11 @@ export class UserService {
     await this.createUserPage(userId, username, email);
 
     // Retornar usuario creado (sin contraseña)
-    return await this.getUserById(userId);
+    const user = await this.getUserById(userId);
+    if (!user) {
+      throw new Error("Error al crear usuario");
+    }
+    return user;
   }
 
   /**
@@ -56,7 +60,7 @@ export class UserService {
       "SELECT id, email, username, foto_perfil, creado_en FROM users WHERE id = ?",
       [userId]
     );
-    return rows.length > 0 ? rows[0] : null;
+    return rows.length > 0 ? (rows[0] ?? null) : null;
   }
 
   /**
@@ -67,7 +71,7 @@ export class UserService {
       "SELECT id, email, username, foto_perfil, creado_en FROM users WHERE email = ?",
       [email]
     );
-    return rows.length > 0 ? rows[0] : null;
+    return rows.length > 0 ? (rows[0] ?? null) : null;
   }
 
   /**
@@ -78,7 +82,7 @@ export class UserService {
       "SELECT id, email, username, foto_perfil, creado_en FROM users WHERE username = ?",
       [username]
     );
-    return rows.length > 0 ? rows[0] : null;
+    return rows.length > 0 ? (rows[0] ?? null) : null;
   }
 
   /**
@@ -89,7 +93,7 @@ export class UserService {
       "SELECT * FROM users WHERE email = ?",
       [email]
     );
-    return rows.length > 0 ? rows[0] : null;
+    return rows.length > 0 ? (rows[0] ?? null) : null;
   }
 
   /**
@@ -158,6 +162,6 @@ export class UserService {
     );
     
     if (rows.length === 0) return false;
-    return rows[0].user_id === userId;
+    return (rows[0]?.user_id ?? '') === userId;
   }
 }

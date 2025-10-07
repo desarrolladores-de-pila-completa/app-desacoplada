@@ -32,7 +32,7 @@ export class PageService {
     return {
       ...pagina,
       imagenes: imageRows
-    };
+    } as PaginaWithImages;
   }
 
   /**
@@ -45,7 +45,7 @@ export class PageService {
        WHERE u.username = ?`,
       [username]
     );
-    return rows.length > 0 ? rows[0] : null;
+    return rows.length > 0 ? (rows[0] ?? null) : null;
   }
 
   /**
@@ -168,7 +168,7 @@ export class PageService {
       "SELECT COUNT(*) as count FROM paginas WHERE id = ?",
       [pageId]
     );
-    return rows[0].count > 0;
+    return (rows[0]?.count ?? 0) > 0;
   }
 
   /**
@@ -179,7 +179,7 @@ export class PageService {
       "SELECT user_id FROM paginas WHERE id = ?",
       [pageId]
     );
-    return rows.length > 0 ? rows[0].user_id : null;
+    return rows.length > 0 ? (rows[0]?.user_id ?? null) : null;
   }
 
   /**
@@ -205,13 +205,13 @@ export class PageService {
       // Actualizar entrada existente
       await getPool().query(
         "UPDATE feed SET titulo = ?, contenido = ?, actualizado_en = NOW() WHERE pagina_id = ?",
-        [pagina.titulo, pagina.contenido, pageId]
+        [pagina?.titulo, pagina?.contenido, pageId]
       );
     } else {
       // Crear nueva entrada en el feed
       await getPool().query(
         "INSERT INTO feed (user_id, pagina_id, titulo, contenido) VALUES (?, ?, ?, ?)",
-        [pagina.user_id, pageId, pagina.titulo, pagina.contenido]
+        [pagina?.user_id, pageId, pagina?.titulo, pagina?.contenido]
       );
     }
   }
@@ -229,7 +229,7 @@ export class PageService {
       throw new Error("Página no encontrada");
     }
 
-    const currentVisibility = rows[0].descripcion;
+    const currentVisibility = rows[0]?.descripcion ?? 'visible';
     const newVisibility = currentVisibility === 'visible' ? 'oculta' : 'visible';
 
     await getPool().query(
@@ -255,8 +255,8 @@ export class PageService {
     );
 
     return {
-      comentarios: comentariosRows[0].count,
-      imagenes: imagenesRows[0].count,
+      comentarios: comentariosRows[0]?.count ?? 0,
+      imagenes: imagenesRows[0]?.count ?? 0,
       visitas: 0 // TODO: Implementar contador de visitas
     };
   }

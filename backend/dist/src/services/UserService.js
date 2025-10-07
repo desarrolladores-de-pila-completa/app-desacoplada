@@ -37,35 +37,39 @@ class UserService {
         // Crear página personal
         await this.createUserPage(userId, username, email);
         // Retornar usuario creado (sin contraseña)
-        return await this.getUserById(userId);
+        const user = await this.getUserById(userId);
+        if (!user) {
+            throw new Error("Error al crear usuario");
+        }
+        return user;
     }
     /**
      * Obtener usuario por ID
      */
     async getUserById(userId) {
         const [rows] = await getPool().query("SELECT id, email, username, foto_perfil, creado_en FROM users WHERE id = ?", [userId]);
-        return rows.length > 0 ? rows[0] : null;
+        return rows.length > 0 ? (rows[0] ?? null) : null;
     }
     /**
      * Obtener usuario por email
      */
     async getUserByEmail(email) {
         const [rows] = await getPool().query("SELECT id, email, username, foto_perfil, creado_en FROM users WHERE email = ?", [email]);
-        return rows.length > 0 ? rows[0] : null;
+        return rows.length > 0 ? (rows[0] ?? null) : null;
     }
     /**
      * Obtener usuario por username
      */
     async getUserByUsername(username) {
         const [rows] = await getPool().query("SELECT id, email, username, foto_perfil, creado_en FROM users WHERE username = ?", [username]);
-        return rows.length > 0 ? rows[0] : null;
+        return rows.length > 0 ? (rows[0] ?? null) : null;
     }
     /**
      * Obtener usuario con contraseña para login
      */
     async getUserWithPassword(email) {
         const [rows] = await getPool().query("SELECT * FROM users WHERE email = ?", [email]);
-        return rows.length > 0 ? rows[0] : null;
+        return rows.length > 0 ? (rows[0] ?? null) : null;
     }
     /**
      * Actualizar foto de perfil
@@ -110,7 +114,7 @@ class UserService {
         const [rows] = await getPool().query("SELECT user_id FROM paginas WHERE id = ?", [pageId]);
         if (rows.length === 0)
             return false;
-        return rows[0].user_id === userId;
+        return (rows[0]?.user_id ?? '') === userId;
     }
 }
 exports.UserService = UserService;

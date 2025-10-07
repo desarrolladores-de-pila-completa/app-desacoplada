@@ -4,7 +4,7 @@ import { Router } from "express";
 
 import { paginasPublicas, guardarComentario, obtenerPagina, actualizarVisibilidad, consultarVisibilidad, actualizarPropietario, actualizarDescripcion, actualizarUsuarioPagina, actualizarComentariosPagina, consultarPropietario, consultarDescripcion, consultarUsuarioPagina, consultarComentariosPagina, eliminarUsuarioTotal } from "../controllers/paginaController";
 import { authMiddleware } from "../middlewares/auth";
-import multer from "multer";
+const multer = require("multer");
 
 import rateLimit from "express-rate-limit";
 const limiter = rateLimit({ windowMs: 60 * 1000, max: 100 });

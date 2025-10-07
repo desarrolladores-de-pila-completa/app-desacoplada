@@ -50,7 +50,7 @@ const router = (0, express_1.Router)();
 const limiter = (0, express_rate_limit_1.default)({
     windowMs: 1 * 60 * 1000, // 1 minuto
     max: 20, // máximo 20 peticiones por IP por minuto
-    message: { error: "Demasiadas peticiones, intenta más tarde." }
+    message: "Demasiadas peticiones, intenta más tarde."
 });
 router.use(limiter);
 const SECRET = process.env.JWT_SECRET || "clave-secreta";

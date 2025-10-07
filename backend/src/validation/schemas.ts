@@ -105,7 +105,7 @@ export const updatePageSchema = z.object({
     .max(1000, 'Comentarios muy largos')
     .optional(),
 }).refine(
-  (data) => Object.keys(data).length > 0,
+  (data: any) => Object.keys(data).length > 0,
   { message: 'Al menos un campo debe ser proporcionado para actualizar' }
 );
 
@@ -138,13 +138,13 @@ export const paginationSchema = z.object({
     .string()
     .regex(/^\d+$/, 'Página debe ser un número')
     .transform(Number)
-    .refine(val => val >= 1, 'Página debe ser mayor a 0')
+    .refine((val: number) => val >= 1, 'Página debe ser mayor a 0')
     .default('1'),
   limit: z
     .string()
     .regex(/^\d+$/, 'Límite debe ser un número')
     .transform(Number)
-    .refine(val => val >= 1 && val <= 100, 'Límite debe estar entre 1 y 100')
+    .refine((val: number) => val >= 1 && val <= 100, 'Límite debe estar entre 1 y 100')
     .default('20'),
 });
 
@@ -160,14 +160,14 @@ export const searchSchema = z.object({
     .string()
     .regex(/^\d+$/, 'Página debe ser un número')
     .transform(Number)
-    .refine(val => val >= 1, 'Página debe ser mayor a 0')
+    .refine((val: number) => val >= 1, 'Página debe ser mayor a 0')
     .default('1')
     .optional(),
   limit: z
     .string()
     .regex(/^\d+$/, 'Límite debe ser un número')
     .transform(Number)
-    .refine(val => val >= 1 && val <= 50, 'Límite debe estar entre 1 y 50')
+    .refine((val: number) => val >= 1 && val <= 50, 'Límite debe estar entre 1 y 50')
     .default('20')
     .optional(),
 });
@@ -178,7 +178,7 @@ export const imageUploadSchema = z.object({
   mimetype: z
     .string()
     .refine(
-      (type) => ['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(type),
+      (type: string) => ['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(type),
       'Tipo de archivo no válido. Solo se permiten JPEG, PNG, GIF y WebP'
     ),
   size: z
@@ -190,7 +190,7 @@ export const avatarUploadSchema = z.object({
   mimetype: z
     .string()
     .refine(
-      (type) => ['image/jpeg', 'image/png'].includes(type),
+      (type: string) => ['image/jpeg', 'image/png'].includes(type),
       'Tipo de archivo no válido para avatar. Solo se permiten JPEG y PNG'
     ),
   size: z
@@ -205,7 +205,7 @@ export const idSchema = z.object({
     .string()
     .regex(/^\d+$/, 'ID debe ser un número válido')
     .transform(Number)
-    .refine(val => val > 0, 'ID debe ser mayor a 0'),
+    .refine((val: number) => val > 0, 'ID debe ser mayor a 0'),
 });
 
 export const userIdSchema = z.object({
@@ -237,11 +237,11 @@ export function validateBody(schema: any) {
       req.body = validated;
       next();
     } catch (error) {
-      if (error.name === 'ZodError') {
+      if ((error as any).name === 'ZodError') {
         return res.status(400).json({
           success: false,
           error: 'Datos de entrada inválidos',
-          details: error.errors.map((err: any) => ({
+          details: (error as any).errors.map((err: any) => ({
             field: err.path.join('.'),
             message: err.message,
           })),
@@ -262,11 +262,11 @@ export function validateQuery(schema: any) {
       req.query = validated;
       next();
     } catch (error) {
-      if (error.name === 'ZodError') {
+      if ((error as any).name === 'ZodError') {
         return res.status(400).json({
           success: false,
           error: 'Parámetros de consulta inválidos',
-          details: error.errors.map((err: any) => ({
+          details: (error as any).errors.map((err: any) => ({
             field: err.path.join('.'),
             message: err.message,
           })),
@@ -287,11 +287,11 @@ export function validateParams(schema: any) {
       req.params = validated;
       next();
     } catch (error) {
-      if (error.name === 'ZodError') {
+      if ((error as any).name === 'ZodError') {
         return res.status(400).json({
           success: false,
           error: 'Parámetros de ruta inválidos',
-          details: error.errors.map((err: any) => ({
+          details: (error as any).errors.map((err: any) => ({
             field: err.path.join('.'),
             message: err.message,
           })),
@@ -318,11 +318,11 @@ export function validateFile(schema: any) {
       });
       next();
     } catch (error) {
-      if (error.name === 'ZodError') {
+      if ((error as any).name === 'ZodError') {
         return res.status(400).json({
           success: false,
           error: 'Archivo inválido',
-          details: error.errors.map((err: any) => ({
+          details: (error as any).errors.map((err: any) => ({
             field: err.path.join('.'),
             message: err.message,
           })),
