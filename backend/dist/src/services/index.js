@@ -1,0 +1,28 @@
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __exportStar = (this && this.__exportStar) || function(m, exports) {
+    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.FeedService = exports.CommentService = exports.PageService = exports.UserService = void 0;
+var UserService_1 = require("./UserService");
+Object.defineProperty(exports, "UserService", { enumerable: true, get: function () { return UserService_1.UserService; } });
+var PageService_1 = require("./PageService");
+Object.defineProperty(exports, "PageService", { enumerable: true, get: function () { return PageService_1.PageService; } });
+var CommentService_1 = require("./CommentService");
+Object.defineProperty(exports, "CommentService", { enumerable: true, get: function () { return CommentService_1.CommentService; } });
+var FeedService_1 = require("./FeedService");
+Object.defineProperty(exports, "FeedService", { enumerable: true, get: function () { return FeedService_1.FeedService; } });
+// Re-exportar tipos para conveniencia
+__exportStar(require("../types/interfaces"), exports);
+//# sourceMappingURL=index.js.map

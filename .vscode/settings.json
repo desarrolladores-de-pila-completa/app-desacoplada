@@ -1,0 +1,33 @@
+{
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/build": true,
+    "**/.git": true,
+    "**/dist": true,
+    "**/android/app/build/generated/**": true,
+    "**/ios/build/**": true,
+    "**/.expo/**": true
+  },
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/build/**": true,
+    "**/dist/**": true,
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/android/app/build/**": true,
+    "**/ios/build/**": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/build": true,
+    "**/dist": true,
+    "**/.git": true,
+    "**/android/app/build/generated/**": true
+  },
+  "java.compile.nullAnalysis.mode": "disabled",
+  "java.configuration.updateBuildConfiguration": "disabled",
+  "java.project.sourcePaths": [
+    "react-native/mobile/android/app/src/main/java"
+  ],
+  "java.project.outputPath": "react-native/mobile/android/app/build"
+}

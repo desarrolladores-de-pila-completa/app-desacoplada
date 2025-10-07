@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Política de Cookies - App Desacoplada</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #0ea5a4;
+            border-bottom: 3px solid #0ea5a4;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #374151;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        h3 {
+            color: #4b5563;
+            margin-top: 25px;
+            margin-bottom: 10px;
+        }
+        .back-link {
+            display: inline-block;
+            background: #0ea5a4;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            transition: background-color 0.2s;
+        }
+        .back-link:hover {
+            background: #0891b2;
+        }
+        .update-date {
+            background: #e5e7eb;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+        .cookie-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .cookie-table th,
+        .cookie-table td {
+            border: 1px solid #e5e7eb;
+            padding: 12px;
+            text-align: left;
+        }
+        .cookie-table th {
+            background-color: #f3f4f6;
+            font-weight: 600;
+        }
+        .cookie-type {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+        .necessary {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        .analytics {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+        .functionality {
+            background-color: #ecfdf5;
+            color: #166534;
+        }
+        ul {
+            margin-bottom: 20px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        .contact-info {
+            background: #f3f4f6;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+        }
+        .cookie-controls {
+            background: #f0f9ff;
+            border: 1px solid #0ea5a4;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .cookie-controls button {
+            background: #0ea5a4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        .cookie-controls button:hover {
+            background: #0891b2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">← Volver a la aplicación</a>
+        
+        <h1>Política de Cookies</h1>
+        
+        <div class="update-date">
+            <strong>Fecha de última actualización:</strong> 7 de octubre de 2025
+        </div>
+
+        <h2>1. ¿Qué son las cookies?</h2>
+        <p>Las cookies son pequeños archivos de texto que se almacenan en tu dispositivo (ordenador, teléfono móvil, tablet) cuando visitas un sitio web. Las cookies permiten que el sitio web reconozca tu dispositivo y almacene información sobre tus preferencias o acciones pasadas.</p>
+
+        <h2>2. ¿Cómo utilizamos las cookies?</h2>
+        <p>Utilizamos cookies para mejorar tu experiencia en nuestra aplicación, analizar cómo utilizas nuestros servicios y recordar tus preferencias. Todas las cookies que utilizamos están descritas en detalle a continuación.</p>
+
+        <h2>3. Tipos de cookies que utilizamos</h2>
+
+        <table class="cookie-table">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Tipo</th>
+                    <th>Propósito</th>
+                    <th>Duración</th>
+                    <th>Proveedor</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>cookieConsent</strong></td>
+                    <td><span class="cookie-type necessary">Necesaria</span></td>
+                    <td>Almacena tus preferencias de consentimiento de cookies</td>
+                    <td>Persistente</td>
+                    <td>App Desacoplada</td>
+                </tr>
+                <tr>
+                    <td><strong>sessionId</strong></td>
+                    <td><span class="cookie-type necessary">Necesaria</span></td>
+                    <td>Mantiene tu sesión de usuario activa</td>
+                    <td>Sesión</td>
+                    <td>App Desacoplada</td>
+                </tr>
+                <tr>
+                    <td><strong>userPreferences</strong></td>
+                    <td><span class="cookie-type functionality">Funcionalidad</span></td>
+                    <td>Guarda tus preferencias de la aplicación</td>
+                    <td>30 días</td>
+                    <td>App Desacoplada</td>
+                </tr>
+                <tr>
+                    <td><strong>_ga</strong></td>
+                    <td><span class="cookie-type analytics">Análisis</span></td>
+                    <td>Distingue usuarios únicos para estadísticas</td>
+                    <td>2 años</td>
+                    <td>Google Analytics</td>
+                </tr>
+                <tr>
+                    <td><strong>_ga_[ID]</strong></td>
+                    <td><span class="cookie-type analytics">Análisis</span></td>
+                    <td>Mantiene el estado de la sesión de Google Analytics</td>
+                    <td>2 años</td>
+                    <td>Google Analytics</td>
+                </tr>
+                <tr>
+                    <td><strong>_gid</strong></td>
+                    <td><span class="cookie-type analytics">Análisis</span></td>
+                    <td>Distingue usuarios únicos (período corto)</td>
+                    <td>24 horas</td>
+                    <td>Google Analytics</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>3.1 Cookies necesarias</h3>
+        <p>Estas cookies son esenciales para el funcionamiento básico de nuestra aplicación. Sin ellas, no podríamos proporcionar los servicios que solicitas. Incluyen cookies para mantener tu sesión de usuario y recordar tus preferencias de consentimiento.</p>
+
+        <h3>3.2 Cookies de análisis</h3>
+        <p>Utilizamos Google Analytics para entender cómo interactúas con nuestra aplicación. Estas cookies nos ayudan a:</p>
+        <ul>
+            <li>Medir el número de visitantes</li>
+            <li>Analizar qué páginas son más populares</li>
+            <li>Entender cómo navegas por la aplicación</li>
+            <li>Identificar problemas técnicos</li>
+            <li>Mejorar el rendimiento y la usabilidad</li>
+        </ul>
+        <p><strong>Nota:</strong> Google Analytics está configurado con anonimización de IP para proteger tu privacidad.</p>
+
+        <h3>3.3 Cookies de funcionalidad</h3>
+        <p>Estas cookies mejoran la funcionalidad y personalización de la aplicación, como recordar tus preferencias de idioma o configuraciones de la interfaz.</p>
+
+        <h2>4. Gestión de cookies</h2>
+        <p>Puedes controlar y gestionar las cookies de varias maneras:</p>
+
+        <div class="cookie-controls">
+            <h3>Controles de la aplicación:</h3>
+            <p>Puedes cambiar tus preferencias de cookies en cualquier momento utilizando estos controles:</p>
+            <button onclick="showCookieSettings()">⚙️ Configurar cookies</button>
+            <button onclick="acceptAllCookies()">✅ Aceptar todas</button>
+            <button onclick="rejectNonEssential()">❌ Solo necesarias</button>
+        </div>
+
+        <h3>4.1 Configuración del navegador</h3>
+        <p>También puedes controlar las cookies a través de la configuración de tu navegador:</p>
+        <ul>
+            <li><strong>Chrome:</strong> Configuración > Privacidad y seguridad > Cookies y otros datos de sitios</li>
+            <li><strong>Firefox:</strong> Preferencias > Privacidad y seguridad > Cookies y datos del sitio</li>
+            <li><strong>Safari:</strong> Preferencias > Privacidad > Gestionar datos de sitios web</li>
+            <li><strong>Edge:</strong> Configuración > Privacidad, búsqueda y servicios > Cookies y permisos de sitio</li>
+        </ul>
+
+        <h2>5. Cookies de terceros</h2>
+        <p>Utilizamos los siguientes servicios de terceros que pueden establecer cookies:</p>
+
+        <h3>5.1 Google Analytics</h3>
+        <ul>
+            <li><strong>Propósito:</strong> Análisis web y estadísticas de uso</li>
+            <li><strong>Datos recopilados:</strong> Información de navegación anonimizada</li>
+            <li><strong>Política de privacidad:</strong> <a href="https://policies.google.com/privacy" target="_blank">https://policies.google.com/privacy</a></li>
+            <li><strong>Opt-out:</strong> <a href="https://tools.google.com/dlpage/gaoptout" target="_blank">Complemento de exclusión de Google Analytics</a></li>
+        </ul>
+
+        <h2>6. Consecuencias de rechazar cookies</h2>
+        <p>Si eliges rechazar las cookies no esenciales:</p>
+        <ul>
+            <li>✅ La aplicación funcionará normalmente para las funciones básicas</li>
+            <li>❌ No podremos recordar tus preferencias personalizadas</li>
+            <li>❌ No tendremos datos de análisis para mejorar la aplicación</li>
+            <li>❌ Algunas funciones de personalización pueden no funcionar correctamente</li>
+        </ul>
+
+        <h2>7. Actualizaciones de esta política</h2>
+        <p>Podemos actualizar esta Política de Cookies ocasionalmente para reflejar cambios en las cookies que utilizamos o por otros motivos operativos, legales o reglamentarios. Por favor, revisa esta página periódicamente.</p>
+
+        <h2>8. Más información</h2>
+        <p>Para obtener más información sobre cookies en general, puedes visitar:</p>
+        <ul>
+            <li><a href="https://www.allaboutcookies.org" target="_blank">All About Cookies</a></li>
+            <li><a href="https://cookiepedia.co.uk" target="_blank">Cookiepedia</a></li>
+        </ul>
+
+        <h2>9. Contacto</h2>
+        <div class="contact-info">
+            <p>Si tienes preguntas sobre nuestra Política de Cookies, puedes contactarnos:</p>
+            <ul>
+                <li><strong>Email:</strong> [Tu email de contacto]</li>
+                <li><strong>Aplicación:</strong> App Desacoplada</li>
+                <li><strong>Desarrollador:</strong> Desarrolladores de Pila Completa</li>
+            </ul>
+            <p>También puedes consultar nuestra <a href="/privacidad.html">Política de Privacidad</a> para obtener más información sobre cómo manejamos tus datos personales.</p>
+        </div>
+    </div>
+
+    <script>
+        // Funciones para controlar las cookies desde esta página
+        function showCookieSettings() {
+            // Redirigir al banner de cookies de la página principal
+            if (window.opener) {
+                window.opener.postMessage({type: 'showCookieSettings'}, '*');
+            } else {
+                alert('Para configurar las cookies, vuelve a la página principal de la aplicación.');
+            }
+        }
+
+        function acceptAllCookies() {
+            const consent = {accepted: true, analytics: true};
+            localStorage.setItem('cookieConsent', JSON.stringify(consent));
+            alert('✅ Todas las cookies han sido aceptadas. Los cambios se aplicarán al recargar la página principal.');
+        }
+
+        function rejectNonEssential() {
+            const consent = {accepted: false, analytics: false};
+            localStorage.setItem('cookieConsent', JSON.stringify(consent));
+            alert('✅ Solo se utilizarán las cookies necesarias. Los cambios se aplicarán al recargar la página principal.');
+        }
+
+        // Escuchar mensajes de la ventana principal
+        window.addEventListener('message', function(event) {
+            if (event.data.type === 'showCookieSettings') {
+                showCookieSettings();
+            }
+        });
+    </script>
+</body>
+</html>
