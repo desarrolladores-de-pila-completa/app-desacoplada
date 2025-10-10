@@ -1,4 +1,4 @@
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { Request, Response } from 'express';
 
 // Límite para operaciones de autenticación (login, register) - por IP
@@ -28,7 +28,7 @@ export const userRateLimit = rateLimit({
   keyGenerator: (req: Request) => {
     // Usar userId si está autenticado, sino IP
     const userId = (req as any).userId;
-    return userId ? `user_${userId}` : (req.ip || req.connection.remoteAddress || 'unknown');
+    return userId ? `user_${userId}` : ipKeyGenerator(req.ip || req.connection.remoteAddress || 'unknown');
   },
   skip: (req: Request) => {
     // Saltar si no está autenticado (para rutas públicas)

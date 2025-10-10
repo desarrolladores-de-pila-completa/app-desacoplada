@@ -8,6 +8,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "winston": "^3.8.2",
+    "sanitize-html": "^2.17.0",
     "@tanstack/react-query": "^5.90.2",
     "browser-image-compression": "^2.0.2",
     "react": "^19.2.0",
