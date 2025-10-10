@@ -36,9 +36,7 @@ export const userRateLimit = rateLimit({
 export const generalRateLimit = rateLimit({
   windowMs: 60 * 1000, // 1 minuto
   max: 100, // Máximo 100 solicitudes por IP por minuto
-  message: {
-    error: 'Demasiadas solicitudes. Inténtalo de nuevo en un minuto.',
-  },
+  message: 'Demasiadas solicitudes. Inténtalo de nuevo en un minuto.',
   standardHeaders: true,
   legacyHeaders: false,
 });
