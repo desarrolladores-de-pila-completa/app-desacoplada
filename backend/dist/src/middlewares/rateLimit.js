@@ -39,9 +39,7 @@ const express_rate_limit_1 = __importStar(require("express-rate-limit"));
 exports.authRateLimit = (0, express_rate_limit_1.default)({
     windowMs: 15 * 60 * 1000, // 15 minutos
     max: 5, // Máximo 5 intentos por IP en 15 minutos
-    message: {
-        error: 'Demasiados intentos de autenticación. Inténtalo de nuevo en 15 minutos.',
-    },
+    message: 'Demasiados intentos de autenticación. Inténtalo de nuevo en 15 minutos.',
     standardHeaders: true,
     legacyHeaders: false,
     skip: (req) => {
@@ -53,9 +51,7 @@ exports.authRateLimit = (0, express_rate_limit_1.default)({
 exports.userRateLimit = (0, express_rate_limit_1.default)({
     windowMs: 60 * 1000, // 1 minuto
     max: 10, // Máximo 10 operaciones por usuario por minuto
-    message: {
-        error: 'Demasiados intentos. Inténtalo de nuevo en un minuto.',
-    },
+    message: 'Demasiados intentos. Inténtalo de nuevo en un minuto.',
     standardHeaders: true,
     legacyHeaders: false,
     keyGenerator: (req) => {
@@ -72,9 +68,7 @@ exports.userRateLimit = (0, express_rate_limit_1.default)({
 exports.generalRateLimit = (0, express_rate_limit_1.default)({
     windowMs: 60 * 1000, // 1 minuto
     max: 100, // Máximo 100 solicitudes por IP por minuto
-    message: {
-        error: 'Demasiadas solicitudes. Inténtalo de nuevo en un minuto.',
-    },
+    message: 'Demasiadas solicitudes. Inténtalo de nuevo en un minuto.',
     standardHeaders: true,
     legacyHeaders: false,
 });
