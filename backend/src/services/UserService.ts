@@ -126,17 +126,25 @@ export class UserService {
    * Eliminar usuario completamente (cascada)
    */
   async deleteUserCompletely(userId: string): Promise<void> {
-    // Eliminar en orden para respetar foreign keys
-    await getPool().query("DELETE FROM comentarios WHERE user_id = ?", [userId]);
-    
-    await getPool().query(
-      "DELETE FROM imagenes WHERE pagina_id IN (SELECT id FROM paginas WHERE user_id = ?)",
-      [userId]
-    );
-    
-    await getPool().query("DELETE FROM feed WHERE user_id = ?", [userId]);
-    await getPool().query("DELETE FROM paginas WHERE user_id = ?", [userId]);
-    await getPool().query("DELETE FROM users WHERE id = ?", [userId]);
+    const conn = await getPool().getConnection();
+    try {
+      await conn.beginTransaction();
+      // Eliminar en orden para respetar foreign keys
+      await conn.query("DELETE FROM comentarios WHERE user_id = ?", [userId]);
+      await conn.query(
+        "DELETE FROM imagenes WHERE pagina_id IN (SELECT id FROM paginas WHERE user_id = ?)",
+        [userId]
+      );
+      await conn.query("DELETE FROM feed WHERE user_id = ?", [userId]);
+      await conn.query("DELETE FROM paginas WHERE user_id = ?", [userId]);
+      await conn.query("DELETE FROM users WHERE id = ?", [userId]);
+      await conn.commit();
+    } catch (err) {
+      await conn.rollback();
+      throw err;
+    } finally {
+      conn.release();
+    }
   }
 
   /**

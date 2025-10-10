@@ -43,6 +43,14 @@ export declare function additionalSecurityHeaders(req: any, res: any, next: any)
  */
 export declare function botProtection(req: any, res: any, next: any): void;
 /**
+ * Middleware para validación de archivos subidos
+ */
+export declare function validateFileUpload(req: any, res: any, next: any): void;
+/**
+ * Función para sanitizar datos sensibles en logs
+ */
+export declare function sanitizeForLogging(data: any): any;
+/**
  * Configuración de CORS segura
  */
 export declare const corsOptions: {

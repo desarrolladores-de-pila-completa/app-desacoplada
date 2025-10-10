@@ -14,10 +14,12 @@ const app = express();
 app.use(
   cors({
     origin: [
-      "http://127.0.0.1:5500", 
+      "http://127.0.0.1:5500",
       "http://localhost:5500",
       "http://localhost:5173",  // Vite dev server
       "http://127.0.0.1:5173",   // Vite dev server (127.0.0.1)
+      "http://localhost:5174",  // Vite dev server (actual port)
+      "http://127.0.0.1:5174",   // Vite dev server (127.0.0.1, actual port)
       "http://10.0.2.2:3000"     // Emulador Android
     ],
     credentials: true,

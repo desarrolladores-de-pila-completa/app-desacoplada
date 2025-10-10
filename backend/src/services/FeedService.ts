@@ -57,6 +57,22 @@ export class FeedService {
   }
 
   /**
+   * Crear entrada en el feed para registro de usuario
+   */
+  async createUserRegistrationEntry(userId: string, username: string): Promise<number> {
+    const enlace = `/pagina/${username}`;
+    const fotoUrl = `/api/auth/user/${userId}/foto`;
+    const mensaje = `Nuevo usuario registrado: <img src='${fotoUrl}' alt='foto' style='width:32px;height:32px;border-radius:50%;vertical-align:middle;margin-right:8px;' /><a href='${enlace}'>${username}</a>`;
+
+    const [result] = await getPool().query(
+      "INSERT INTO feed (user_id, mensaje, enlace) VALUES (?, ?, ?)",
+      [userId, mensaje, enlace]
+    );
+
+    return (result as any).insertId;
+  }
+
+  /**
    * Crear entrada en el feed cuando se crea una página
    */
   async createFeedEntry(userId: string, pageId: number, titulo: string, contenido: string): Promise<number> {

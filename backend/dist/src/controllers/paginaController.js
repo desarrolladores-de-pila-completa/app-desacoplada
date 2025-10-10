@@ -285,38 +285,25 @@ async function obtenerPagina(req, res) {
         sendError(res, 500, "Error al obtener página");
     }
 }
-// ...existing code...
+const UserService_1 = require("../services/UserService");
+const userService = new UserService_1.UserService();
 // Eliminar usuario y todo su rastro (perfil, comentarios, imágenes, feed)
 async function eliminarUsuarioTotal(req, res) {
     const userId = req.params.id;
+    if (!userId)
+        return res.status(400).json({ error: "Falta el id de usuario" });
     const authUserId = req.userId;
     // Solo el propio usuario puede borrar su cuenta
     if (String(userId) !== String(authUserId)) {
         return res.status(403).json({ error: "No autorizado" });
     }
-    const conn = await db_1.pool.getConnection();
     try {
-        await conn.beginTransaction();
-        // Eliminar comentarios
-        await conn.query("DELETE FROM comentarios WHERE user_id = ?", [userId]);
-        // Eliminar imágenes (por pagina_id)
-        await conn.query("DELETE FROM imagenes WHERE pagina_id IN (SELECT id FROM paginas WHERE user_id = ?)", [userId]);
-        // Eliminar feed
-        await conn.query("DELETE FROM feed WHERE user_id = ?", [userId]);
-        // Eliminar página(s)
-        await conn.query("DELETE FROM paginas WHERE user_id = ?", [userId]);
-        // Eliminar usuario
-        await conn.query("DELETE FROM users WHERE id = ?", [userId]);
-        await conn.commit();
+        await userService.deleteUserCompletely(userId);
         res.json({ message: "Usuario y todos sus datos eliminados" });
     }
     catch (err) {
-        await conn.rollback();
         console.error(err);
         res.status(500).json({ error: "Error al eliminar usuario y sus datos" });
-    }
-    finally {
-        conn.release();
     }
 }
 function sendError(res, code, msg) {
@@ -354,7 +341,15 @@ async function guardarComentario(req, res) {
         return sendError(res, 400, "Comentario vacío o inválido");
     }
     try {
-        await db_1.pool.query("INSERT INTO comentarios (pagina_id, user_id, comentario, creado_en) VALUES (?, ?, ?, NOW())", [paginaId, userId, comentario.trim()]);
+        const [result] = await db_1.pool.query("INSERT INTO comentarios (pagina_id, user_id, comentario, creado_en) VALUES (?, ?, ?, NOW())", [paginaId, userId, comentario.trim()]);
+        const commentId = result.insertId;
+        // Asociar imágenes subidas con el comentario
+        const imageRegex = /\/api\/comment-images\/(\d+)/g;
+        let match;
+        while ((match = imageRegex.exec(comentario)) !== null) {
+            const imageId = match[1];
+            await db_1.pool.query("UPDATE imagenes_comentarios SET comentario_id = ? WHERE id = ?", [commentId, imageId]);
+        }
         res.json({ message: "Comentario guardado" });
     }
     catch (err) {

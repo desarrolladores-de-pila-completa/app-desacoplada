@@ -3,6 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const db_1 = require("../middlewares/db");
 // Endpoint para obtener todas las páginas públicas
 const express_1 = require("express");
 // import rateLimit from "express-rate-limit";
@@ -22,7 +23,7 @@ const upload = multer();
 router.get("/:id/comentarios", async (req, res) => {
     const { id } = req.params;
     try {
-        const [rows] = await require("../middlewares/db").pool.query(`SELECT c.*, u.username FROM comentarios c LEFT JOIN users u ON c.user_id = u.id WHERE c.pagina_id = ? ORDER BY c.creado_en DESC`, [id]);
+        const [rows] = await db_1.pool.query(`SELECT c.*, u.username FROM comentarios c LEFT JOIN users u ON c.user_id = u.id WHERE c.pagina_id = ? ORDER BY c.creado_en DESC`, [id]);
         res.json(rows);
     }
     catch (err) {
@@ -57,22 +58,13 @@ router.post("/:id/imagenes", auth_1.authMiddleware, upload.single("imagen"), asy
         return res.status(400).json({ error: "No se recibió imagen" });
     try {
         // Verificar que el usuario autenticado es el dueño de la página
-        const [rows] = await require("../middlewares/db").pool.query("SELECT user_id FROM paginas WHERE id = ?", [paginaId]);
+        const [rows] = await db_1.pool.query("SELECT user_id FROM paginas WHERE id = ?", [paginaId]);
         if (!rows || rows.length === 0)
             return res.status(404).json({ error: "Página no encontrada" });
         if (String(rows[0].user_id) !== String(req.user.id))
             return res.status(403).json({ error: "Solo el dueño puede subir imágenes" });
-        // Crear tabla 'imagenes' si no existe
-        await require("../middlewares/db").pool.query(`CREATE TABLE IF NOT EXISTS imagenes (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      pagina_id INT NOT NULL,
-      idx INT NOT NULL,
-      imagen LONGBLOB,
-      creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (pagina_id) REFERENCES paginas(id) ON DELETE CASCADE
-    )`);
         // Guardar imagen en la base de datos
-        await require("../middlewares/db").pool.query("REPLACE INTO imagenes (pagina_id, idx, imagen) VALUES (?, ?, ?)", [paginaId, idx, file.buffer]);
+        await db_1.pool.query("REPLACE INTO imagenes (pagina_id, idx, imagen) VALUES (?, ?, ?)", [paginaId, idx, file.buffer]);
         res.json({ message: "Imagen subida" });
     }
     catch (err) {
@@ -84,7 +76,7 @@ router.post("/:id/imagenes", auth_1.authMiddleware, upload.single("imagen"), asy
 router.get("/:id/imagenes", async (req, res) => {
     const paginaId = req.params.id;
     try {
-        const [rows] = await require("../middlewares/db").pool.query("SELECT idx, imagen FROM imagenes WHERE pagina_id = ? ORDER BY idx ASC", [paginaId]);
+        const [rows] = await db_1.pool.query("SELECT idx, imagen FROM imagenes WHERE pagina_id = ? ORDER BY idx ASC", [paginaId]);
         // Convertir BLOB a base64 para frontend
         const images = rows.map((row) => ({
             idx: row.idx,
@@ -95,6 +87,36 @@ router.get("/:id/imagenes", async (req, res) => {
     catch (err) {
         console.error("Error al obtener imágenes:", err);
         res.status(500).json({ error: "Error al obtener imágenes" });
+    }
+});
+// Endpoint para subir imágenes para comentarios (CKEditor)
+router.post("/upload-comment-image", auth_1.authMiddleware, upload.single("upload"), async (req, res) => {
+    const file = req.file;
+    if (!file)
+        return res.status(400).json({ error: "No file uploaded" });
+    try {
+        const [result] = await db_1.pool.query("INSERT INTO imagenes_comentarios (user_id, comentario_id, imagen, filename, mimetype, size) VALUES (?, ?, ?, ?, ?, ?)", [req.user.id, null, file.buffer, file.originalname, file.mimetype, file.size]);
+        const imageId = result.insertId;
+        res.json({ url: `/api/paginas/comment-images/${imageId}` });
+    }
+    catch (err) {
+        console.error("Error uploading comment image:", err);
+        res.status(500).json({ error: "Upload failed" });
+    }
+});
+// Endpoint para servir imágenes de comentarios
+router.get("/comment-images/:id", async (req, res) => {
+    const id = req.params.id;
+    try {
+        const [rows] = await db_1.pool.query("SELECT imagen, mimetype FROM imagenes_comentarios WHERE id = ?", [id]);
+        if (rows.length === 0)
+            return res.status(404).json({ error: "Image not found" });
+        res.set('Content-Type', rows[0].mimetype);
+        res.send(rows[0].imagen);
+    }
+    catch (err) {
+        console.error("Error serving comment image:", err);
+        res.status(500).json({ error: "Server error" });
     }
 });
 // Endpoint para eliminar usuario y todo su rastro

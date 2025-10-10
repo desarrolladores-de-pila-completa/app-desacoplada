@@ -160,4 +160,19 @@ export type CreateUserDTO = Omit<User, 'id' | 'creado_en' | 'foto_perfil'> & {
 export type UpdateUserDTO = Partial<Omit<User, 'id' | 'creado_en'>>;
 export type CreatePaginaDTO = Omit<Pagina, 'id' | 'creado_en'>;
 export type UpdatePaginaDTO = Partial<Omit<Pagina, 'id' | 'user_id' | 'creado_en'>>;
+export declare class AppError extends Error {
+    readonly statusCode: number;
+    readonly isOperational: boolean;
+    constructor(statusCode: number, message: string, isOperational?: boolean);
+}
+export interface ErrorResponse {
+    status: 'error';
+    message: string;
+    stack?: string;
+}
+export interface ValidationResult<T> {
+    success: boolean;
+    data?: T;
+    error?: ValidationError[];
+}
 //# sourceMappingURL=interfaces.d.ts.map

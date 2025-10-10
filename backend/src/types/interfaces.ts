@@ -197,3 +197,30 @@ export type UpdateUserDTO = Partial<Omit<User, 'id' | 'creado_en'>>;
 export type CreatePaginaDTO = Omit<Pagina, 'id' | 'creado_en'>;
 
 export type UpdatePaginaDTO = Partial<Omit<Pagina, 'id' | 'user_id' | 'creado_en'>>;
+
+// Error handling types
+export class AppError extends Error {
+  public readonly statusCode: number;
+  public readonly isOperational: boolean;
+
+  constructor(statusCode: number, message: string, isOperational = true) {
+    super(message);
+    this.statusCode = statusCode;
+    this.isOperational = isOperational;
+
+    Error.captureStackTrace(this, this.constructor);
+  }
+}
+
+export interface ErrorResponse {
+  status: 'error';
+  message: string;
+  stack?: string; // Only included in development
+}
+
+// Validation schemas types (to be used with Zod)
+export interface ValidationResult<T> {
+  success: boolean;
+  data?: T;
+  error?: ValidationError[];
+}

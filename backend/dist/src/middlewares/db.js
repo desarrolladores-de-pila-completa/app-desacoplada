@@ -145,6 +145,18 @@ async function initDatabase() {
       FOREIGN KEY (pagina_id) REFERENCES paginas(id) ON DELETE CASCADE
     )`);
         console.log("Tabla 'comentarios' verificada/creada correctamente.");
+        // Crear tabla 'imagenes_comentarios' para imágenes en comentarios
+        await pool.query(`CREATE TABLE IF NOT EXISTS imagenes_comentarios (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id VARCHAR(36) NOT NULL,
+      comentario_id INT NULL,
+      imagen LONGBLOB,
+      filename VARCHAR(255),
+      mimetype VARCHAR(100),
+      size INT,
+      creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+        console.log("Tabla 'imagenes_comentarios' verificada/creada correctamente.");
         // Crear tabla 'imagenes' para la galería de cada página
         await pool.query(`CREATE TABLE IF NOT EXISTS imagenes (
       id INT AUTO_INCREMENT PRIMARY KEY,

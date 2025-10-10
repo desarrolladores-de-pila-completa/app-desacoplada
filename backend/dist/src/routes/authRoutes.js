@@ -2,6 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.router = void 0;
 const express_1 = require("express");
+const security_1 = require("../middlewares/security");
+const schemas_1 = require("../validation/schemas");
 const multer = require("multer");
 const authController_1 = require("../controllers/authController");
 const auth_1 = require("../middlewares/auth");
@@ -18,7 +20,7 @@ router.get("/me", auth_1.authMiddleware, async (req, res) => {
     res.json(user);
 });
 // Endpoint para actualizar foto de perfil
-router.post("/me/foto", auth_1.authMiddleware, upload.single("foto"), async (req, res) => {
+router.post("/me/foto", auth_1.authMiddleware, upload.single("foto"), security_1.validateFileUpload, async (req, res) => {
     const user = req.user;
     if (!user || !user.id)
         return res.status(401).json({ error: "No autenticado" });
@@ -68,8 +70,8 @@ router.get("/user/:id/foto", async (req, res) => {
         res.status(500).json({ error: "Error al obtener foto de perfil" });
     }
 });
-router.post("/register", authController_1.register);
-router.post("/login", authController_1.login);
+router.post("/register", (0, schemas_1.validateRequest)(schemas_1.RegisterSchema), authController_1.register);
+router.post("/login", (0, schemas_1.validateRequest)(schemas_1.LoginSchema), authController_1.login);
 // router.post("/username", authMiddleware, cambiarUsername); // Función no implementada
 router.post("/logout", authController_1.logout);
 router.delete("/user/:id", authController_1.eliminarUsuario);

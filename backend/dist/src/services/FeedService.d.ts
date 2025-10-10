@@ -13,6 +13,10 @@ export declare class FeedService {
      */
     getFeedEntry(feedId: number): Promise<FeedEntry | null>;
     /**
+     * Crear entrada en el feed para registro de usuario
+     */
+    createUserRegistrationEntry(userId: string, username: string): Promise<number>;
+    /**
      * Crear entrada en el feed cuando se crea una página
      */
     createFeedEntry(userId: string, pageId: number, titulo: string, contenido: string): Promise<number>;

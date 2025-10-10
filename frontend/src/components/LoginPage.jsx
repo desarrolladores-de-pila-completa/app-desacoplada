@@ -1,17 +1,27 @@
 
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import useAuthStore from "../stores/authStore";
 
-function LoginPage({ logEmail, logPass, setLogEmail, setLogPass, login, showOutput }) {
+function LoginPage({ showOutput }) {
   const navigate = useNavigate();
+  const { login, isLoading, error } = useAuthStore();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    const result = await login(logEmail, logPass);
-    if (result?.error) return showOutput(result.error, "error");
-    showOutput("Login exitoso", "success");
-    // Redirige siempre si hay id
-    if (result?.username) {
-      navigate(`/pagina/${result.username}`);
+
+    const result = await login(email, password);
+
+    if (result.success) {
+      showOutput("Login exitoso", "success");
+      // Redirige a la página del usuario
+      if (result.user?.username) {
+        navigate(`/pagina/${result.user.username}`);
+      }
+    } else {
+      showOutput(result.error, "error");
     }
   };
 
@@ -28,8 +38,9 @@ function LoginPage({ logEmail, logPass, setLogEmail, setLogPass, login, showOutp
             type="email"
             id="logEmail"
             required
-            value={logEmail}
-            onChange={e => setLogEmail(e.target.value)}
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            disabled={isLoading}
             style={{ flex: 1, padding: "8px", borderRadius: 4, border: "1px solid #bbb", boxSizing: "border-box" }}
           />
         </div>
@@ -39,12 +50,15 @@ function LoginPage({ logEmail, logPass, setLogEmail, setLogPass, login, showOutp
             type="password"
             id="logPass"
             required
-            value={logPass}
-            onChange={e => setLogPass(e.target.value)}
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            disabled={isLoading}
             style={{ flex: 1, padding: "8px", borderRadius: 4, border: "1px solid #bbb", boxSizing: "border-box" }}
           />
         </div>
-        <button type="submit">Login</button>
+        <button type="submit" disabled={isLoading}>
+          {isLoading ? "Iniciando sesión..." : "Login"}
+        </button>
       </form>
     </div>
   );

@@ -16,7 +16,7 @@ function Feed({ feed }) {
       <ul>
         {feed.map((row) => (
           <li key={row.id}>
-            <span dangerouslySetInnerHTML={{ __html: row.mensaje }} />
+            <span>{row.mensaje}</span>
             {row.creado_en && (
               <span style={{ color: '#888', marginLeft: '8px' }}>{new Date(row.creado_en).toLocaleString()}</span>
             )}
