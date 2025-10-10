@@ -255,7 +255,9 @@ export async function obtenerPagina(req: Request, res: Response) {
 }
 
 import { UserService } from "../services/UserService";
-const userService = new UserService();
+import { getService } from '../utils/servicesConfig';
+
+const userService = getService<UserService>('UserService');
 
 // Eliminar usuario y todo su rastro (perfil, comentarios, imágenes, feed)
 export async function eliminarUsuarioTotal(req: Request, res: Response) {

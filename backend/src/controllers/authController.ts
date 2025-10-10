@@ -3,9 +3,10 @@ import { MulterFile, AppError } from '../types/interfaces';
 import { AuthService } from '../services/AuthService';
 import { UserService } from '../services/UserService';
 import { RegisterSchema, LoginSchema, validateRequest } from '../validation/schemas';
+import { getService } from '../utils/servicesConfig';
 
-const authService = new AuthService();
-const userService = new UserService();
+const authService = getService<AuthService>('AuthService');
+const userService = getService<UserService>('UserService');
 
 interface RequestWithFile extends Request {
   file?: MulterFile;

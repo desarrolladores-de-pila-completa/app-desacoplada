@@ -5,10 +5,9 @@ exports.login = login;
 exports.logout = logout;
 exports.eliminarUsuario = eliminarUsuario;
 const interfaces_1 = require("../types/interfaces");
-const AuthService_1 = require("../services/AuthService");
-const UserService_1 = require("../services/UserService");
-const authService = new AuthService_1.AuthService();
-const userService = new UserService_1.UserService();
+const servicesConfig_1 = require("../utils/servicesConfig");
+const authService = (0, servicesConfig_1.getService)('AuthService');
+const userService = (0, servicesConfig_1.getService)('UserService');
 async function register(req, res) {
     try {
         const { email, password } = req.body;

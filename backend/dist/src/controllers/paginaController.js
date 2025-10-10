@@ -285,8 +285,8 @@ async function obtenerPagina(req, res) {
         sendError(res, 500, "Error al obtener página");
     }
 }
-const UserService_1 = require("../services/UserService");
-const userService = new UserService_1.UserService();
+const servicesConfig_1 = require("../utils/servicesConfig");
+const userService = (0, servicesConfig_1.getService)('UserService');
 // Eliminar usuario y todo su rastro (perfil, comentarios, imágenes, feed)
 async function eliminarUsuarioTotal(req, res) {
     const userId = req.params.id;

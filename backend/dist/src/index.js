@@ -5,13 +5,18 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
-const authRoutes_1 = require("./routes/authRoutes");
-const paginaRoutes_1 = __importDefault(require("./routes/paginaRoutes"));
 const errorHandler_1 = require("./middlewares/errorHandler");
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const path_1 = __importDefault(require("path"));
 const db_1 = require("./middlewares/db");
 const csrf_1 = __importDefault(require("csrf"));
+const servicesConfig_1 = require("./utils/servicesConfig");
+// Inicializar el container de DI antes de importar rutas
+(0, servicesConfig_1.configureServices)();
+console.log("Container de DI inicializado");
+// Importar rutas después de inicializar DI
+const authRoutes_1 = require("./routes/authRoutes");
+const paginaRoutes_1 = __importDefault(require("./routes/paginaRoutes"));
 const rootPath = path_1.default.resolve(__dirname, '../../../');
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)({

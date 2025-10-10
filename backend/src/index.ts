@@ -1,12 +1,19 @@
 import express from "express";
 import cors from "cors";
-import { router as authRoutes } from "./routes/authRoutes";
-import paginaRoutes from "./routes/paginaRoutes";
 import { errorHandler } from "./middlewares/errorHandler";
 import cookieParser from "cookie-parser";
 import path from "path";
 import { pool, initDatabase } from "./middlewares/db";
 import csrf from "csrf";
+import { configureServices } from "./utils/servicesConfig";
+
+// Inicializar el container de DI antes de importar rutas
+configureServices();
+console.log("Container de DI inicializado");
+
+// Importar rutas después de inicializar DI
+import { router as authRoutes } from "./routes/authRoutes";
+import paginaRoutes from "./routes/paginaRoutes";
 
 const rootPath = path.resolve(__dirname, '../../../');
 
@@ -95,6 +102,7 @@ if (require.main === module) {
       // pool ya está inicializado en initDatabase
       await pool.query("SELECT 1");
       console.log("Conexión a MySQL exitosa");
+
       app.listen(3000, () =>
         console.log("Servidor backend en http://localhost:3000")
       );

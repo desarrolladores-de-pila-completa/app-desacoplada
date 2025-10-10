@@ -8,9 +8,9 @@ export class AuthService {
   private userService: UserService;
   private feedService: FeedService;
 
-  constructor() {
-    this.userService = new UserService();
-    this.feedService = new FeedService();
+  constructor(userService: UserService, feedService: FeedService) {
+    this.userService = userService;
+    this.feedService = feedService;
   }
 
   /**

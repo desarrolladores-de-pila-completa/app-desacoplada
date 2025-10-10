@@ -4,17 +4,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
-const UserService_1 = require("./UserService");
-const FeedService_1 = require("./FeedService");
 const interfaces_1 = require("../types/interfaces");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 class AuthService {
     userService;
     feedService;
-    constructor() {
-        this.userService = new UserService_1.UserService();
-        this.feedService = new FeedService_1.FeedService();
+    constructor(userService, feedService) {
+        this.userService = userService;
+        this.feedService = feedService;
     }
     /**
      * Registrar un nuevo usuario
