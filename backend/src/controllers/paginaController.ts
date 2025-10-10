@@ -1,3 +1,5 @@
+import logger from "../utils/logger";
+
 // Obtener página por user_id (UUID sin guiones)
 export async function obtenerPaginaPorUserId(req: Request, res: Response) {
   const userId = req.params.user_id;
@@ -153,14 +155,15 @@ export async function actualizarDescripcion(req: Request, res: Response) {
 }
 
 // Actualizar usuario
-export async function actualizarUsuarioPagina(req: Request, res: Response) {
+export async function actualizarUsuarioPagina(req: RequestWithValidatedData, res: Response) {
   const paginaId = req.params.id;
-  const { usuario } = req.body;
+  const { username } = req.validatedData as any;
   const userId = (req as any).userId;
   try {
     const [rows]: any = await pool.query("SELECT user_id FROM paginas WHERE id = ?", [paginaId]);
     if (!rows || rows.length === 0) return res.status(404).json({ error: "Página no encontrada" });
     if (String(rows[0].user_id) !== String(userId)) return res.status(403).json({ error: "No autorizado" });
+  const usuario = username.getValue();
   await pool.query("UPDATE paginas SET usuario = ? WHERE id = ?", [usuario, paginaId]);
   // Sanitizar username para la URL (sin espacios, solo guiones)
   const usernameSanitizado = usuario.replace(/\s+/g, '-');
@@ -211,6 +214,10 @@ export async function actualizarComentariosPagina(req: Request, res: Response) {
 import { pool } from "../middlewares/db";
 import { Request, Response } from "express";
 
+interface RequestWithValidatedData extends Request {
+  validatedData?: any;
+}
+
 export async function actualizarVisibilidad(req: Request, res: Response) {
   const paginaId = req.params.id;
   const { oculto } = req.body;
@@ -243,13 +250,13 @@ export async function consultarVisibilidad(req: Request, res: Response) {
 export async function obtenerPagina(req: Request, res: Response) {
   const paginaId = req.params.id;
   try {
-    console.log("Buscando página con id:", paginaId);
+    logger.debug('Buscando página por ID', { paginaId, context: 'pagina' });
     const [rows]: any = await pool.query("SELECT * FROM paginas WHERE id = ?", [paginaId]);
-    console.log("Resultado de la consulta:", rows);
+    logger.debug('Resultado de consulta de página', { paginaId, found: rows && rows.length > 0, context: 'pagina' });
     if (!rows || rows.length === 0) return sendError(res, 404, "Página no encontrada");
     res.json(rows[0]);
   } catch (err) {
-    console.error(err);
+    logger.error('Error al obtener página', { paginaId, error: (err as Error).message, stack: (err as Error).stack, context: 'pagina' });
     sendError(res, 500, "Error al obtener página");
   }
 }
@@ -305,25 +312,22 @@ export async function paginasPublicas(req: Request, res: Response) {
 // Eliminado: función de edición de página
 
 // Guardar comentario en la base de datos
-export async function guardarComentario(req: Request, res: Response) {
-  const paginaId = req.params.id;
-  const { comentario } = req.body;
+export async function guardarComentario(req: RequestWithValidatedData, res: Response) {
+  const { comentario, pageId } = req.validatedData as any;
   const userId = (req as any).user?.id;
   if (!userId) return sendError(res, 401, "Debes estar autenticado para comentar");
-  if (!comentario || typeof comentario !== "string" || comentario.trim().length === 0) {
-    return sendError(res, 400, "Comentario vacío o inválido");
-  }
+
   try {
     const [result] = await pool.query(
       "INSERT INTO comentarios (pagina_id, user_id, comentario, creado_en) VALUES (?, ?, ?, NOW())",
-      [paginaId, userId, comentario.trim()]
+      [pageId, userId, comentario.getValue()]
     );
     const commentId = (result as any).insertId;
 
     // Asociar imágenes subidas con el comentario
     const imageRegex = /\/api\/comment-images\/(\d+)/g;
     let match;
-    while ((match = imageRegex.exec(comentario)) !== null) {
+    while ((match = imageRegex.exec(comentario.getValue())) !== null) {
       const imageId = match[1];
       await pool.query("UPDATE imagenes_comentarios SET comentario_id = ? WHERE id = ?", [commentId, imageId]);
     }

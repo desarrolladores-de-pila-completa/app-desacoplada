@@ -1,16 +1,18 @@
 import { UserService } from './UserService';
 import { FeedService } from './FeedService';
-import { User, UserCreateData, AppError } from '../types/interfaces';
+import { User, UserCreateData, AppError, IEventBus } from '../types/interfaces';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 
 export class AuthService {
   private userService: UserService;
   private feedService: FeedService;
+  private eventBus: IEventBus;
 
-  constructor(userService: UserService, feedService: FeedService) {
+  constructor(userService: UserService, feedService: FeedService, eventBus: IEventBus) {
     this.userService = userService;
     this.feedService = feedService;
+    this.eventBus = eventBus;
   }
 
   /**
@@ -33,6 +35,18 @@ export class AuthService {
       await this.feedService.createUserRegistrationEntry(user.id, user.username);
     } catch (error) {
       console.error('Error creando entrada en feed:', error);
+      // No fallar el registro por esto
+    }
+
+    // Emitir evento de usuario registrado
+    try {
+      await this.eventBus.emit('user.registered', {
+        userId: user.id,
+        username: user.username,
+        email: userData.email,
+      });
+    } catch (error) {
+      console.error('Error emitiendo evento user.registered:', error);
       // No fallar el registro por esto
     }
 

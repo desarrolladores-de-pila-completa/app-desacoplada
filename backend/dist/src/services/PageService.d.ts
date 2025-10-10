@@ -1,5 +1,10 @@
-import { Pagina, CreatePaginaData, UpdatePaginaData, PaginaWithImages } from '../types/interfaces';
+import { Pagina, CreatePaginaData, UpdatePaginaData, PaginaWithImages, IEventBus } from '../types/interfaces';
+import { IPageRepository, IFeedRepository } from '../repositories';
 export declare class PageService {
+    private pageRepository;
+    private feedRepository;
+    private eventBus;
+    constructor(pageRepository: IPageRepository, feedRepository: IFeedRepository, eventBus: IEventBus);
     /**
      * Obtener página por ID con imágenes
      */
@@ -13,8 +18,9 @@ export declare class PageService {
      */
     getPublicPages(limit?: number, offset?: number): Promise<Pagina[]>;
     /**
-     * Crear nueva página
-     */
+     /**
+      * Crear nueva página
+      */
     createPage(userId: string, pageData: CreatePaginaData): Promise<number>;
     /**
      * Actualizar página existente
@@ -40,10 +46,6 @@ export declare class PageService {
      * Obtener el propietario de una página
      */
     getPageOwner(pageId: number): Promise<string | null>;
-    /**
-     * Actualizar página en el feed (privado)
-     */
-    private updatePageInFeed;
     /**
      * Cambiar visibilidad de página
      */

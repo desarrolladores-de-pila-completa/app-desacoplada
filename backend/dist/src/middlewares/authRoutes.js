@@ -42,6 +42,7 @@ const db_1 = require("./db");
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const crypto_1 = __importStar(require("crypto"));
+const cookieConfig_1 = require("../utils/cookieConfig");
 // Función para guardar el token en la base de datos
 async function saveToken(user, token) {
     await db_1.pool.execute("INSERT INTO tokens (user_id, token, created_at) VALUES (?, ?, NOW())", [user.id, token]);
@@ -92,13 +93,7 @@ router.post("/login", async (req, res) => {
         return res.status(400).json({ error: "Credenciales inválidas" });
     const token = jsonwebtoken_1.default.sign({ userId: user.id }, SECRET, { expiresIn: "1h" });
     const encryptedToken = encrypt(token);
-    res.cookie("token", encryptedToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production", // Solo true en producción
-        sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
-        maxAge: 3600000, // 1 hora
-        path: "/"
-    });
+    res.cookie("token", encryptedToken, (0, cookieConfig_1.getAuthCookieOptions)());
     res.json({ message: "Login exitoso", username: user.username });
 });
 exports.default = router;

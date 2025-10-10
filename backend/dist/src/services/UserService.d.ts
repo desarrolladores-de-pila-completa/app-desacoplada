@@ -1,5 +1,9 @@
 import { User, UserCreateData } from '../types/interfaces';
+import { IUserRepository, IPageRepository } from '../repositories';
 export declare class UserService {
+    private userRepository;
+    private pageRepository;
+    constructor(userRepository: IUserRepository, pageRepository: IPageRepository);
     /**
      * Crear un nuevo usuario con página personal
      */

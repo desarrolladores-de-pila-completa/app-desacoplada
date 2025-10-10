@@ -3,7 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.router = void 0;
 const express_1 = require("express");
 const security_1 = require("../middlewares/security");
-const schemas_1 = require("../validation/schemas");
+const ValidationService_1 = require("../services/ValidationService");
+const rateLimit_1 = require("../middlewares/rateLimit");
 const multer = require("multer");
 const authController_1 = require("../controllers/authController");
 const auth_1 = require("../middlewares/auth");
@@ -70,8 +71,8 @@ router.get("/user/:id/foto", async (req, res) => {
         res.status(500).json({ error: "Error al obtener foto de perfil" });
     }
 });
-router.post("/register", (0, schemas_1.validateRequest)(schemas_1.RegisterSchema), authController_1.register);
-router.post("/login", (0, schemas_1.validateRequest)(schemas_1.LoginSchema), authController_1.login);
+router.post("/register", rateLimit_1.authRateLimit, (0, ValidationService_1.validateRequest)(ValidationService_1.ValidationService.validateRegister), authController_1.register);
+router.post("/login", rateLimit_1.authRateLimit, (0, ValidationService_1.validateRequest)(ValidationService_1.ValidationService.validateLogin), authController_1.login);
 // router.post("/username", authMiddleware, cambiarUsername); // Función no implementada
 router.post("/logout", authController_1.logout);
 router.delete("/user/:id", authController_1.eliminarUsuario);

@@ -6,20 +6,17 @@ exports.logout = logout;
 exports.eliminarUsuario = eliminarUsuario;
 const interfaces_1 = require("../types/interfaces");
 const servicesConfig_1 = require("../utils/servicesConfig");
+const cookieConfig_1 = require("../utils/cookieConfig");
 const authService = (0, servicesConfig_1.getService)('AuthService');
 const userService = (0, servicesConfig_1.getService)('UserService');
 async function register(req, res) {
     try {
-        const { email, password } = req.body;
+        const { email, password } = req.validatedData; // Type assertion for now
         const file = req.file;
-        const userData = { email, password, file };
+        const userData = { email: email.getValue(), password: password.getValue(), file };
         const result = await authService.register(userData);
         // Establecer cookie con token
-        res.cookie("token", result.token, {
-            httpOnly: true,
-            secure: false,
-            sameSite: "lax"
-        });
+        res.cookie("token", result.token, (0, cookieConfig_1.getAuthCookieOptions)());
         res.json({
             message: "Usuario creado y página personal en línea",
             id: result.user.id,
@@ -36,14 +33,10 @@ async function register(req, res) {
 }
 async function login(req, res) {
     try {
-        const { email, password } = req.body;
-        const result = await authService.login(email, password);
+        const { email, password } = req.validatedData;
+        const result = await authService.login(email.getValue(), password.getValue());
         // Establecer cookie con token
-        res.cookie("token", result.token, {
-            httpOnly: true,
-            secure: false,
-            sameSite: "lax"
-        });
+        res.cookie("token", result.token, (0, cookieConfig_1.getAuthCookieOptions)());
         res.json({
             message: "Login exitoso",
             id: result.user.id,
@@ -59,7 +52,7 @@ async function login(req, res) {
     }
 }
 async function logout(req, res) {
-    res.clearCookie("token", { httpOnly: true, secure: false, sameSite: "lax" });
+    res.clearCookie("token", (0, cookieConfig_1.getAuthCookieOptions)());
     res.json({ message: "Sesión cerrada y token eliminado" });
 }
 // Eliminar usuario y su página

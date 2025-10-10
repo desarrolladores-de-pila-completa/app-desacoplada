@@ -224,3 +224,58 @@ export interface ValidationResult<T> {
   data?: T;
   error?: ValidationError[];
 }
+
+// Event system types
+export type EventName = 'user.registered' | 'page.created' | 'comment.created' | 'page.updated' | 'page.deleted';
+
+export interface EventPayload {
+  [key: string]: any;
+}
+
+export interface UserRegisteredEvent extends EventPayload {
+  userId: string;
+  username: string;
+  email: string;
+}
+
+export interface PageCreatedEvent extends EventPayload {
+  pageId: number;
+  userId: string;
+  title: string;
+  content: string;
+}
+
+export interface CommentCreatedEvent extends EventPayload {
+  commentId: number;
+  pageId: number;
+  userId: string;
+  content: string;
+}
+
+export interface PageUpdatedEvent extends EventPayload {
+  pageId: number;
+  userId: string;
+  changes: UpdatePaginaData;
+}
+
+export interface PageDeletedEvent extends EventPayload {
+  pageId: number;
+  userId: string;
+}
+
+export type EventDataMap = {
+  'user.registered': UserRegisteredEvent;
+  'page.created': PageCreatedEvent;
+  'comment.created': CommentCreatedEvent;
+  'page.updated': PageUpdatedEvent;
+  'page.deleted': PageDeletedEvent;
+};
+
+export type EventListener<T extends EventName> = (payload: EventDataMap[T]) => void | Promise<void>;
+
+export interface IEventBus {
+  emit<T extends EventName>(event: T, payload: EventDataMap[T]): Promise<void>;
+  on<T extends EventName>(event: T, listener: EventListener<T>): void;
+  off<T extends EventName>(event: T, listener: EventListener<T>): void;
+  removeAllListeners(event?: EventName): void;
+}

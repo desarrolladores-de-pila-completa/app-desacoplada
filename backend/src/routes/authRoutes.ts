@@ -1,7 +1,8 @@
 import { Router, Request, Response } from "express";
 import { MulterFile } from '../types/interfaces';
 import { validateFileUpload } from '../middlewares/security';
-import { RegisterSchema, LoginSchema, validateRequest } from '../validation/schemas';
+import { ValidationService, validateRequest } from '../services/ValidationService';
+import { authRateLimit } from '../middlewares/rateLimit';
 
 interface RequestWithFile extends Request {
   file?: MulterFile;
@@ -80,8 +81,8 @@ router.get("/user/:id/foto", async (req, res) => {
   }
 });
 
-router.post("/register", validateRequest(RegisterSchema), register);
-router.post("/login", validateRequest(LoginSchema), login);
+router.post("/register", authRateLimit, validateRequest(ValidationService.validateRegister), register);
+router.post("/login", authRateLimit, validateRequest(ValidationService.validateLogin), login);
 // router.post("/username", authMiddleware, cambiarUsername); // Función no implementada
 router.post("/logout", logout);
 

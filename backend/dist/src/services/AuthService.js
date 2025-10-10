@@ -10,9 +10,11 @@ const bcryptjs_1 = __importDefault(require("bcryptjs"));
 class AuthService {
     userService;
     feedService;
-    constructor(userService, feedService) {
+    eventBus;
+    constructor(userService, feedService, eventBus) {
         this.userService = userService;
         this.feedService = feedService;
+        this.eventBus = eventBus;
     }
     /**
      * Registrar un nuevo usuario
@@ -29,6 +31,18 @@ class AuthService {
         }
         catch (error) {
             console.error('Error creando entrada en feed:', error);
+            // No fallar el registro por esto
+        }
+        // Emitir evento de usuario registrado
+        try {
+            await this.eventBus.emit('user.registered', {
+                userId: user.id,
+                username: user.username,
+                email: userData.email,
+            });
+        }
+        catch (error) {
+            console.error('Error emitiendo evento user.registered:', error);
             // No fallar el registro por esto
         }
         // Generar token JWT

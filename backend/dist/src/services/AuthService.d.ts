@@ -1,10 +1,11 @@
 import { UserService } from './UserService';
 import { FeedService } from './FeedService';
-import { User, UserCreateData } from '../types/interfaces';
+import { User, UserCreateData, IEventBus } from '../types/interfaces';
 export declare class AuthService {
     private userService;
     private feedService;
-    constructor(userService: UserService, feedService: FeedService);
+    private eventBus;
+    constructor(userService: UserService, feedService: FeedService, eventBus: IEventBus);
     /**
      * Registrar un nuevo usuario
      */

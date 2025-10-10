@@ -9,6 +9,8 @@ const express_1 = require("express");
 // import rateLimit from "express-rate-limit";
 const paginaController_1 = require("../controllers/paginaController");
 const auth_1 = require("../middlewares/auth");
+const ValidationService_1 = require("../services/ValidationService");
+const rateLimit_1 = require("../middlewares/rateLimit");
 const multer = require("multer");
 const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
 const limiter = (0, express_rate_limit_1.default)({ windowMs: 60 * 1000, max: 100 });
@@ -39,11 +41,11 @@ router.get("/pagina/:username", paginaController_3.obtenerPaginaPorUsername);
 const paginaController_4 = require("../controllers/paginaController");
 router.get("/pagina/id/:user_id", paginaController_4.obtenerPaginaPorUserId);
 // Endpoint para actualizar el nombre de usuario de la página
-router.post("/:id/usuario", auth_1.authMiddleware, paginaController_1.actualizarUsuarioPagina);
+router.post("/:id/usuario", auth_1.authMiddleware, (0, ValidationService_1.validateRequest)(ValidationService_1.ValidationService.validateUpdateUsername), paginaController_1.actualizarUsuarioPagina);
 // Comentarios
-router.post("/:id/comentarios", auth_1.authMiddleware, paginaController_1.guardarComentario);
+router.post("/:id/comentarios", auth_1.authMiddleware, rateLimit_1.userRateLimit, (0, ValidationService_1.validateRequest)(ValidationService_1.ValidationService.validateCreateComment), paginaController_1.guardarComentario);
 // Endpoint para subir imágenes a una página (BLOB)
-router.post("/:id/imagenes", auth_1.authMiddleware, upload.single("imagen"), async (req, res) => {
+router.post("/:id/imagenes", auth_1.authMiddleware, rateLimit_1.userRateLimit, upload.single("imagen"), async (req, res) => {
     const paginaId = req.params.id;
     // Usar multer para procesar todos los campos del formulario
     const file = req.file;
@@ -90,7 +92,7 @@ router.get("/:id/imagenes", async (req, res) => {
     }
 });
 // Endpoint para subir imágenes para comentarios (CKEditor)
-router.post("/upload-comment-image", auth_1.authMiddleware, upload.single("upload"), async (req, res) => {
+router.post("/upload-comment-image", auth_1.authMiddleware, rateLimit_1.userRateLimit, upload.single("upload"), async (req, res) => {
     const file = req.file;
     if (!file)
         return res.status(400).json({ error: "No file uploaded" });
@@ -120,6 +122,6 @@ router.get("/comment-images/:id", async (req, res) => {
     }
 });
 // Endpoint para eliminar usuario y todo su rastro
-router.delete("/usuario/:id", auth_1.authMiddleware, paginaController_1.eliminarUsuarioTotal);
+router.delete("/usuario/:id", auth_1.authMiddleware, rateLimit_1.userRateLimit, paginaController_1.eliminarUsuarioTotal);
 exports.default = router;
 //# sourceMappingURL=paginaRoutes.js.map

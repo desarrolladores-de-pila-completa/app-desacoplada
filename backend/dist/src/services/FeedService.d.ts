@@ -1,5 +1,8 @@
 import { FeedEntry } from '../types/interfaces';
+import { IFeedRepository } from '../repositories';
 export declare class FeedService {
+    private feedRepository;
+    constructor(feedRepository: IFeedRepository);
     /**
      * Obtener feed completo con paginación
      */
@@ -56,10 +59,6 @@ export declare class FeedService {
         created: number;
         updated: number;
     }>;
-    /**
-     * Enriquecer entradas del feed con imágenes
-     */
-    private enrichFeedWithImages;
     /**
      * Limpiar entradas huérfanas del feed
      */
