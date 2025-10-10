@@ -44,6 +44,7 @@ router.get("/pagina/id/:user_id", paginaController_4.obtenerPaginaPorUserId);
 router.post("/:id/usuario", auth_1.authMiddleware, (0, ValidationService_1.validateRequest)(ValidationService_1.ValidationService.validateUpdateUsername), paginaController_1.actualizarUsuarioPagina);
 // Comentarios
 router.post("/:id/comentarios", auth_1.authMiddleware, rateLimit_1.userRateLimit, (0, ValidationService_1.validateRequest)(ValidationService_1.ValidationService.validateCreateComment), paginaController_1.guardarComentario);
+router.delete("/:id/comentarios/:commentId", auth_1.authMiddleware, rateLimit_1.userRateLimit, paginaController_1.eliminarComentario);
 // Endpoint para subir imágenes a una página (BLOB)
 router.post("/:id/imagenes", auth_1.authMiddleware, rateLimit_1.userRateLimit, upload.single("imagen"), async (req, res) => {
     const paginaId = req.params.id;
@@ -91,7 +92,7 @@ router.get("/:id/imagenes", async (req, res) => {
         res.status(500).json({ error: "Error al obtener imágenes" });
     }
 });
-// Endpoint para subir imágenes para comentarios (CKEditor)
+// Endpoint para subir imágenes para comentarios
 router.post("/upload-comment-image", auth_1.authMiddleware, rateLimit_1.userRateLimit, upload.single("upload"), async (req, res) => {
     const file = req.file;
     if (!file)

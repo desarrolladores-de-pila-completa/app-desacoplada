@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import Navbar from "./Navbar";
 import ImageGrid from "./ImageGrid";
 import FotoPerfil from "./FotoPerfil";
 import UserHeader from "./UserHeader";
@@ -91,14 +92,16 @@ function UserPage() {
     );
   }
   return (
-  <div style={{ width: '100vw', maxWidth: '100vw', minHeight: windowSize.height, margin: 0, background: '#fff', padding: 'clamp(8px, 4vw, 24px)', borderRadius: 0, boxShadow: 'none', position: 'relative', overflowY: 'auto', overflowX: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}>
-      <div style={{ width: '100%', maxWidth: 900, margin: '0 auto', boxSizing: 'border-box', padding: '0 5vw', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+  <>
+    <Navbar />
+    <div style={{    maxWidth: '100vw', minHeight: windowSize.height, margin: 0, background: '#fff', padding: 'clamp(8px, 4vw, 24px)', borderRadius: 0, boxShadow: 'none', position: 'relative', overflowY: 'auto', overflowX: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box', marginTop: '80px' }}>
+      <div style={{  maxWidth: 900, margin: '0 auto', boxSizing: 'border-box', padding: '0 5vw', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
         <FotoPerfil user={authUser} setUser={() => {}} editable={authUser?.id === paginaUser?.user_id} authUserId={authUser?.id} id={paginaUser?.user_id || username} />
         <UserHeader paginaUser={paginaUser} username={paginaUser?.usuario} authUserId={authUser?.id} onUsernameChange={() => {}} />
         <div style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', overflowX: 'hidden' }}>
           <ImageGrid paginaId={paginaUser?.id} editable={authUser?.id === paginaUser?.user_id} />
         </div>
-        <div style={{ marginTop: 32, width: '100%' }}>
+        <div style={{ marginTop: 32 }}>
           {isAuthenticated ? (
             <AgregarComentario paginaId={paginaUser.id} />
           ) : (
@@ -106,21 +109,22 @@ function UserPage() {
               Debes <Link to="/login">iniciar sesión</Link> para agregar un comentario.
             </div>
           )}
-          <ComentariosList comentarios={comentarios} />
+          <ComentariosList comentarios={comentarios} pageId={paginaUser.id} />
         </div>
-        {/* Botón de borrado al final */}
-        {authUser?.id === paginaUser?.user_id && (
-          <button
-            onClick={handleDeleteUser}
-            style={{
-              background: '#d32f2f', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 24px', marginTop: 48, fontWeight: 'bold', cursor: 'pointer', fontSize: '1.1rem', alignSelf: 'center'
-            }}
-          >
-            Borrar mi perfil y todos mis datos
-          </button>
-        )}
       </div>
+      {/* Botón de borrado al final */}
+      {authUser?.id === paginaUser?.user_id && (
+        <button
+          onClick={handleDeleteUser}
+          style={{
+            background: '#d32f2f', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 24px', marginTop: 48, fontWeight: 'bold', cursor: 'pointer', fontSize: '1.1rem', alignSelf: 'center'
+          }}
+        >
+          Borrar mi perfil y todos mis datos
+        </button>
+      )}
     </div>
+  </>
   );
 }
 

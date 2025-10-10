@@ -11,12 +11,12 @@ function Navbar({ onFeedClick }) {
   };
 
   return (
-    <nav style={{ display: "flex", gap: "24px", alignItems: "center", padding: "16px 0" }}>
+    <nav style={{ position: "fixed", top: 0, left: 0, right: 0, width: "100%", display: "flex", gap: "24px", alignItems: "center", padding: "16px 24px", background: "#f0f0f0", borderBottom: "1px solid #ccc", zIndex: 1000 }}>
       <Link to="/" id="nav-feed" onClick={onFeedClick}>Feed</Link>
 
       {isAuthenticated ? (
         <>
-          <span>Bienvenido, {user?.username}</span>
+          <span>Bienvenido, <Link to={`/pagina/${user?.username}`}>{user?.username}</Link></span>
           <button onClick={handleLogout} style={{ background: 'none', border: 'none', color: 'blue', cursor: 'pointer', textDecoration: 'underline' }}>
             Logout
           </button>

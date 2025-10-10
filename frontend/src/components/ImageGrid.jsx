@@ -1,5 +1,8 @@
 const API_URL = "http://localhost:3000";
 import React, { useRef, useState, useEffect } from "react";
+import { createRoot } from "react-dom/client";
+import WinBox from "winbox/src/js/winbox.js";
+import "winbox/dist/css/winbox.min.css";
 
 const GRID_ROWS = 3;
 const GRID_COLS = 6;
@@ -8,6 +11,21 @@ const TOTAL_CELLS = GRID_ROWS * GRID_COLS;
 function ImageGrid({ paginaId, editable }) {
   const [images, setImages] = useState([]);
   const fileInputs = useRef([]);
+
+  const openImageInWinBox = (src, alt) => {
+    const maxWidth = window.innerWidth * 0.9;
+    const maxHeight = window.innerHeight * 0.8;
+    const winbox = new WinBox({
+      title: alt || "Imagen",
+      width: Math.min(800, maxWidth),
+      height: Math.min(600, maxHeight),
+      x: 'center',
+      y: 'center',
+      drag: true,
+      keys: true,
+    });
+    winbox.body.innerHTML = `<img src="${src}" alt="${alt}" style="width: 100%; height: 100%; object-fit: contain;" />`;
+  };
   // Cargar imágenes guardadas en el backend
   useEffect(() => {
     setImages([]); // Limpiar imágenes al cambiar de usuario
@@ -64,54 +82,44 @@ function ImageGrid({ paginaId, editable }) {
   };
 
   return (
-    <div style={{ width: "100%", maxWidth: 900, margin: "32px auto", display: "flex", justifyContent: "center", alignItems: "center", padding: '0 2vw', boxSizing: 'border-box' }}>
-      <div style={{ width: "100%", background: "#fff", borderRadius: 16, boxShadow: "0 2px 16px #0001", padding: 'clamp(12px, 3vw, 24px)' }}>
+    <div style={{ maxWidth: 900, margin: "32px auto", padding: '0 2vw' }}>
+      <div style={{ background: "#fff", borderRadius: 16, boxShadow: "0 2px 16px #0001", padding: 'clamp(12px, 3vw, 24px)' }}>
         <h3 style={{ textAlign: "center", marginBottom: 24, fontSize: 'clamp(1.1rem, 3vw, 1.5rem)' }}>Galería de imágenes</h3>
         <div style={{
           display: "grid",
-          gridTemplateColumns: `repeat(auto-fit, minmax(100px, 1fr))`,
-          gridAutoRows: '120px',
-          gap: "clamp(8px, 2vw, 16px)",
-          justifyContent: "center",
-          width: '100%'
+          gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
+          gap: "clamp(8px, 2vw, 16px)"
         }}>
           {images.map((img, idx) => (
             <div key={idx} style={{
+              aspectRatio: "1",
               border: "2px solid #1976d2",
               borderRadius: 8,
               background: "#f7f7f7",
-              width: "100%",
-              height: "100%",
-              minWidth: 100,
-              minHeight: 100,
-              maxWidth: 140,
-              maxHeight: 140,
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
-              position: "relative"
+              justifyContent: "center"
             }}>
-              <img src={img} alt={`Imagen ${idx + 1}`} style={{ maxWidth: "100%", maxHeight: "100%", borderRadius: 6 }} />
+              <img
+                src={img}
+                alt={`Imagen ${idx + 1}`}
+                style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 6, cursor: "pointer" }}
+                onClick={() => openImageInWinBox(img, `Imagen ${idx + 1}`)}
+              />
             </div>
           ))}
           {editable && (
             <div style={{
+              aspectRatio: "1",
               border: "2px dashed #1976d2",
               borderRadius: 8,
               background: "#f7f7f7",
-              width: "100%",
-              height: "100%",
-              minWidth: 100,
-              minHeight: 100,
-              maxWidth: 140,
-              maxHeight: 140,
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
-              position: "relative"
+              justifyContent: "center"
             }}>
               <button
-                style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", padding: "8px 12px", borderRadius: 6, background: "#1976d2", color: "#fff", border: "none", cursor: "pointer", fontSize: 'clamp(0.9rem, 2vw, 1.1rem)' }}
+                style={{ padding: "8px 12px", borderRadius: 6, background: "#1976d2", color: "#fff", border: "none", cursor: "pointer", fontSize: 'clamp(0.9rem, 2vw, 1.1rem)' }}
                 onClick={() => fileInputs.current[images.length]?.click()}
               >
                 Subir

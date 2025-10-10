@@ -58,3 +58,12 @@ nav {
   z-index: 1000;
   margin: 0;
 }
+
+.comentario {
+  max-width: 600px;
+}
+
+.comentario img {
+  max-width: 100%;
+  height: auto;
+}

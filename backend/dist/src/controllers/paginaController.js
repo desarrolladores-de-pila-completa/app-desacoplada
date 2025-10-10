@@ -21,6 +21,7 @@ exports.obtenerPagina = obtenerPagina;
 exports.eliminarUsuarioTotal = eliminarUsuarioTotal;
 exports.paginasPublicas = paginasPublicas;
 exports.guardarComentario = guardarComentario;
+exports.eliminarComentario = eliminarComentario;
 const logger_1 = __importDefault(require("../utils/logger"));
 // Obtener página por user_id (UUID sin guiones)
 async function obtenerPaginaPorUserId(req, res) {
@@ -196,16 +197,12 @@ async function actualizarUsuarioPagina(req, res) {
         await db_1.pool.query("UPDATE paginas SET usuario = ? WHERE id = ?", [usuario, paginaId]);
         // Sanitizar username para la URL (sin espacios, solo guiones)
         const usernameSanitizado = usuario.replace(/\s+/g, '-');
-        // Generar nueva foto de perfil con el nuevo nombre usando Canvas
-        const { generarAvatarBuffer } = require("../utils/generarAvatarBuffer");
-        const nuevaFotoBuffer = await generarAvatarBuffer(usernameSanitizado);
-        await db_1.pool.query("UPDATE users SET username = ?, foto_perfil = ? WHERE id = ?", [usernameSanitizado, nuevaFotoBuffer, rows[0].user_id]);
+        await db_1.pool.query("UPDATE users SET username = ? WHERE id = ?", [usernameSanitizado, rows[0].user_id]);
         // Actualizar el feed para ese usuario
         if (usuario && usuario.trim()) {
             // Sanitizar para el enlace (reemplazar espacios por guiones)
             const enlaceUsuario = usuario.replace(/\s+/g, '-');
-            const fotoUrl = `/api/auth/user/${rows[0].user_id}/foto`;
-            const mensaje = `Nuevo usuario registrado: <img src='${fotoUrl}' alt='foto' style='width:32px;height:32px;border-radius:50%;vertical-align:middle;margin-right:8px;' /><a href='/pagina/${enlaceUsuario}'>${usuario}</a>`;
+            const mensaje = `Usuario actualizado: <a href='/pagina/${enlaceUsuario}'>${usuario}</a>`;
             const enlace = `/pagina/${enlaceUsuario}`;
             await db_1.pool.query("UPDATE feed SET mensaje = ?, enlace = ? WHERE user_id = ?", [mensaje, enlace, rows[0].user_id]);
         }
@@ -345,7 +342,7 @@ async function guardarComentario(req, res) {
         const [result] = await db_1.pool.query("INSERT INTO comentarios (pagina_id, user_id, comentario, creado_en) VALUES (?, ?, ?, NOW())", [pageId, userId, comentario.getValue()]);
         const commentId = result.insertId;
         // Asociar imágenes subidas con el comentario
-        const imageRegex = /\/api\/comment-images\/(\d+)/g;
+        const imageRegex = /\/api\/paginas\/comment-images\/(\d+)/g;
         let match;
         while ((match = imageRegex.exec(comentario.getValue())) !== null) {
             const imageId = match[1];
@@ -356,6 +353,28 @@ async function guardarComentario(req, res) {
     catch (err) {
         console.error(err);
         sendError(res, 500, "Error al guardar comentario");
+    }
+}
+// Eliminar comentario
+async function eliminarComentario(req, res) {
+    const { id: pageId, commentId } = req.params;
+    const userId = req.user?.id;
+    if (!userId)
+        return sendError(res, 401, "Debes estar autenticado");
+    try {
+        // Verificar que el comentario existe y pertenece al usuario
+        const [rows] = await db_1.pool.query("SELECT user_id FROM comentarios WHERE id = ? AND pagina_id = ?", [commentId, pageId]);
+        if (!rows || rows.length === 0)
+            return sendError(res, 404, "Comentario no encontrado");
+        if (String(rows[0].user_id) !== String(userId))
+            return sendError(res, 403, "No autorizado para eliminar este comentario");
+        // Eliminar el comentario
+        await db_1.pool.query("DELETE FROM comentarios WHERE id = ?", [commentId]);
+        res.json({ message: "Comentario eliminado" });
+    }
+    catch (err) {
+        console.error(err);
+        sendError(res, 500, "Error al eliminar comentario");
     }
 }
 //# sourceMappingURL=paginaController.js.map

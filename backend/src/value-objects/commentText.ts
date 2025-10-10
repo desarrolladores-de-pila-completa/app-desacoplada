@@ -16,7 +16,7 @@ export class CommentText {
       return err('El comentario no puede estar vacío');
     }
 
-    if (trimmed.length > 500) {
+    if (trimmed.length > 10000) {
       return err('El comentario es demasiado largo');
     }
 

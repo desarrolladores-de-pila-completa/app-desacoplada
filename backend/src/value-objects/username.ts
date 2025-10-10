@@ -24,8 +24,8 @@ export class Username {
       return err('El username es demasiado largo');
     }
 
-    // Solo letras, números y guiones bajos
-    const usernameRegex = /^[a-zA-Z0-9_]+$/;
+    // Permitir letras, números, guiones bajos, espacios, acentos y guiones
+    const usernameRegex = /^[a-zA-Z0-9_\sáéíóúÁÉÍÓÚñÑ-]+$/;
     if (!usernameRegex.test(trimmed)) {
       return err('El username solo puede contener letras, números y guiones bajos');
     }
