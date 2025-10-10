@@ -5,9 +5,7 @@ import { Request, Response } from 'express';
 export const authRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
   max: 5, // Máximo 5 intentos por IP en 15 minutos
-  message: {
-    error: 'Demasiados intentos de autenticación. Inténtalo de nuevo en 15 minutos.',
-  },
+  message: 'Demasiados intentos de autenticación. Inténtalo de nuevo en 15 minutos.',
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req: Request) => {
@@ -20,9 +18,7 @@ export const authRateLimit = rateLimit({
 export const userRateLimit = rateLimit({
   windowMs: 60 * 1000, // 1 minuto
   max: 10, // Máximo 10 operaciones por usuario por minuto
-  message: {
-    error: 'Demasiados intentos. Inténtalo de nuevo en un minuto.',
-  },
+  message: 'Demasiados intentos. Inténtalo de nuevo en un minuto.',
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req: Request) => {
@@ -40,9 +36,7 @@ export const userRateLimit = rateLimit({
 export const generalRateLimit = rateLimit({
   windowMs: 60 * 1000, // 1 minuto
   max: 100, // Máximo 100 solicitudes por IP por minuto
-  message: {
-    error: 'Demasiadas solicitudes. Inténtalo de nuevo en un minuto.',
-  },
+  message: 'Demasiadas solicitudes. Inténtalo de nuevo en un minuto.',
   standardHeaders: true,
   legacyHeaders: false,
 });
