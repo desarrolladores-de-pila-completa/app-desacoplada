@@ -167,16 +167,12 @@ export async function actualizarUsuarioPagina(req: RequestWithValidatedData, res
   await pool.query("UPDATE paginas SET usuario = ? WHERE id = ?", [usuario, paginaId]);
   // Sanitizar username para la URL (sin espacios, solo guiones)
   const usernameSanitizado = usuario.replace(/\s+/g, '-');
-  // Generar nueva foto de perfil con el nuevo nombre usando Canvas
-  const { generarAvatarBuffer } = require("../utils/generarAvatarBuffer");
-  const nuevaFotoBuffer = await generarAvatarBuffer(usernameSanitizado);
-  await pool.query("UPDATE users SET username = ?, foto_perfil = ? WHERE id = ?", [usernameSanitizado, nuevaFotoBuffer, rows[0].user_id]);
+  await pool.query("UPDATE users SET username = ? WHERE id = ?", [usernameSanitizado, rows[0].user_id]);
     // Actualizar el feed para ese usuario
     if (usuario && usuario.trim()) {
       // Sanitizar para el enlace (reemplazar espacios por guiones)
       const enlaceUsuario = usuario.replace(/\s+/g, '-');
-      const fotoUrl = `/api/auth/user/${rows[0].user_id}/foto`;
-      const mensaje = `Nuevo usuario registrado: <img src='${fotoUrl}' alt='foto' style='width:32px;height:32px;border-radius:50%;vertical-align:middle;margin-right:8px;' /><a href='/pagina/${enlaceUsuario}'>${usuario}</a>`;
+      const mensaje = `Usuario actualizado: <a href='/pagina/${enlaceUsuario}'>${usuario}</a>`;
       const enlace = `/pagina/${enlaceUsuario}`;
       await pool.query(
         "UPDATE feed SET mensaje = ?, enlace = ? WHERE user_id = ?",
@@ -325,7 +321,7 @@ export async function guardarComentario(req: RequestWithValidatedData, res: Resp
     const commentId = (result as any).insertId;
 
     // Asociar imágenes subidas con el comentario
-    const imageRegex = /\/api\/comment-images\/(\d+)/g;
+    const imageRegex = /\/api\/paginas\/comment-images\/(\d+)/g;
     let match;
     while ((match = imageRegex.exec(comentario.getValue())) !== null) {
       const imageId = match[1];
@@ -336,5 +332,30 @@ export async function guardarComentario(req: RequestWithValidatedData, res: Resp
   } catch (err) {
     console.error(err);
     sendError(res, 500, "Error al guardar comentario");
+  }
+}
+
+// Eliminar comentario
+export async function eliminarComentario(req: Request, res: Response) {
+  const { id: pageId, commentId } = req.params;
+  const userId = (req as any).user?.id;
+  if (!userId) return sendError(res, 401, "Debes estar autenticado");
+
+  try {
+    // Verificar que el comentario existe y pertenece al usuario
+    const [rows]: any = await pool.query(
+      "SELECT user_id FROM comentarios WHERE id = ? AND pagina_id = ?",
+      [commentId, pageId]
+    );
+    if (!rows || rows.length === 0) return sendError(res, 404, "Comentario no encontrado");
+    if (String(rows[0].user_id) !== String(userId)) return sendError(res, 403, "No autorizado para eliminar este comentario");
+
+    // Eliminar el comentario
+    await pool.query("DELETE FROM comentarios WHERE id = ?", [commentId]);
+
+    res.json({ message: "Comentario eliminado" });
+  } catch (err) {
+    console.error(err);
+    sendError(res, 500, "Error al eliminar comentario");
   }
 }

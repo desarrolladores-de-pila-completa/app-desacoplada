@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Navbar from "./Navbar";
 import useAuthStore from "../stores/authStore";
 
 function validateEmail(email) {
@@ -41,7 +42,9 @@ function RegisterPage({ showOutput }) {
   };
 
   return (
-    <div style={{ maxWidth: 400, margin: "40px auto", background: "#fff", padding: 32, borderRadius: 12, boxShadow: "0 4px 24px #0002" }}>
+    <>
+      <Navbar />
+      <div style={{ maxWidth: 400, margin: "120px auto", background: "#fff", padding: 32, borderRadius: 12, boxShadow: "0 4px 24px #0002" }}>
       <form id="registerForm" onSubmit={handleRegister}>
         <h2>Registro</h2>
         <div style={{ display: "flex", alignItems: "center", border: "2px solid #1976d2", borderRadius: 8, padding: "12px", marginBottom: "16px", background: "#f7f7f7", width: "100%", boxSizing: "border-box" }}>
@@ -74,6 +77,7 @@ function RegisterPage({ showOutput }) {
       </form>
       {/* Cartel de página personal oculto tras registro, solo redirige */}
     </div>
+    </>
   );
 }
 

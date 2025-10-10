@@ -4,7 +4,7 @@ import { pool } from "../middlewares/db";
 import { Router } from "express";
 // import rateLimit from "express-rate-limit";
 
-import { paginasPublicas, guardarComentario, obtenerPagina, actualizarVisibilidad, consultarVisibilidad, actualizarPropietario, actualizarDescripcion, actualizarUsuarioPagina, actualizarComentariosPagina, consultarPropietario, consultarDescripcion, consultarUsuarioPagina, consultarComentariosPagina, eliminarUsuarioTotal } from "../controllers/paginaController";
+import { paginasPublicas, guardarComentario, eliminarComentario, obtenerPagina, actualizarVisibilidad, consultarVisibilidad, actualizarPropietario, actualizarDescripcion, actualizarUsuarioPagina, actualizarComentariosPagina, consultarPropietario, consultarDescripcion, consultarUsuarioPagina, consultarComentariosPagina, eliminarUsuarioTotal } from "../controllers/paginaController";
 import { authMiddleware } from "../middlewares/auth";
 import { ValidationService, validateRequest } from '../services/ValidationService';
 import { userRateLimit } from '../middlewares/rateLimit';
@@ -52,6 +52,7 @@ router.get("/pagina/id/:user_id", obtenerPaginaPorUserId);
 router.post("/:id/usuario", authMiddleware, validateRequest(ValidationService.validateUpdateUsername), actualizarUsuarioPagina);
 // Comentarios
 router.post("/:id/comentarios", authMiddleware, userRateLimit, validateRequest(ValidationService.validateCreateComment), guardarComentario);
+router.delete("/:id/comentarios/:commentId", authMiddleware, userRateLimit, eliminarComentario);
 
 // Endpoint para subir imágenes a una página (BLOB)
 router.post("/:id/imagenes", authMiddleware, userRateLimit, upload.single("imagen"), async (req: any, res: any) => {
@@ -101,20 +102,21 @@ router.get("/:id/imagenes", async (req: any, res: any) => {
   }
 });
 
-// Endpoint para subir imágenes para comentarios (CKEditor)
+
+// Endpoint para subir imágenes para comentarios
 router.post("/upload-comment-image", authMiddleware, userRateLimit, upload.single("upload"), async (req: any, res: any) => {
   const file = req.file;
   if (!file) return res.status(400).json({ error: "No file uploaded" });
   try {
      const [result] = await pool.query(
-      "INSERT INTO imagenes_comentarios (user_id, comentario_id, imagen, filename, mimetype, size) VALUES (?, ?, ?, ?, ?, ?)",
-      [req.user.id, null, file.buffer, file.originalname, file.mimetype, file.size]
-    );
-    const imageId = (result as any).insertId;
-    res.json({ url: `/api/paginas/comment-images/${imageId}` });
+       "INSERT INTO imagenes_comentarios (user_id, comentario_id, imagen, filename, mimetype, size) VALUES (?, ?, ?, ?, ?, ?)",
+       [req.user.id, null, file.buffer, file.originalname, file.mimetype, file.size]
+     );
+     const imageId = (result as any).insertId;
+     res.json({ url: `/api/paginas/comment-images/${imageId}` });
   } catch (err) {
-    console.error("Error uploading comment image:", err);
-    res.status(500).json({ error: "Upload failed" });
+     console.error("Error uploading comment image:", err);
+     res.status(500).json({ error: "Upload failed" });
   }
 });
 

@@ -4,14 +4,28 @@ import {
   AuthenticatedRequest
 } from '../types/interfaces';
 import { ICommentRepository } from '../repositories';
+import sanitizeHtml from 'sanitize-html';
 
 export class CommentService {
   constructor(private commentRepository: ICommentRepository) {}
+
+  private sanitizeComment(text: string): string {
+    // Allow only img tags for images, strip other HTML
+    return sanitizeHtml(text, {
+      allowedTags: ['img'],
+      allowedAttributes: {
+        'img': ['src', 'alt']
+      },
+      allowedSchemes: ['http', 'https']
+    }).trim();
+  }
+
   /**
    * Crear un nuevo comentario
    */
   async createComment(userId: string, pageId: number, comentario: string): Promise<number> {
-    return await this.commentRepository.create({ pagina_id: pageId, user_id: userId, comentario });
+    const sanitizedComment = this.sanitizeComment(comentario);
+    return await this.commentRepository.create({ pagina_id: pageId, user_id: userId, comentario: sanitizedComment });
   }
 
   /**
@@ -32,7 +46,8 @@ export class CommentService {
    * Actualizar comentario (solo el propietario)
    */
   async updateComment(commentId: number, userId: string, nuevoComentario: string): Promise<void> {
-    await this.commentRepository.update(commentId, userId, nuevoComentario);
+    const sanitizedComment = this.sanitizeComment(nuevoComentario);
+    await this.commentRepository.update(commentId, userId, sanitizedComment);
   }
 
   /**

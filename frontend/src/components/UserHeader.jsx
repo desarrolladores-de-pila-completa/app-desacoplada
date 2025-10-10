@@ -35,7 +35,7 @@ function UserHeader({ paginaUser, username, authUserId, onUsernameChange }) {
           "Content-Type": "application/json",
           "X-CSRF-Token": csrfToken
         },
-        body: JSON.stringify({ usuario: value }),
+        body: JSON.stringify({ username: value }),
         credentials: "include"
       });
       if (resp.ok) {

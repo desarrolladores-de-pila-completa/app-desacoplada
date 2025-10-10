@@ -18,7 +18,7 @@ class CommentText {
         if (!trimmed) {
             return (0, result_1.err)('El comentario no puede estar vacío');
         }
-        if (trimmed.length > 500) {
+        if (trimmed.length > 10000) {
             return (0, result_1.err)('El comentario es demasiado largo');
         }
         return (0, result_1.ok)(new CommentText(trimmed));

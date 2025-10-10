@@ -1,6 +1,7 @@
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Navbar from "./Navbar";
 import useAuthStore from "../stores/authStore";
 
 function LoginPage({ showOutput }) {
@@ -26,7 +27,9 @@ function LoginPage({ showOutput }) {
   };
 
   return (
-    <div style={{ maxWidth: 400, margin: "40px auto", background: "#fff", padding: 32, borderRadius: 12, boxShadow: "0 4px 24px #0002" }}>
+    <>
+      <Navbar />
+      <div style={{ maxWidth: 400, margin: "120px auto", background: "#fff", padding: 32, borderRadius: 12, boxShadow: "0 4px 24px #0002" }}>
       <form
         id="loginForm"
         onSubmit={handleLogin}
@@ -61,6 +64,7 @@ function LoginPage({ showOutput }) {
         </button>
       </form>
     </div>
+    </>
   );
 }
 

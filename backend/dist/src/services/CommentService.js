@@ -1,16 +1,31 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CommentService = void 0;
+const sanitize_html_1 = __importDefault(require("sanitize-html"));
 class CommentService {
     commentRepository;
     constructor(commentRepository) {
         this.commentRepository = commentRepository;
     }
+    sanitizeComment(text) {
+        // Allow only img tags for images, strip other HTML
+        return (0, sanitize_html_1.default)(text, {
+            allowedTags: ['img'],
+            allowedAttributes: {
+                'img': ['src', 'alt']
+            },
+            allowedSchemes: ['http', 'https']
+        }).trim();
+    }
     /**
      * Crear un nuevo comentario
      */
     async createComment(userId, pageId, comentario) {
-        return await this.commentRepository.create({ pagina_id: pageId, user_id: userId, comentario });
+        const sanitizedComment = this.sanitizeComment(comentario);
+        return await this.commentRepository.create({ pagina_id: pageId, user_id: userId, comentario: sanitizedComment });
     }
     /**
      * Obtener comentarios de una página con información de usuario
@@ -28,7 +43,8 @@ class CommentService {
      * Actualizar comentario (solo el propietario)
      */
     async updateComment(commentId, userId, nuevoComentario) {
-        await this.commentRepository.update(commentId, userId, nuevoComentario);
+        const sanitizedComment = this.sanitizeComment(nuevoComentario);
+        await this.commentRepository.update(commentId, userId, sanitizedComment);
     }
     /**
      * Eliminar comentario

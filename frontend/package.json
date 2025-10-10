@@ -8,13 +8,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
-  "@ckeditor/ckeditor5-build-classic": "^41.4.2",
-  "@ckeditor/ckeditor5-react": "^11.0.0",
-  "@tanstack/react-query": "^5.90.2",
-  "react": "^19.2.0",
-  "react-dom": "^19.2.0",
-  "react-router-dom": "^7.9.3",
-  "zustand": "^5.0.8"
+    "@tanstack/react-query": "^5.90.2",
+    "browser-image-compression": "^2.0.2",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.9.3",
+    "winbox": "^0.2.82",
+    "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^5.0.4",

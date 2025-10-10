@@ -71,6 +71,35 @@ export const useComments = (pageId) => {
   });
 };
 
+// Hook para eliminar comentario
+export const useDeleteComment = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ pageId, commentId }) => {
+      const csrfToken = await getCsrfToken();
+      const response = await fetch(`${API_BASE}/paginas/${pageId}/comentarios/${commentId}`, {
+        method: 'DELETE',
+        headers: {
+          'X-CSRF-Token': csrfToken,
+        },
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Error al eliminar comentario');
+      }
+
+      return response.json();
+    },
+    onSuccess: (data, variables) => {
+      // Invalidar cache de comentarios de la página
+      queryClient.invalidateQueries(['comments', variables.pageId]);
+    },
+  });
+};
+
 // Hook para obtener página de usuario
 export const useUserPage = (username) => {
   return useQuery({
