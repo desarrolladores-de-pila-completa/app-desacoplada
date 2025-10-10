@@ -15,7 +15,7 @@ function ComentariosList({ comentarios }) {
       ) : (
         comentarios.map(com => (
           <div key={com.id} style={{ background: '#f7f7f7', margin: '8px 0', padding: '8px', borderRadius: 6 }}>
-            <strong>{com.comentario}</strong>
+            <div dangerouslySetInnerHTML={{ __html: com.comentario }}></div>
             <div style={{ fontSize: '0.9em', color: '#555' }}>
               Publicado por: {com.user_id ? (
                 <Link to={com.username ? `/pagina/${encodeURIComponent(com.username.replace(/\s+/g, '-'))}` : `/pagina/${encodeURIComponent(com.user_id.replace(/-/g, ""))}`} style={{ color: '#007bff', textDecoration: 'underline' }}>

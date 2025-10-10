@@ -1,298 +1,166 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.usernameSchema = exports.userIdSchema = exports.idSchema = exports.avatarUploadSchema = exports.imageUploadSchema = exports.searchSchema = exports.paginationSchema = exports.updateCommentSchema = exports.createCommentSchema = exports.updatePageSchema = exports.createPageSchema = exports.updateUserSchema = exports.loginSchema = exports.registerSchema = void 0;
-exports.validateBody = validateBody;
-exports.validateQuery = validateQuery;
-exports.validateParams = validateParams;
-exports.validateFile = validateFile;
-const { z } = require('zod');
-// === USER VALIDATION SCHEMAS ===
-exports.registerSchema = z.object({
-    email: z
-        .string()
-        .email('Email inválido')
-        .min(1, 'Email es requerido')
-        .max(255, 'Email muy largo'),
-    password: z
-        .string()
-        .min(6, 'La contraseña debe tener al menos 6 caracteres')
-        .max(100, 'Contraseña muy larga')
-        .regex(/^(?=.*[a-zA-Z])(?=.*\d)/, 'La contraseña debe contener al menos una letra y un número'),
-    username: z
-        .string()
-        .min(3, 'Username debe tener al menos 3 caracteres')
-        .max(30, 'Username muy largo')
-        .regex(/^[a-zA-Z0-9_-]+$/, 'Username solo puede contener letras, números, guiones y guiones bajos'),
-});
-exports.loginSchema = z.object({
-    email: z
-        .string()
-        .email('Email inválido')
-        .min(1, 'Email es requerido'),
-    password: z
-        .string()
-        .min(1, 'Contraseña es requerida'),
-});
-exports.updateUserSchema = z.object({
-    username: z
-        .string()
-        .min(3, 'Username debe tener al menos 3 caracteres')
-        .max(30, 'Username muy largo')
-        .regex(/^[a-zA-Z0-9_-]+$/, 'Username solo puede contener letras, números, guiones y guiones bajos')
-        .optional(),
-    email: z
-        .string()
-        .email('Email inválido')
-        .max(255, 'Email muy largo')
-        .optional(),
-});
-// === PAGE VALIDATION SCHEMAS ===
-exports.createPageSchema = z.object({
-    titulo: z
-        .string()
-        .min(1, 'Título es requerido')
-        .max(200, 'Título muy largo')
-        .trim(),
-    contenido: z
-        .string()
-        .min(1, 'Contenido es requerido')
-        .max(10000, 'Contenido muy largo')
-        .trim(),
-    descripcion: z
-        .enum(['visible', 'oculta'], {
-        errorMap: () => ({ message: 'Descripción debe ser "visible" o "oculta"' })
-    })
-        .default('visible'),
-    usuario: z
-        .string()
-        .min(1, 'Usuario es requerido')
-        .max(30, 'Usuario muy largo'),
-    comentarios: z
-        .string()
-        .max(1000, 'Comentarios muy largos')
-        .optional()
-        .default(''),
-});
-exports.updatePageSchema = z.object({
-    titulo: z
-        .string()
-        .min(1, 'Título no puede estar vacío')
-        .max(200, 'Título muy largo')
-        .trim()
-        .optional(),
-    contenido: z
-        .string()
-        .min(1, 'Contenido no puede estar vacío')
-        .max(10000, 'Contenido muy largo')
-        .trim()
-        .optional(),
-    descripcion: z
-        .enum(['visible', 'oculta'], {
-        errorMap: () => ({ message: 'Descripción debe ser "visible" o "oculta"' })
-    })
-        .optional(),
-    comentarios: z
-        .string()
-        .max(1000, 'Comentarios muy largos')
-        .optional(),
-}).refine((data) => Object.keys(data).length > 0, { message: 'Al menos un campo debe ser proporcionado para actualizar' });
-// === COMMENT VALIDATION SCHEMAS ===
-exports.createCommentSchema = z.object({
-    pagina_id: z
-        .number()
-        .int('ID de página debe ser un número entero')
-        .positive('ID de página debe ser positivo'),
-    comentario: z
-        .string()
-        .min(1, 'Comentario es requerido')
-        .max(1000, 'Comentario muy largo')
-        .trim(),
-});
-exports.updateCommentSchema = z.object({
-    comentario: z
-        .string()
-        .min(1, 'Comentario no puede estar vacío')
-        .max(1000, 'Comentario muy largo')
-        .trim(),
-});
-// === PAGINATION SCHEMAS ===
-exports.paginationSchema = z.object({
-    page: z
-        .string()
-        .regex(/^\d+$/, 'Página debe ser un número')
-        .transform(Number)
-        .refine((val) => val >= 1, 'Página debe ser mayor a 0')
-        .default('1'),
-    limit: z
-        .string()
-        .regex(/^\d+$/, 'Límite debe ser un número')
-        .transform(Number)
-        .refine((val) => val >= 1 && val <= 100, 'Límite debe estar entre 1 y 100')
-        .default('20'),
-});
-// === SEARCH SCHEMAS ===
-exports.searchSchema = z.object({
-    q: z
-        .string()
-        .min(1, 'Término de búsqueda es requerido')
-        .max(100, 'Término de búsqueda muy largo')
-        .trim(),
-    page: z
-        .string()
-        .regex(/^\d+$/, 'Página debe ser un número')
-        .transform(Number)
-        .refine((val) => val >= 1, 'Página debe ser mayor a 0')
-        .default('1')
-        .optional(),
-    limit: z
-        .string()
-        .regex(/^\d+$/, 'Límite debe ser un número')
-        .transform(Number)
-        .refine((val) => val >= 1 && val <= 50, 'Límite debe estar entre 1 y 50')
-        .default('20')
-        .optional(),
-});
-// === FILE UPLOAD SCHEMAS ===
-exports.imageUploadSchema = z.object({
-    mimetype: z
-        .string()
-        .refine((type) => ['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(type), 'Tipo de archivo no válido. Solo se permiten JPEG, PNG, GIF y WebP'),
-    size: z
-        .number()
-        .max(5 * 1024 * 1024, 'La imagen no puede superar los 5MB'),
-});
-exports.avatarUploadSchema = z.object({
-    mimetype: z
-        .string()
-        .refine((type) => ['image/jpeg', 'image/png'].includes(type), 'Tipo de archivo no válido para avatar. Solo se permiten JPEG y PNG'),
-    size: z
-        .number()
-        .max(2 * 1024 * 1024, 'El avatar no puede superar los 2MB'),
-});
-// === ID VALIDATION SCHEMAS ===
-exports.idSchema = z.object({
-    id: z
-        .string()
-        .regex(/^\d+$/, 'ID debe ser un número válido')
-        .transform(Number)
-        .refine((val) => val > 0, 'ID debe ser mayor a 0'),
-});
-exports.userIdSchema = z.object({
-    userId: z
-        .string()
-        .uuid('ID de usuario debe ser un UUID válido'),
-});
-exports.usernameSchema = z.object({
-    username: z
-        .string()
-        .min(3, 'Username debe tener al menos 3 caracteres')
-        .max(30, 'Username muy largo')
-        .regex(/^[a-zA-Z0-9_-]+$/, 'Username solo puede contener letras, números, guiones y guiones bajos'),
-});
-// === UTILITY FUNCTIONS ===
-/**
- * Middleware para validar request body
- */
-function validateBody(schema) {
-    return (req, res, next) => {
-        try {
-            const validated = schema.parse(req.body);
-            req.body = validated;
-            next();
-        }
-        catch (error) {
-            if (error.name === 'ZodError') {
-                return res.status(400).json({
-                    success: false,
-                    error: 'Datos de entrada inválidos',
-                    details: error.errors.map((err) => ({
-                        field: err.path.join('.'),
-                        message: err.message,
-                    })),
-                });
-            }
-            next(error);
-        }
-    };
+exports.validateRequest = void 0;
+exports.validateRegister = validateRegister;
+exports.validateLogin = validateLogin;
+exports.validateCreatePage = validateCreatePage;
+exports.validateUpdatePage = validateUpdatePage;
+exports.validateCreateComment = validateCreateComment;
+exports.validateUpdateUsername = validateUpdateUsername;
+const value_objects_1 = require("../value-objects");
+const value_objects_2 = require("../value-objects");
+// Funciones de validación usando Value Objects
+function validateRegister(body) {
+    const errors = [];
+    if (!body || typeof body !== 'object') {
+        return (0, value_objects_1.err)([{ field: 'body', message: 'Cuerpo de la solicitud inválido' }]);
+    }
+    const emailResult = value_objects_2.Email.create(body.email);
+    if ((0, value_objects_1.isErr)(emailResult)) {
+        errors.push({ field: 'email', message: emailResult.error });
+    }
+    const passwordResult = value_objects_2.Password.create(body.password);
+    if ((0, value_objects_1.isErr)(passwordResult)) {
+        errors.push({ field: 'password', message: passwordResult.error });
+    }
+    if (errors.length > 0) {
+        return (0, value_objects_1.err)(errors);
+    }
+    return (0, value_objects_1.ok)({
+        email: emailResult.value,
+        password: passwordResult.value
+    });
 }
-/**
- * Middleware para validar query parameters
- */
-function validateQuery(schema) {
-    return (req, res, next) => {
-        try {
-            const validated = schema.parse(req.query);
-            req.query = validated;
-            next();
-        }
-        catch (error) {
-            if (error.name === 'ZodError') {
-                return res.status(400).json({
-                    success: false,
-                    error: 'Parámetros de consulta inválidos',
-                    details: error.errors.map((err) => ({
-                        field: err.path.join('.'),
-                        message: err.message,
-                    })),
-                });
-            }
-            next(error);
-        }
-    };
+function validateLogin(body) {
+    const errors = [];
+    if (!body || typeof body !== 'object') {
+        return (0, value_objects_1.err)([{ field: 'body', message: 'Cuerpo de la solicitud inválido' }]);
+    }
+    const emailResult = value_objects_2.Email.create(body.email);
+    if ((0, value_objects_1.isErr)(emailResult)) {
+        errors.push({ field: 'email', message: emailResult.error });
+    }
+    const passwordResult = value_objects_2.Password.createForLogin(body.password);
+    if ((0, value_objects_1.isErr)(passwordResult)) {
+        errors.push({ field: 'password', message: passwordResult.error });
+    }
+    if (errors.length > 0) {
+        return (0, value_objects_1.err)(errors);
+    }
+    return (0, value_objects_1.ok)({
+        email: emailResult.value,
+        password: passwordResult.value
+    });
 }
-/**
- * Middleware para validar parámetros de ruta
- */
-function validateParams(schema) {
-    return (req, res, next) => {
-        try {
-            const validated = schema.parse(req.params);
-            req.params = validated;
-            next();
-        }
-        catch (error) {
-            if (error.name === 'ZodError') {
-                return res.status(400).json({
-                    success: false,
-                    error: 'Parámetros de ruta inválidos',
-                    details: error.errors.map((err) => ({
-                        field: err.path.join('.'),
-                        message: err.message,
-                    })),
-                });
-            }
-            next(error);
-        }
-    };
+function validateCreatePage(body) {
+    const errors = [];
+    if (!body || typeof body !== 'object') {
+        return (0, value_objects_1.err)([{ field: 'body', message: 'Cuerpo de la solicitud inválido' }]);
+    }
+    const tituloResult = value_objects_2.PageTitle.create(body.titulo);
+    if ((0, value_objects_1.isErr)(tituloResult)) {
+        errors.push({ field: 'titulo', message: tituloResult.error });
+    }
+    const contenidoResult = value_objects_2.PageContent.create(body.contenido);
+    if ((0, value_objects_1.isErr)(contenidoResult)) {
+        errors.push({ field: 'contenido', message: contenidoResult.error });
+    }
+    if (errors.length > 0) {
+        return (0, value_objects_1.err)(errors);
+    }
+    return (0, value_objects_1.ok)({
+        titulo: tituloResult.value,
+        contenido: contenidoResult.value,
+        descripcion: body.descripcion
+    });
 }
-/**
- * Validar archivos subidos
- */
-function validateFile(schema) {
-    return (req, res, next) => {
-        if (!req.file) {
-            return next();
+function validateUpdatePage(body) {
+    const errors = [];
+    const dto = {};
+    if (!body || typeof body !== 'object') {
+        return (0, value_objects_1.err)([{ field: 'body', message: 'Cuerpo de la solicitud inválido' }]);
+    }
+    if (body.titulo !== undefined) {
+        const tituloResult = value_objects_2.PageTitle.create(body.titulo);
+        if ((0, value_objects_1.isErr)(tituloResult)) {
+            errors.push({ field: 'titulo', message: tituloResult.error });
         }
-        try {
-            schema.parse({
-                mimetype: req.file.mimetype,
-                size: req.file.size,
+        else {
+            dto.titulo = tituloResult.value;
+        }
+    }
+    if (body.contenido !== undefined) {
+        const contenidoResult = value_objects_2.PageContent.create(body.contenido);
+        if ((0, value_objects_1.isErr)(contenidoResult)) {
+            errors.push({ field: 'contenido', message: contenidoResult.error });
+        }
+        else {
+            dto.contenido = contenidoResult.value;
+        }
+    }
+    if (body.descripcion !== undefined) {
+        dto.descripcion = body.descripcion;
+    }
+    if (errors.length > 0) {
+        return (0, value_objects_1.err)(errors);
+    }
+    return (0, value_objects_1.ok)(dto);
+}
+function validateCreateComment(body, params) {
+    const errors = [];
+    if (!body || typeof body !== 'object') {
+        return (0, value_objects_1.err)([{ field: 'body', message: 'Cuerpo de la solicitud inválido' }]);
+    }
+    if (!params || typeof params !== 'object') {
+        return (0, value_objects_1.err)([{ field: 'params', message: 'Parámetros inválidos' }]);
+    }
+    const comentarioResult = value_objects_2.CommentText.create(body.comentario);
+    if ((0, value_objects_1.isErr)(comentarioResult)) {
+        errors.push({ field: 'comentario', message: comentarioResult.error });
+    }
+    const pageId = parseInt(params.id, 10);
+    if (isNaN(pageId) || pageId <= 0) {
+        errors.push({ field: 'id', message: 'ID de página inválido' });
+    }
+    if (errors.length > 0) {
+        return (0, value_objects_1.err)(errors);
+    }
+    return (0, value_objects_1.ok)({
+        comentario: comentarioResult.value,
+        pageId
+    });
+}
+function validateUpdateUsername(body) {
+    const errors = [];
+    if (!body || typeof body !== 'object') {
+        return (0, value_objects_1.err)([{ field: 'body', message: 'Cuerpo de la solicitud inválido' }]);
+    }
+    const usernameResult = value_objects_2.Username.create(body.username);
+    if ((0, value_objects_1.isErr)(usernameResult)) {
+        errors.push({ field: 'username', message: usernameResult.error });
+    }
+    if (errors.length > 0) {
+        return (0, value_objects_1.err)(errors);
+    }
+    return (0, value_objects_1.ok)({
+        username: usernameResult.value
+    });
+}
+// Middleware de validación actualizado
+const validateRequest = (validator) => {
+    return (req, res, next) => {
+        const result = validator(req.body, req.params);
+        if ((0, value_objects_1.isErr)(result)) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Datos de entrada inválidos',
+                errors: result.error
             });
-            next();
         }
-        catch (error) {
-            if (error.name === 'ZodError') {
-                return res.status(400).json({
-                    success: false,
-                    error: 'Archivo inválido',
-                    details: error.errors.map((err) => ({
-                        field: err.path.join('.'),
-                        message: err.message,
-                    })),
-                });
-            }
-            next(error);
-        }
+        // Adjuntar los datos validados a la request
+        req.validatedData = result.value;
+        next();
     };
-}
+};
+exports.validateRequest = validateRequest;
 //# sourceMappingURL=schemas.js.map

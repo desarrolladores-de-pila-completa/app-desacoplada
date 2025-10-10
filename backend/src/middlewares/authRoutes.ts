@@ -4,6 +4,7 @@ import { pool } from "./db";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto, { randomUUID } from "crypto";
+import { getAuthCookieOptions } from "../utils/cookieConfig";
 
 // Función para guardar el token en la base de datos
 async function saveToken(user: any, token: string) {
@@ -67,13 +68,7 @@ router.post("/login", async (req, res) => {
 
   const token = jwt.sign({ userId: user.id }, SECRET, { expiresIn: "1h" });
   const encryptedToken = encrypt(token);
-  res.cookie("token", encryptedToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production", // Solo true en producción
-    sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
-    maxAge: 3600000, // 1 hora
-    path: "/"
-  });
+  res.cookie("token", encryptedToken, getAuthCookieOptions());
   res.json({ message: "Login exitoso", username: user.username });
 });
 

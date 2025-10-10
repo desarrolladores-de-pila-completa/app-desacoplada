@@ -8,13 +8,17 @@ export declare function consultarUsuarioPagina(req: Request, res: Response): Pro
 export declare function consultarComentariosPagina(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
 export declare function actualizarPropietario(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
 export declare function actualizarDescripcion(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
-export declare function actualizarUsuarioPagina(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
+export declare function actualizarUsuarioPagina(req: RequestWithValidatedData, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
 export declare function actualizarComentariosPagina(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
 import { Request, Response } from "express";
+interface RequestWithValidatedData extends Request {
+    validatedData?: any;
+}
 export declare function actualizarVisibilidad(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
 export declare function consultarVisibilidad(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
 export declare function obtenerPagina(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
 export declare function eliminarUsuarioTotal(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
 export declare function paginasPublicas(req: Request, res: Response): Promise<void>;
-export declare function guardarComentario(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
+export declare function guardarComentario(req: RequestWithValidatedData, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
+export {};
 //# sourceMappingURL=paginaController.d.ts.map

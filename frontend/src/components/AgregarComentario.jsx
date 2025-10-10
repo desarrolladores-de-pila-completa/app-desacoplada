@@ -1,57 +1,63 @@
 import React from "react";
-import useAuthUser from "../hooks/useAuthUser";
-const API_URL = "http://localhost:3000";
+import { Link } from "react-router-dom";
+import useAuthStore from "../stores/authStore";
+import { useCreateComment } from "../hooks/useFeed";
+import TextEditor from "./TextEditor";
 
 function AgregarComentario({ paginaId }) {
-  const { authUserId } = useAuthUser();
+  const { isAuthenticated } = useAuthStore();
   const [comentario, setComentario] = React.useState("");
-  const [msg, setMsg] = React.useState("");
-  const [error, setError] = React.useState("");
+  const createCommentMutation = useCreateComment();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMsg("");
-    setError("");
+
+    if (!comentario.trim()) {
+      return;
+    }
+
     try {
-      // Obtener el token CSRF desde el endpoint y usar el valor del JSON
-      const csrfRes = await fetch(`${API_URL}/api/csrf-token`, { credentials: "include" });
-      const csrfData = await csrfRes.json();
-      const csrfToken = csrfData.csrfToken;
-      const res = await fetch(`${API_URL}/api/paginas/${paginaId}/comentarios`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": csrfToken
-        },
-        body: JSON.stringify({ comentario }),
-        credentials: "include"
+      await createCommentMutation.mutateAsync({
+        pageId: paginaId,
+        comentario: comentario.trim()
       });
-      if (res.ok) {
-        setMsg("Comentario agregado!");
-        setComentario("");
-      } else {
-        setError("Error al agregar comentario");
-      }
-    } catch (err) {
-      setError("Error de red o servidor");
+
+      setComentario("");
+    } catch (error) {
+      // El error ya se maneja en el mutation
+      console.error('Error creating comment:', error);
     }
   };
 
-  if (!authUserId) {
-    return <div style={{ color: '#888', marginTop: 16 }}>Debes iniciar sesión para agregar un comentario.</div>;
+  if (!isAuthenticated) {
+    return <div style={{ color: '#888', marginTop: 16 }}>Debes <Link to="/login">iniciar sesión</Link> para agregar un comentario.</div>;
   }
+
   return (
     <form onSubmit={handleSubmit} style={{ margin: '24px auto', width: 400, height: 300, maxWidth: 400, maxHeight: 300, minWidth: 400, minHeight: 300, boxSizing: 'border-box', background: '#f7f7f7', borderRadius: 8, padding: 16, display: 'flex', flexDirection: 'column', alignItems: 'stretch', justifyContent: 'flex-start' }}>
       <label>Agregar comentario:</label>
-      <textarea
+      <TextEditor
         value={comentario}
         onChange={e => setComentario(e.target.value)}
+        placeholder="Escribe tu comentario..."
         rows={8}
-        style={{ width: "100%", height: 180, marginBottom: 8, resize: "none", boxSizing: 'border-box', borderRadius: 6, border: '1px solid #ccc', padding: 8 }}
+        style={{ height: 180, marginBottom: 8, resize: "none" }}
       />
-      <button type="submit" style={{ width: 120, alignSelf: 'center', marginTop: 8 }}>Agregar</button>
-      {msg && <div style={{ color: "green", marginTop: 8 }}>{msg}</div>}
-      {error && <div style={{ color: "red", marginTop: 8 }}>{error}</div>}
+      <button
+        type="submit"
+        disabled={createCommentMutation.isPending || !comentario.trim()}
+        style={{ width: 120, alignSelf: 'center', marginTop: 8 }}
+      >
+        {createCommentMutation.isPending ? "Agregando..." : "Agregar"}
+      </button>
+      {createCommentMutation.isSuccess && (
+        <div style={{ color: "green", marginTop: 8 }}>Comentario agregado!</div>
+      )}
+      {createCommentMutation.isError && (
+        <div style={{ color: "red", marginTop: 8 }}>
+          Error al agregar comentario
+        </div>
+      )}
     </form>
   );
 }

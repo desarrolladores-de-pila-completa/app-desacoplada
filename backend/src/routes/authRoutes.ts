@@ -1,5 +1,8 @@
 import { Router, Request, Response } from "express";
 import { MulterFile } from '../types/interfaces';
+import { validateFileUpload } from '../middlewares/security';
+import { ValidationService, validateRequest } from '../services/ValidationService';
+import { authRateLimit } from '../middlewares/rateLimit';
 
 interface RequestWithFile extends Request {
   file?: MulterFile;
@@ -22,7 +25,7 @@ router.get("/me", authMiddleware, async (req, res) => {
 });
 
 // Endpoint para actualizar foto de perfil
-router.post("/me/foto", authMiddleware, upload.single("foto"), async (req: RequestWithFile, res: Response) => {
+router.post("/me/foto", authMiddleware, upload.single("foto"), validateFileUpload, async (req: RequestWithFile, res: Response) => {
   const user = (req as any).user;
   if (!user || !user.id) return res.status(401).json({ error: "No autenticado" });
   const file = req.file;
@@ -78,8 +81,8 @@ router.get("/user/:id/foto", async (req, res) => {
   }
 });
 
-router.post("/register", register);
-router.post("/login", login);
+router.post("/register", authRateLimit, validateRequest(ValidationService.validateRegister), register);
+router.post("/login", authRateLimit, validateRequest(ValidationService.validateLogin), login);
 // router.post("/username", authMiddleware, cambiarUsername); // Función no implementada
 router.post("/logout", logout);
 

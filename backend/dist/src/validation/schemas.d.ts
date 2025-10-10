@@ -1,31 +1,39 @@
-export declare const registerSchema: any;
-export declare const loginSchema: any;
-export declare const updateUserSchema: any;
-export declare const createPageSchema: any;
-export declare const updatePageSchema: any;
-export declare const createCommentSchema: any;
-export declare const updateCommentSchema: any;
-export declare const paginationSchema: any;
-export declare const searchSchema: any;
-export declare const imageUploadSchema: any;
-export declare const avatarUploadSchema: any;
-export declare const idSchema: any;
-export declare const userIdSchema: any;
-export declare const usernameSchema: any;
-/**
- * Middleware para validar request body
- */
-export declare function validateBody(schema: any): (req: any, res: any, next: any) => any;
-/**
- * Middleware para validar query parameters
- */
-export declare function validateQuery(schema: any): (req: any, res: any, next: any) => any;
-/**
- * Middleware para validar parámetros de ruta
- */
-export declare function validateParams(schema: any): (req: any, res: any, next: any) => any;
-/**
- * Validar archivos subidos
- */
-export declare function validateFile(schema: any): (req: any, res: any, next: any) => any;
+import { Result } from '../value-objects';
+import { Email, Password, Username, PageTitle, PageContent, CommentText } from '../value-objects';
+export interface ValidationError {
+    field: string;
+    message: string;
+}
+export interface RegisterDTO {
+    email: Email;
+    password: Password;
+}
+export interface LoginDTO {
+    email: Email;
+    password: Password;
+}
+export interface CreatePageDTO {
+    titulo: PageTitle;
+    contenido: PageContent;
+    descripcion?: string;
+}
+export interface UpdatePageDTO {
+    titulo?: PageTitle;
+    contenido?: PageContent;
+    descripcion?: string;
+}
+export interface CreateCommentDTO {
+    comentario: CommentText;
+    pageId: number;
+}
+export interface UpdateUsernameDTO {
+    username: Username;
+}
+export declare function validateRegister(body: any): Result<RegisterDTO, ValidationError[]>;
+export declare function validateLogin(body: any): Result<LoginDTO, ValidationError[]>;
+export declare function validateCreatePage(body: any): Result<CreatePageDTO, ValidationError[]>;
+export declare function validateUpdatePage(body: any): Result<UpdatePageDTO, ValidationError[]>;
+export declare function validateCreateComment(body: any, params: any): Result<CreateCommentDTO, ValidationError[]>;
+export declare function validateUpdateUsername(body: any): Result<UpdateUsernameDTO, ValidationError[]>;
+export declare const validateRequest: (validator: (body: any, params?: any) => Result<any, ValidationError[]>) => (req: any, res: any, next: any) => any;
 //# sourceMappingURL=schemas.d.ts.map

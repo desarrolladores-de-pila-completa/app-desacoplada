@@ -1,166 +1,160 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PageService = void 0;
-const { getPool } = require("../middlewares/db");
+const CacheService_1 = require("./CacheService");
 class PageService {
+    pageRepository;
+    feedRepository;
+    eventBus;
+    constructor(pageRepository, feedRepository, eventBus) {
+        this.pageRepository = pageRepository;
+        this.feedRepository = feedRepository;
+        this.eventBus = eventBus;
+    }
     /**
      * Obtener página por ID con imágenes
      */
     async getPageWithImages(pageId) {
-        // Obtener datos de la página
-        const [pageRows] = await getPool().query("SELECT * FROM paginas WHERE id = ?", [pageId]);
-        if (pageRows.length === 0)
-            return null;
-        const pagina = pageRows[0];
-        // Obtener imágenes de la página
-        const [imageRows] = await getPool().query("SELECT * FROM imagenes WHERE pagina_id = ? ORDER BY creado_en DESC", [pageId]);
-        return {
-            ...pagina,
-            imagenes: imageRows
-        };
+        const cacheKey = `page:withImages:${pageId}`;
+        const cached = CacheService_1.cacheService.get(cacheKey);
+        if (cached)
+            return cached;
+        const page = await this.pageRepository.findWithImages(pageId);
+        if (page) {
+            CacheService_1.cacheService.set(cacheKey, page);
+        }
+        return page;
     }
     /**
      * Obtener página por usuario (username)
      */
     async getPageByUsername(username) {
-        const [rows] = await getPool().query(`SELECT p.* FROM paginas p 
-       INNER JOIN users u ON p.user_id = u.id 
-       WHERE u.username = ?`, [username]);
-        return rows.length > 0 ? (rows[0] ?? null) : null;
+        const cacheKey = `page:byUsername:${username}`;
+        const cached = CacheService_1.cacheService.get(cacheKey);
+        if (cached)
+            return cached;
+        const page = await this.pageRepository.findByUsername(username);
+        if (page) {
+            CacheService_1.cacheService.set(cacheKey, page);
+        }
+        return page;
     }
     /**
      * Obtener todas las páginas públicas con paginación
      */
     async getPublicPages(limit = 20, offset = 0) {
-        const [rows] = await getPool().query("SELECT * FROM paginas WHERE descripcion = 'visible' ORDER BY creado_en DESC LIMIT ? OFFSET ?", [limit, offset]);
-        return rows;
+        const cacheKey = `page:public:${limit}:${offset}`;
+        const cached = CacheService_1.cacheService.get(cacheKey);
+        if (cached)
+            return cached;
+        const pages = await this.pageRepository.findPublic(limit, offset);
+        CacheService_1.cacheService.set(cacheKey, pages);
+        return pages;
     }
     /**
-     * Crear nueva página
-     */
+     /**
+      * Crear nueva página
+      */
     async createPage(userId, pageData) {
-        const { titulo, contenido, descripcion, usuario, comentarios } = pageData;
-        const [result] = await getPool().query("INSERT INTO paginas (user_id, propietario, titulo, contenido, descripcion, usuario, comentarios) VALUES (?, 1, ?, ?, ?, ?, ?)", [userId, titulo, contenido, descripcion || 'visible', usuario, comentarios || '']);
-        return result.insertId;
+        const pageId = await this.pageRepository.create(userId, pageData);
+        // Crear entrada en el feed
+        await this.feedRepository.createForPage(userId, pageId, pageData.titulo, pageData.contenido);
+        // Emitir evento de página creada
+        try {
+            await this.eventBus.emit('page.created', {
+                pageId,
+                userId,
+                title: pageData.titulo,
+                content: pageData.contenido,
+            });
+        }
+        catch (error) {
+            console.error('Error emitiendo evento page.created:', error);
+            // No fallar la creación por esto
+        }
+        return pageId;
     }
     /**
      * Actualizar página existente
      */
     async updatePage(pageId, updateData) {
-        const fields = [];
-        const values = [];
-        // Construir query dinámicamente
-        if (updateData.titulo !== undefined) {
-            fields.push('titulo = ?');
-            values.push(updateData.titulo);
+        await this.pageRepository.update(pageId, updateData);
+        // Invalidar caché de la página
+        CacheService_1.cacheService.invalidatePattern(`page:withImages:${pageId}`);
+        CacheService_1.cacheService.invalidatePattern(`page:byUsername:`); // Invalidar todas las búsquedas por username, ya que podría cambiar
+        // Actualizar el feed si cambió titulo o contenido
+        if (updateData.titulo || updateData.contenido) {
+            const page = await this.pageRepository.findById(pageId);
+            if (page) {
+                await this.feedRepository.updateForPage(pageId, page.titulo, page.contenido);
+            }
         }
-        if (updateData.contenido !== undefined) {
-            fields.push('contenido = ?');
-            values.push(updateData.contenido);
-        }
-        if (updateData.descripcion !== undefined) {
-            fields.push('descripcion = ?');
-            values.push(updateData.descripcion);
-        }
-        if (updateData.comentarios !== undefined) {
-            fields.push('comentarios = ?');
-            values.push(updateData.comentarios);
-        }
-        if (fields.length === 0) {
-            throw new Error("No hay campos para actualizar");
-        }
-        values.push(pageId);
-        await getPool().query(`UPDATE paginas SET ${fields.join(', ')} WHERE id = ?`, values);
     }
     /**
      * Eliminar página y todas sus imágenes
      */
     async deletePage(pageId) {
-        // Eliminar imágenes primero (foreign key)
-        await getPool().query("DELETE FROM imagenes WHERE pagina_id = ?", [pageId]);
-        // Eliminar comentarios de la página
-        await getPool().query("DELETE FROM comentarios WHERE pagina_id = ?", [pageId]);
-        // Eliminar entrada del feed
-        await getPool().query("DELETE FROM feed WHERE pagina_id = ?", [pageId]);
-        // Eliminar página
-        await getPool().query("DELETE FROM paginas WHERE id = ?", [pageId]);
+        await this.pageRepository.delete(pageId);
+        await this.feedRepository.deleteByPage(pageId);
+        // Invalidar caché de la página
+        CacheService_1.cacheService.invalidatePattern(`page:withImages:${pageId}`);
+        CacheService_1.cacheService.invalidatePattern(`page:byUsername:`); // Invalidar búsquedas por username
+        CacheService_1.cacheService.invalidatePattern(`page:public:`); // Invalidar listas públicas
     }
     /**
      * Agregar imagen a una página
      */
     async addImageToPage(pageId, imageBuffer, mimeType) {
-        const [result] = await getPool().query("INSERT INTO imagenes (pagina_id, imagen_buffer, mime_type) VALUES (?, ?, ?)", [pageId, imageBuffer, mimeType]);
-        const imageId = result.insertId;
+        const imageId = await this.pageRepository.addImage(pageId, imageBuffer, mimeType);
+        // Invalidar caché de la página
+        CacheService_1.cacheService.invalidatePattern(`page:withImages:${pageId}`);
         // Actualizar el feed si es necesario
-        await this.updatePageInFeed(pageId);
+        const page = await this.pageRepository.findById(pageId);
+        if (page) {
+            await this.feedRepository.updateForPage(pageId, page.titulo, page.contenido);
+        }
         return imageId;
     }
     /**
      * Eliminar imagen específica
      */
     async removeImage(imageId, pageId) {
-        await getPool().query("DELETE FROM imagenes WHERE id = ? AND pagina_id = ?", [imageId, pageId]);
+        await this.pageRepository.removeImage(imageId, pageId);
+        // Invalidar caché de la página
+        CacheService_1.cacheService.invalidatePattern(`page:withImages:${pageId}`);
         // Actualizar el feed
-        await this.updatePageInFeed(pageId);
+        const page = await this.pageRepository.findById(pageId);
+        if (page) {
+            await this.feedRepository.updateForPage(pageId, page.titulo, page.contenido);
+        }
     }
     /**
      * Verificar si una página existe
      */
     async pageExists(pageId) {
-        const [rows] = await getPool().query("SELECT COUNT(*) as count FROM paginas WHERE id = ?", [pageId]);
-        return (rows[0]?.count ?? 0) > 0;
+        return await this.pageRepository.exists(pageId);
     }
     /**
      * Obtener el propietario de una página
      */
     async getPageOwner(pageId) {
-        const [rows] = await getPool().query("SELECT user_id FROM paginas WHERE id = ?", [pageId]);
-        return rows.length > 0 ? (rows[0]?.user_id ?? null) : null;
-    }
-    /**
-     * Actualizar página en el feed (privado)
-     */
-    async updatePageInFeed(pageId) {
-        // Obtener datos de la página
-        const [pageRows] = await getPool().query("SELECT * FROM paginas WHERE id = ?", [pageId]);
-        if (pageRows.length === 0)
-            return;
-        const pagina = pageRows[0];
-        // Verificar si ya existe en el feed
-        const [feedRows] = await getPool().query("SELECT id FROM feed WHERE pagina_id = ?", [pageId]);
-        if (feedRows.length > 0) {
-            // Actualizar entrada existente
-            await getPool().query("UPDATE feed SET titulo = ?, contenido = ?, actualizado_en = NOW() WHERE pagina_id = ?", [pagina?.titulo, pagina?.contenido, pageId]);
-        }
-        else {
-            // Crear nueva entrada en el feed
-            await getPool().query("INSERT INTO feed (user_id, pagina_id, titulo, contenido) VALUES (?, ?, ?, ?)", [pagina?.user_id, pageId, pagina?.titulo, pagina?.contenido]);
-        }
+        return await this.pageRepository.getOwner(pageId);
     }
     /**
      * Cambiar visibilidad de página
      */
     async togglePageVisibility(pageId) {
-        const [rows] = await getPool().query("SELECT descripcion FROM paginas WHERE id = ?", [pageId]);
-        if (rows.length === 0) {
-            throw new Error("Página no encontrada");
-        }
-        const currentVisibility = rows[0]?.descripcion ?? 'visible';
-        const newVisibility = currentVisibility === 'visible' ? 'oculta' : 'visible';
-        await getPool().query("UPDATE paginas SET descripcion = ? WHERE id = ?", [newVisibility, pageId]);
-        return newVisibility;
+        const result = await this.pageRepository.toggleVisibility(pageId);
+        // Invalidar caché de la página y listas públicas
+        CacheService_1.cacheService.invalidatePattern(`page:withImages:${pageId}`);
+        CacheService_1.cacheService.invalidatePattern(`page:public:`);
+        return result;
     }
     /**
      * Obtener estadísticas de página
      */
     async getPageStats(pageId) {
-        const [comentariosRows] = await getPool().query("SELECT COUNT(*) as count FROM comentarios WHERE pagina_id = ?", [pageId]);
-        const [imagenesRows] = await getPool().query("SELECT COUNT(*) as count FROM imagenes WHERE pagina_id = ?", [pageId]);
-        return {
-            comentarios: comentariosRows[0]?.count ?? 0,
-            imagenes: imagenesRows[0]?.count ?? 0,
-            visitas: 0 // TODO: Implementar contador de visitas
-        };
+        return await this.pageRepository.getStats(pageId);
     }
 }
 exports.PageService = PageService;

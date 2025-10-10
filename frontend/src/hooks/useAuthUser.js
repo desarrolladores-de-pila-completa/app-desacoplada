@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-const API_URL = "http://localhost:3000";
+import { API_URL } from "../config/api";
 
 export default function useAuthUser() {
   const [authUser, setAuthUser] = useState(null);

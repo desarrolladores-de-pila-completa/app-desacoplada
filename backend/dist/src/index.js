@@ -5,13 +5,21 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
-const authRoutes_1 = require("./routes/authRoutes");
-const paginaRoutes_1 = __importDefault(require("./routes/paginaRoutes"));
 const errorHandler_1 = require("./middlewares/errorHandler");
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const path_1 = __importDefault(require("path"));
 const db_1 = require("./middlewares/db");
 const csrf_1 = __importDefault(require("csrf"));
+const servicesConfig_1 = require("./utils/servicesConfig");
+const cookieConfig_1 = require("./utils/cookieConfig");
+const rateLimit_1 = require("./middlewares/rateLimit");
+const logger_1 = __importDefault(require("./utils/logger"));
+// Inicializar el container de DI antes de importar rutas
+(0, servicesConfig_1.configureServices)();
+logger_1.default.info("Container de DI inicializado", { context: 'app' });
+// Importar rutas después de inicializar DI
+const authRoutes_1 = require("./routes/authRoutes");
+const paginaRoutes_1 = __importDefault(require("./routes/paginaRoutes"));
 const rootPath = path_1.default.resolve(__dirname, '../../../');
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)({
@@ -20,6 +28,8 @@ app.use((0, cors_1.default)({
         "http://localhost:5500",
         "http://localhost:5173", // Vite dev server
         "http://127.0.0.1:5173", // Vite dev server (127.0.0.1)
+        "http://localhost:5174", // Vite dev server (actual port)
+        "http://127.0.0.1:5174", // Vite dev server (127.0.0.1, actual port)
         "http://10.0.2.2:3000" // Emulador Android
     ],
     credentials: true,
@@ -27,20 +37,22 @@ app.use((0, cors_1.default)({
 app.use(express_1.default.json());
 app.use((0, cookie_parser_1.default)());
 app.use(express_1.default.static(path_1.default.join(rootPath, 'frontend')));
+// Aplicar rate limiting general a todas las rutas API
+app.use("/api", rateLimit_1.generalRateLimit);
 // Configurar CSRF con el nuevo paquete
 const tokens = new csrf_1.default();
 const secret = tokens.secretSync();
 // Ruta para obtener el token CSRF
 app.get("/api/csrf-token", (req, res) => {
     const token = tokens.create(secret);
-    res.cookie('_csrf', token, { httpOnly: false, sameSite: 'lax' });
+    res.cookie('_csrf', token, (0, cookieConfig_1.getCsrfCookieOptions)());
     res.json({ csrfToken: token });
 });
 // Middleware de logging para depuración CSRF
 app.use(["/api/paginas", "/api/auth"], (req, res, next) => {
     const cookieCsrf = req.cookies['_csrf'];
     const headerCsrf = req.headers['x-csrf-token'] || req.headers['csrf-token'];
-    console.log("[CSRF] Cookie (_csrf):", cookieCsrf, "Header:", headerCsrf);
+    logger_1.default.debug('Verificando tokens CSRF', { cookieCsrf: cookieCsrf ? 'presente' : 'ausente', headerCsrf: headerCsrf ? 'presente' : 'ausente', context: 'csrf' });
     next();
 });
 // Aplica CSRF a rutas que modifican estado
@@ -49,7 +61,7 @@ app.use(["/api/paginas", "/api/auth"], (req, res, next) => {
 app.use(["/api/paginas", "/api/auth"], (req, res, next) => {
     if (["POST", "PUT", "DELETE"].includes(req.method)) {
         const userAgent = req.headers['user-agent'] || '';
-        console.log('[CSRF] User-Agent:', userAgent);
+        logger_1.default.debug('Verificando CSRF para método modificador', { method: req.method, userAgent, context: 'csrf' });
         if (userAgent.includes('ReactNative') || userAgent.includes('okhttp')) {
             // Excluir CSRF para peticiones móviles
             return next();
@@ -82,11 +94,11 @@ if (require.main === module) {
             await (0, db_1.initDatabase)();
             // pool ya está inicializado en initDatabase
             await db_1.pool.query("SELECT 1");
-            console.log("Conexión a MySQL exitosa");
-            app.listen(3000, () => console.log("Servidor backend en http://localhost:3000"));
+            logger_1.default.info("Conexión a MySQL exitosa", { context: 'app' });
+            app.listen(3000, () => logger_1.default.info("Servidor backend iniciado", { port: 3000, url: "http://localhost:3000", context: 'app' }));
         }
         catch (err) {
-            console.error("Error de conexión a MySQL:", err);
+            logger_1.default.error("Error de conexión a MySQL", { error: err.message, stack: err.stack, context: 'app' });
             process.exit(1);
         }
     })();

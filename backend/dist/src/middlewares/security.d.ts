@@ -1,8 +1,4 @@
 /**
- * Configuración de Helmet para headers de seguridad
- */
-export declare const helmetConfig: any;
-/**
  * Rate limiting general para la API
  */
 export declare const generalRateLimit: any;
@@ -42,6 +38,14 @@ export declare function additionalSecurityHeaders(req: any, res: any, next: any)
  * Middleware para detectar y bloquear bots maliciosos
  */
 export declare function botProtection(req: any, res: any, next: any): void;
+/**
+ * Middleware para validación de archivos subidos
+ */
+export declare function validateFileUpload(req: any, res: any, next: any): void;
+/**
+ * Función para sanitizar datos sensibles en logs
+ */
+export declare function sanitizeForLogging(data: any): any;
 /**
  * Configuración de CORS segura
  */

@@ -197,3 +197,85 @@ export type UpdateUserDTO = Partial<Omit<User, 'id' | 'creado_en'>>;
 export type CreatePaginaDTO = Omit<Pagina, 'id' | 'creado_en'>;
 
 export type UpdatePaginaDTO = Partial<Omit<Pagina, 'id' | 'user_id' | 'creado_en'>>;
+
+// Error handling types
+export class AppError extends Error {
+  public readonly statusCode: number;
+  public readonly isOperational: boolean;
+
+  constructor(statusCode: number, message: string, isOperational = true) {
+    super(message);
+    this.statusCode = statusCode;
+    this.isOperational = isOperational;
+
+    Error.captureStackTrace(this, this.constructor);
+  }
+}
+
+export interface ErrorResponse {
+  status: 'error';
+  message: string;
+  stack?: string; // Only included in development
+}
+
+// Validation schemas types (to be used with Zod)
+export interface ValidationResult<T> {
+  success: boolean;
+  data?: T;
+  error?: ValidationError[];
+}
+
+// Event system types
+export type EventName = 'user.registered' | 'page.created' | 'comment.created' | 'page.updated' | 'page.deleted';
+
+export interface EventPayload {
+  [key: string]: any;
+}
+
+export interface UserRegisteredEvent extends EventPayload {
+  userId: string;
+  username: string;
+  email: string;
+}
+
+export interface PageCreatedEvent extends EventPayload {
+  pageId: number;
+  userId: string;
+  title: string;
+  content: string;
+}
+
+export interface CommentCreatedEvent extends EventPayload {
+  commentId: number;
+  pageId: number;
+  userId: string;
+  content: string;
+}
+
+export interface PageUpdatedEvent extends EventPayload {
+  pageId: number;
+  userId: string;
+  changes: UpdatePaginaData;
+}
+
+export interface PageDeletedEvent extends EventPayload {
+  pageId: number;
+  userId: string;
+}
+
+export type EventDataMap = {
+  'user.registered': UserRegisteredEvent;
+  'page.created': PageCreatedEvent;
+  'comment.created': CommentCreatedEvent;
+  'page.updated': PageUpdatedEvent;
+  'page.deleted': PageDeletedEvent;
+};
+
+export type EventListener<T extends EventName> = (payload: EventDataMap[T]) => void | Promise<void>;
+
+export interface IEventBus {
+  emit<T extends EventName>(event: T, payload: EventDataMap[T]): Promise<void>;
+  on<T extends EventName>(event: T, listener: EventListener<T>): void;
+  off<T extends EventName>(event: T, listener: EventListener<T>): void;
+  removeAllListeners(event?: EventName): void;
+}

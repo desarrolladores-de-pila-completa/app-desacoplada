@@ -1,4 +1,7 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.obtenerPaginaPorUserId = obtenerPaginaPorUserId;
 exports.obtenerPaginaPorUsername = obtenerPaginaPorUsername;
@@ -18,6 +21,7 @@ exports.obtenerPagina = obtenerPagina;
 exports.eliminarUsuarioTotal = eliminarUsuarioTotal;
 exports.paginasPublicas = paginasPublicas;
 exports.guardarComentario = guardarComentario;
+const logger_1 = __importDefault(require("../utils/logger"));
 // Obtener página por user_id (UUID sin guiones)
 async function obtenerPaginaPorUserId(req, res) {
     const userId = req.params.user_id;
@@ -180,7 +184,7 @@ async function actualizarDescripcion(req, res) {
 // Actualizar usuario
 async function actualizarUsuarioPagina(req, res) {
     const paginaId = req.params.id;
-    const { usuario } = req.body;
+    const { username } = req.validatedData;
     const userId = req.userId;
     try {
         const [rows] = await db_1.pool.query("SELECT user_id FROM paginas WHERE id = ?", [paginaId]);
@@ -188,6 +192,7 @@ async function actualizarUsuarioPagina(req, res) {
             return res.status(404).json({ error: "Página no encontrada" });
         if (String(rows[0].user_id) !== String(userId))
             return res.status(403).json({ error: "No autorizado" });
+        const usuario = username.getValue();
         await db_1.pool.query("UPDATE paginas SET usuario = ? WHERE id = ?", [usuario, paginaId]);
         // Sanitizar username para la URL (sin espacios, solo guiones)
         const usernameSanitizado = usuario.replace(/\s+/g, '-');
@@ -273,50 +278,37 @@ async function consultarVisibilidad(req, res) {
 async function obtenerPagina(req, res) {
     const paginaId = req.params.id;
     try {
-        console.log("Buscando página con id:", paginaId);
+        logger_1.default.debug('Buscando página por ID', { paginaId, context: 'pagina' });
         const [rows] = await db_1.pool.query("SELECT * FROM paginas WHERE id = ?", [paginaId]);
-        console.log("Resultado de la consulta:", rows);
+        logger_1.default.debug('Resultado de consulta de página', { paginaId, found: rows && rows.length > 0, context: 'pagina' });
         if (!rows || rows.length === 0)
             return sendError(res, 404, "Página no encontrada");
         res.json(rows[0]);
     }
     catch (err) {
-        console.error(err);
+        logger_1.default.error('Error al obtener página', { paginaId, error: err.message, stack: err.stack, context: 'pagina' });
         sendError(res, 500, "Error al obtener página");
     }
 }
-// ...existing code...
+const servicesConfig_1 = require("../utils/servicesConfig");
+const userService = (0, servicesConfig_1.getService)('UserService');
 // Eliminar usuario y todo su rastro (perfil, comentarios, imágenes, feed)
 async function eliminarUsuarioTotal(req, res) {
     const userId = req.params.id;
+    if (!userId)
+        return res.status(400).json({ error: "Falta el id de usuario" });
     const authUserId = req.userId;
     // Solo el propio usuario puede borrar su cuenta
     if (String(userId) !== String(authUserId)) {
         return res.status(403).json({ error: "No autorizado" });
     }
-    const conn = await db_1.pool.getConnection();
     try {
-        await conn.beginTransaction();
-        // Eliminar comentarios
-        await conn.query("DELETE FROM comentarios WHERE user_id = ?", [userId]);
-        // Eliminar imágenes (por pagina_id)
-        await conn.query("DELETE FROM imagenes WHERE pagina_id IN (SELECT id FROM paginas WHERE user_id = ?)", [userId]);
-        // Eliminar feed
-        await conn.query("DELETE FROM feed WHERE user_id = ?", [userId]);
-        // Eliminar página(s)
-        await conn.query("DELETE FROM paginas WHERE user_id = ?", [userId]);
-        // Eliminar usuario
-        await conn.query("DELETE FROM users WHERE id = ?", [userId]);
-        await conn.commit();
+        await userService.deleteUserCompletely(userId);
         res.json({ message: "Usuario y todos sus datos eliminados" });
     }
     catch (err) {
-        await conn.rollback();
         console.error(err);
         res.status(500).json({ error: "Error al eliminar usuario y sus datos" });
-    }
-    finally {
-        conn.release();
     }
 }
 function sendError(res, code, msg) {
@@ -345,16 +337,20 @@ async function paginasPublicas(req, res) {
 // Eliminado: función de edición de página
 // Guardar comentario en la base de datos
 async function guardarComentario(req, res) {
-    const paginaId = req.params.id;
-    const { comentario } = req.body;
+    const { comentario, pageId } = req.validatedData;
     const userId = req.user?.id;
     if (!userId)
         return sendError(res, 401, "Debes estar autenticado para comentar");
-    if (!comentario || typeof comentario !== "string" || comentario.trim().length === 0) {
-        return sendError(res, 400, "Comentario vacío o inválido");
-    }
     try {
-        await db_1.pool.query("INSERT INTO comentarios (pagina_id, user_id, comentario, creado_en) VALUES (?, ?, ?, NOW())", [paginaId, userId, comentario.trim()]);
+        const [result] = await db_1.pool.query("INSERT INTO comentarios (pagina_id, user_id, comentario, creado_en) VALUES (?, ?, ?, NOW())", [pageId, userId, comentario.getValue()]);
+        const commentId = result.insertId;
+        // Asociar imágenes subidas con el comentario
+        const imageRegex = /\/api\/comment-images\/(\d+)/g;
+        let match;
+        while ((match = imageRegex.exec(comentario.getValue())) !== null) {
+            const imageId = match[1];
+            await db_1.pool.query("UPDATE imagenes_comentarios SET comentario_id = ? WHERE id = ?", [commentId, imageId]);
+        }
         res.json({ message: "Comentario guardado" });
     }
     catch (err) {

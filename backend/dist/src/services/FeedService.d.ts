@@ -1,5 +1,8 @@
 import { FeedEntry } from '../types/interfaces';
+import { IFeedRepository } from '../repositories';
 export declare class FeedService {
+    private feedRepository;
+    constructor(feedRepository: IFeedRepository);
     /**
      * Obtener feed completo con paginación
      */
@@ -12,6 +15,10 @@ export declare class FeedService {
      * Obtener entrada específica del feed
      */
     getFeedEntry(feedId: number): Promise<FeedEntry | null>;
+    /**
+     * Crear entrada en el feed para registro de usuario
+     */
+    createUserRegistrationEntry(userId: string, username: string): Promise<number>;
     /**
      * Crear entrada en el feed cuando se crea una página
      */
@@ -52,10 +59,6 @@ export declare class FeedService {
         created: number;
         updated: number;
     }>;
-    /**
-     * Enriquecer entradas del feed con imágenes
-     */
-    private enrichFeedWithImages;
     /**
      * Limpiar entradas huérfanas del feed
      */

@@ -1,39 +1,15 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.corsOptions = exports.commentRateLimit = exports.uploadRateLimit = exports.registerRateLimit = exports.authRateLimit = exports.generalRateLimit = exports.helmetConfig = void 0;
+exports.corsOptions = exports.commentRateLimit = exports.uploadRateLimit = exports.registerRateLimit = exports.authRateLimit = exports.generalRateLimit = void 0;
 exports.sanitizeInput = sanitizeInput;
 exports.securityLogger = securityLogger;
 exports.validateContentType = validateContentType;
 exports.additionalSecurityHeaders = additionalSecurityHeaders;
 exports.botProtection = botProtection;
-const helmet = require('helmet');
+exports.validateFileUpload = validateFileUpload;
+exports.sanitizeForLogging = sanitizeForLogging;
 const rateLimit = require('express-rate-limit');
 const { RateLimitError } = require('../errors/AppErrors');
-/**
- * Configuración de Helmet para headers de seguridad
- */
-exports.helmetConfig = helmet({
-    contentSecurityPolicy: {
-        directives: {
-            defaultSrc: ["'self'"],
-            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-            fontSrc: ["'self'", "https://fonts.gstatic.com"],
-            imgSrc: ["'self'", "data:", "https:"],
-            scriptSrc: ["'self'"],
-            connectSrc: ["'self'"],
-            frameSrc: ["'none'"],
-            objectSrc: ["'none'"],
-            mediaSrc: ["'self'"],
-            workerSrc: ["'none'"],
-        },
-    },
-    crossOriginEmbedderPolicy: false, // Permitir imágenes de diferentes orígenes
-    hsts: {
-        maxAge: 31536000,
-        includeSubDomains: true,
-        preload: true
-    }
-});
 /**
  * Rate limiting general para la API
  */
@@ -276,6 +252,103 @@ function botProtection(req, res, next) {
     next();
 }
 /**
+ * Middleware para validación de archivos subidos
+ */
+function validateFileUpload(req, res, next) {
+    const file = req.file;
+    if (!file) {
+        return next(); // No hay archivo, continuar
+    }
+    // Tipos MIME permitidos
+    const allowedTypes = [
+        'image/jpeg',
+        'image/png',
+        'image/gif',
+        'image/webp'
+    ];
+    // Tamaño máximo (5MB)
+    const maxSize = 5 * 1024 * 1024;
+    // Validar tipo MIME
+    if (!allowedTypes.includes(file.mimetype)) {
+        return res.status(400).json({
+            success: false,
+            error: 'Tipo de archivo no permitido. Solo se permiten imágenes JPEG, PNG, GIF y WebP.',
+            code: 'INVALID_FILE_TYPE'
+        });
+    }
+    // Validar tamaño
+    if (file.size > maxSize) {
+        return res.status(400).json({
+            success: false,
+            error: 'El archivo es demasiado grande. Máximo 5MB.',
+            code: 'FILE_TOO_LARGE'
+        });
+    }
+    // Validar que sea realmente una imagen (magic bytes)
+    const buffer = file.buffer;
+    if (buffer) {
+        const magicBytes = buffer.slice(0, 4);
+        const isValidImage = validateImageMagicBytes(magicBytes, file.mimetype);
+        if (!isValidImage) {
+            return res.status(400).json({
+                success: false,
+                error: 'El archivo no es una imagen válida.',
+                code: 'INVALID_IMAGE_FILE'
+            });
+        }
+    }
+    next();
+}
+/**
+ * Validar magic bytes de imágenes
+ */
+function validateImageMagicBytes(magicBytes, mimetype) {
+    const signatures = {
+        'image/jpeg': [[0xFF, 0xD8, 0xFF]],
+        'image/png': [[0x89, 0x50, 0x4E, 0x47]],
+        'image/gif': [[0x47, 0x49, 0x46, 0x38]],
+        'image/webp': [[0x52, 0x49, 0x46, 0x46], [0x57, 0x45, 0x42, 0x50]]
+    };
+    const expectedSignatures = signatures[mimetype];
+    if (!expectedSignatures)
+        return false;
+    return expectedSignatures.some(signature => {
+        return signature.every((byte, index) => magicBytes[index] === byte);
+    });
+}
+/**
+ * Función para sanitizar datos sensibles en logs
+ */
+function sanitizeForLogging(data) {
+    const sensitive = ['password', 'token', 'secret', 'authorization', 'cookie'];
+    const sanitizeObject = (obj) => {
+        if (typeof obj === 'string') {
+            // Ocultar datos que parecen tokens o contraseñas
+            if (obj.length > 10 && /^[a-zA-Z0-9+/=.-]+$/.test(obj)) {
+                return '[REDACTED]';
+            }
+            return obj;
+        }
+        if (Array.isArray(obj)) {
+            return obj.map(sanitizeObject);
+        }
+        if (obj && typeof obj === 'object') {
+            const sanitized = {};
+            for (const [key, value] of Object.entries(obj)) {
+                if (sensitive.some(s => key.toLowerCase().includes(s))) {
+                    sanitized[key] = '[REDACTED]';
+                }
+                else {
+                    sanitized[key] = sanitizeObject(value);
+                }
+            }
+            return sanitized;
+        }
+        return obj;
+    };
+    return sanitizeObject(data);
+}
+/**
  * Configuración de CORS segura
  */
 exports.corsOptions = {
@@ -309,7 +382,6 @@ exports.corsOptions = {
     ]
 };
 module.exports = {
-    helmetConfig: exports.helmetConfig,
     generalRateLimit: exports.generalRateLimit,
     authRateLimit: exports.authRateLimit,
     registerRateLimit: exports.registerRateLimit,
@@ -320,6 +392,8 @@ module.exports = {
     validateContentType,
     additionalSecurityHeaders,
     botProtection,
-    corsOptions: exports.corsOptions
+    corsOptions: exports.corsOptions,
+    validateFileUpload,
+    sanitizeForLogging
 };
 //# sourceMappingURL=security.js.map
