@@ -1,6 +1,6 @@
 import { UserService } from './UserService';
 import { FeedService } from './FeedService';
-import { User, UserCreateData } from '../types/interfaces';
+import { User, UserCreateData, AppError } from '../types/interfaces';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 
@@ -64,13 +64,13 @@ export class AuthService {
     // Obtener usuario con contraseña
     const userWithPassword = await this.userService.getUserWithPassword(email);
     if (!userWithPassword) {
-      throw new Error('Credenciales inválidas');
+      throw new AppError(401, 'Credenciales inválidas');
     }
 
     // Verificar contraseña
     const isPasswordValid = await bcrypt.compare(password, userWithPassword.password);
     if (!isPasswordValid) {
-      throw new Error('Credenciales inválidas');
+      throw new AppError(401, 'Credenciales inválidas');
     }
 
     // Retornar usuario sin contraseña
@@ -104,7 +104,7 @@ export class AuthService {
       const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
       return decoded;
     } catch (error) {
-      throw new Error('Token inválido');
+      throw new AppError(401, 'Token inválido');
     }
   }
 }

@@ -1,12 +1,12 @@
 import { QueryResult, FeedEntry, User, Pagina, ImagenData } from '../types/interfaces';
-const { getPool } = require("../middlewares/db");
+const { pool } = require("../middlewares/db");
 
 export class FeedService {
   /**
    * Obtener feed completo con paginación
    */
   async getFeed(limit: number = 20, offset: number = 0): Promise<FeedEntry[]> {
-    const [rows]: QueryResult<FeedEntry & { username: string; foto_perfil: Buffer }> = await getPool().query(
+    const [rows]: QueryResult<FeedEntry & { username: string; foto_perfil: Buffer }> = await pool.query(
       `SELECT f.*, u.username, u.foto_perfil
        FROM feed f 
        INNER JOIN users u ON f.user_id = u.id 
@@ -25,7 +25,7 @@ export class FeedService {
    * Obtener feed de un usuario específico
    */
   async getUserFeed(userId: string, limit: number = 20, offset: number = 0): Promise<FeedEntry[]> {
-    const [rows]: QueryResult<FeedEntry & { username: string; foto_perfil: Buffer }> = await getPool().query(
+    const [rows]: QueryResult<FeedEntry & { username: string; foto_perfil: Buffer }> = await pool.query(
       `SELECT f.*, u.username, u.foto_perfil
        FROM feed f 
        INNER JOIN users u ON f.user_id = u.id 
@@ -42,7 +42,7 @@ export class FeedService {
    * Obtener entrada específica del feed
    */
   async getFeedEntry(feedId: number): Promise<FeedEntry | null> {
-    const [rows]: QueryResult<FeedEntry & { username: string; foto_perfil: Buffer }> = await getPool().query(
+    const [rows]: QueryResult<FeedEntry & { username: string; foto_perfil: Buffer }> = await pool.query(
       `SELECT f.*, u.username, u.foto_perfil
        FROM feed f 
        INNER JOIN users u ON f.user_id = u.id 
@@ -64,7 +64,7 @@ export class FeedService {
     const fotoUrl = `/api/auth/user/${userId}/foto`;
     const mensaje = `Nuevo usuario registrado: <img src='${fotoUrl}' alt='foto' style='width:32px;height:32px;border-radius:50%;vertical-align:middle;margin-right:8px;' /><a href='${enlace}'>${username}</a>`;
 
-    const [result] = await getPool().query(
+    const [result] = await pool.query(
       "INSERT INTO feed (user_id, mensaje, enlace) VALUES (?, ?, ?)",
       [userId, mensaje, enlace]
     );
@@ -76,7 +76,7 @@ export class FeedService {
    * Crear entrada en el feed cuando se crea una página
    */
   async createFeedEntry(userId: string, pageId: number, titulo: string, contenido: string): Promise<number> {
-    const [result] = await getPool().query(
+    const [result] = await pool.query(
       "INSERT INTO feed (user_id, pagina_id, titulo, contenido) VALUES (?, ?, ?, ?)",
       [userId, pageId, titulo, contenido]
     );
@@ -88,7 +88,7 @@ export class FeedService {
    * Actualizar entrada del feed cuando se modifica una página
    */
   async updateFeedEntry(pageId: number, titulo: string, contenido: string): Promise<void> {
-    await getPool().query(
+    await pool.query(
       "UPDATE feed SET titulo = ?, contenido = ?, actualizado_en = NOW() WHERE pagina_id = ?",
       [titulo, contenido, pageId]
     );
@@ -98,14 +98,14 @@ export class FeedService {
    * Eliminar entrada del feed
    */
   async deleteFeedEntry(pageId: number): Promise<void> {
-    await getPool().query("DELETE FROM feed WHERE pagina_id = ?", [pageId]);
+    await pool.query("DELETE FROM feed WHERE pagina_id = ?", [pageId]);
   }
 
   /**
    * Eliminar todas las entradas de un usuario
    */
   async deleteUserFeedEntries(userId: string): Promise<void> {
-    await getPool().query("DELETE FROM feed WHERE user_id = ?", [userId]);
+    await pool.query("DELETE FROM feed WHERE user_id = ?", [userId]);
   }
 
   /**
@@ -114,7 +114,7 @@ export class FeedService {
   async searchFeed(searchTerm: string, limit: number = 20, offset: number = 0): Promise<FeedEntry[]> {
     const searchPattern = `%${searchTerm}%`;
     
-    const [rows]: QueryResult<FeedEntry & { username: string; foto_perfil: Buffer }> = await getPool().query(
+    const [rows]: QueryResult<FeedEntry & { username: string; foto_perfil: Buffer }> = await pool.query(
       `SELECT f.*, u.username, u.foto_perfil
        FROM feed f 
        INNER JOIN users u ON f.user_id = u.id 
@@ -139,22 +139,22 @@ export class FeedService {
     mostActiveUser: { username: string; entries: number } | null;
   }> {
     // Total de entradas
-    const [totalRows]: QueryResult<{ count: number }> = await getPool().query(
+    const [totalRows]: QueryResult<{ count: number }> = await pool.query(
       "SELECT COUNT(*) as count FROM feed"
     );
 
     // Total de usuarios únicos
-    const [usersRows]: QueryResult<{ count: number }> = await getPool().query(
+    const [usersRows]: QueryResult<{ count: number }> = await pool.query(
       "SELECT COUNT(DISTINCT user_id) as count FROM feed"
     );
 
     // Entradas últimas 24 horas
-    const [recentRows]: QueryResult<{ count: number }> = await getPool().query(
+    const [recentRows]: QueryResult<{ count: number }> = await pool.query(
       "SELECT COUNT(*) as count FROM feed WHERE creado_en >= DATE_SUB(NOW(), INTERVAL 24 HOUR)"
     );
 
     // Usuario más activo
-    const [activeUserRows]: QueryResult<{ username: string; entries: number }> = await getPool().query(
+    const [activeUserRows]: QueryResult<{ username: string; entries: number }> = await pool.query(
       `SELECT u.username, COUNT(*) as entries 
        FROM feed f 
        INNER JOIN users u ON f.user_id = u.id 
@@ -180,13 +180,13 @@ export class FeedService {
     let updated = 0;
 
     // Obtener todas las páginas visibles
-    const [pages]: QueryResult<Pagina> = await getPool().query(
+    const [pages]: QueryResult<Pagina> = await pool.query(
       "SELECT * FROM paginas WHERE descripcion = 'visible'"
     );
 
     for (const page of pages) {
       // Verificar si ya existe en el feed
-      const [existing]: QueryResult<FeedEntry> = await getPool().query(
+      const [existing]: QueryResult<FeedEntry> = await pool.query(
         "SELECT id FROM feed WHERE pagina_id = ?",
         [page.id]
       );
@@ -213,7 +213,7 @@ export class FeedService {
 
     for (const entry of feedEntries) {
       // Obtener imágenes de la página
-      const [images]: QueryResult<ImagenData> = await getPool().query(
+      const [images]: QueryResult<ImagenData> = await pool.query(
         "SELECT * FROM imagenes WHERE pagina_id = ? ORDER BY creado_en DESC LIMIT 5",
         [(entry as any).pagina_id]
       );
@@ -242,7 +242,7 @@ export class FeedService {
    * Limpiar entradas huérfanas del feed
    */
   async cleanOrphanedEntries(): Promise<number> {
-    const [result] = await getPool().query(
+    const [result] = await pool.query(
       `DELETE f FROM feed f 
        LEFT JOIN paginas p ON f.pagina_id = p.id 
        WHERE p.id IS NULL`

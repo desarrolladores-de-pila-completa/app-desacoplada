@@ -58,7 +58,7 @@ export const UpdateUsernameSchema = z.object({
 export const validateRequest = (schema: z.ZodSchema) => {
   return (req: any, res: any, next: any) => {
     try {
-      schema.parse(req);
+      schema.parse({ body: req.body });
       next();
     } catch (error) {
       if (error instanceof z.ZodError) {

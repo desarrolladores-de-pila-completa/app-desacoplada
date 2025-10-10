@@ -14,9 +14,16 @@ if (fs.existsSync(envPath)) {
 
 let pool: any;
 
+// Inicializar pool inmediatamente
+pool = mysql.createPool({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+});
+
 async function initDatabase() {
   try {
-
     console.log("[DB] Conectando a MySQL para crear la base de datos si no existe...");
     const connection = await mysql.createConnection({
       host: process.env.DB_HOST,
@@ -26,15 +33,7 @@ async function initDatabase() {
     await connection.query(`CREATE DATABASE IF NOT EXISTS \`${process.env.DB_NAME}\``);
     console.log(`[DB] Base de datos '${process.env.DB_NAME}' verificada/creada.`);
     await connection.end();
-    console.log("[DB] Conexión inicial cerrada. Inicializando pool con la base de datos...");
-
-    // Ahora sí, crear el pool con la base de datos
-    pool = mysql.createPool({
-      host: process.env.DB_HOST,
-      user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME,
-    });
+    console.log("[DB] Conexión inicial cerrada. Pool ya inicializado con la base de datos...");
 
     // Verificar que el pool está inicializado correctamente
     if (!pool) {

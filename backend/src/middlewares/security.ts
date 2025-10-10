@@ -1,32 +1,6 @@
-const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { RateLimitError } = require('../errors/AppErrors');
 
-/**
- * Configuración de Helmet para headers de seguridad
- */
-export const helmetConfig = helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      imgSrc: ["'self'", "data:", "https:"],
-      scriptSrc: ["'self'"],
-      connectSrc: ["'self'"],
-      frameSrc: ["'none'"],
-      objectSrc: ["'none'"],
-      mediaSrc: ["'self'"],
-      workerSrc: ["'none'"],
-    },
-  },
-  crossOriginEmbedderPolicy: false, // Permitir imágenes de diferentes orígenes
-  hsts: {
-    maxAge: 31536000,
-    includeSubDomains: true,
-    preload: true
-  }
-});
 
 /**
  * Rate limiting general para la API
@@ -454,7 +428,6 @@ export const corsOptions = {
 };
 
 module.exports = {
-  helmetConfig,
   generalRateLimit,
   authRateLimit,
   registerRateLimit,

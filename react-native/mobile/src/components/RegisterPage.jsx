@@ -36,8 +36,9 @@ const RegisterPage = () => {
         navigation.replace('Login');
       }
     } catch (err) {
-      setError('Error al registrar usuario');
-      setToast({ visible: true, message: 'Error al registrar usuario', type: 'error' });
+      const errorMessage = err.response?.data?.message || 'Error al registrar usuario';
+      setError(errorMessage);
+      setToast({ visible: true, message: errorMessage, type: 'error' });
     }
   };
 

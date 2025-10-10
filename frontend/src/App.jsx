@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import "./App.css";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
@@ -12,17 +12,24 @@ import { useFeed } from "./hooks/useFeed";
 
 function MainApp({ showOutput }) {
   const { data: feed = [], isLoading, error } = useFeed();
+  const lastMessageRef = useRef("");
 
   // Mostrar mensajes de carga y error
   useEffect(() => {
+    let message = "";
     if (isLoading) {
-      showOutput("Cargando feed...", "info");
+      message = "Cargando feed...";
     } else if (error) {
-      showOutput("Error al cargar el feed", "error");
+      message = "Error al cargar el feed";
     } else if (feed.length > 0) {
-      showOutput(`Feed cargado: ${feed.length} entradas`, "success");
+      message = `Feed cargado: ${feed.length} entradas`;
     } else {
-      showOutput("No hay entradas disponibles en el feed.", "info");
+      message = "No hay entradas disponibles en el feed.";
+    }
+
+    if (message !== lastMessageRef.current) {
+      showOutput(message, isLoading ? "info" : error ? "error" : "success");
+      lastMessageRef.current = message;
     }
   }, [isLoading, error, feed, showOutput]);
 
@@ -43,10 +50,14 @@ export default function App() {
   const { checkAuth } = useAuthStore();
   const [output, setOutput] = React.useState({ message: "", type: "" });
   const [outputMinimized, setOutputMinimized] = React.useState(false);
+  const checkAuthCalled = useRef(false);
 
   // Verificar autenticación al cargar la app
   useEffect(() => {
-    checkAuth();
+    if (!checkAuthCalled.current) {
+      checkAuth();
+      checkAuthCalled.current = true;
+    }
   }, [checkAuth]);
 
   // Output global

@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
 const UserService_1 = require("./UserService");
 const FeedService_1 = require("./FeedService");
+const interfaces_1 = require("../types/interfaces");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 class AuthService {
@@ -54,12 +55,12 @@ class AuthService {
         // Obtener usuario con contraseña
         const userWithPassword = await this.userService.getUserWithPassword(email);
         if (!userWithPassword) {
-            throw new Error('Credenciales inválidas');
+            throw new interfaces_1.AppError(401, 'Credenciales inválidas');
         }
         // Verificar contraseña
         const isPasswordValid = await bcryptjs_1.default.compare(password, userWithPassword.password);
         if (!isPasswordValid) {
-            throw new Error('Credenciales inválidas');
+            throw new interfaces_1.AppError(401, 'Credenciales inválidas');
         }
         // Retornar usuario sin contraseña
         const { password: _, ...user } = userWithPassword;
@@ -85,7 +86,7 @@ class AuthService {
             return decoded;
         }
         catch (error) {
-            throw new Error('Token inválido');
+            throw new interfaces_1.AppError(401, 'Token inválido');
         }
     }
 }

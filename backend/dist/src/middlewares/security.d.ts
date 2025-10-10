@@ -1,8 +1,4 @@
 /**
- * Configuración de Helmet para headers de seguridad
- */
-export declare const helmetConfig: any;
-/**
  * Rate limiting general para la API
  */
 export declare const generalRateLimit: any;

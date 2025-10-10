@@ -63,7 +63,7 @@ app.use(["/api/paginas", "/api/auth"], (req, res, next) => {
       const headerCsrf = req.headers['x-csrf-token'] || req.headers['csrf-token'];
       const cookieCsrf = req.cookies['_csrf'];
       const token = headerCsrf || cookieCsrf;
-      
+
       if (!token || !tokens.verify(secret, token)) {
         return res.status(403).json({ error: 'Invalid CSRF token' });
       }

@@ -54,7 +54,7 @@ exports.UpdateUsernameSchema = zod_1.z.object({
 const validateRequest = (schema) => {
     return (req, res, next) => {
         try {
-            schema.parse(req);
+            schema.parse({ body: req.body });
             next();
         }
         catch (error) {

@@ -1,7 +1,7 @@
-import { QueryResult, User, UserCreateData, CreateUserDTO } from '../types/interfaces';
+import { QueryResult, User, UserCreateData, CreateUserDTO, AppError } from '../types/interfaces';
 const bcrypt = require("bcryptjs");
 const { randomUUID } = require("crypto");
-const { getPool } = require("../middlewares/db");
+import { pool } from "../middlewares/db";
 const generarAvatarBuffer = require("../utils/generarAvatarBuffer");
 
 export class UserService {
@@ -10,17 +10,17 @@ export class UserService {
    */
   async createUser(userData: UserCreateData): Promise<User> {
     const { email, password, username, file } = userData;
-    
+
     // Verificar si el usuario ya existe
     const existingUser = await this.getUserByEmail(email);
     if (existingUser) {
-      throw new Error("El email ya está registrado");
+      throw new AppError(409, "email ya registrado");
     }
 
     // Verificar username único
     const existingUsername = await this.getUserByUsername(username);
     if (existingUsername) {
-      throw new Error("El username ya está en uso");
+      throw new AppError(409, "El username ya está en uso");
     }
 
     // Hash de contraseña
@@ -36,7 +36,7 @@ export class UserService {
     }
 
     // Insertar usuario
-    await getPool().query(
+    await pool.query(
       "INSERT INTO users (id, email, password, username, foto_perfil) VALUES (?, ?, ?, ?, ?)",
       [userId, email, hashedPassword, username, avatarBuffer]
     );
@@ -47,7 +47,7 @@ export class UserService {
     // Retornar usuario creado (sin contraseña)
     const user = await this.getUserById(userId);
     if (!user) {
-      throw new Error("Error al crear usuario");
+      throw new AppError(500, "Error al crear usuario");
     }
     return user;
   }
@@ -56,7 +56,7 @@ export class UserService {
    * Obtener usuario por ID
    */
   async getUserById(userId: string): Promise<User | null> {
-    const [rows]: QueryResult<User> = await getPool().query(
+    const [rows]: QueryResult<User> = await pool.query(
       "SELECT id, email, username, foto_perfil, creado_en FROM users WHERE id = ?",
       [userId]
     );
@@ -67,7 +67,7 @@ export class UserService {
    * Obtener usuario por email
    */
   async getUserByEmail(email: string): Promise<User | null> {
-    const [rows]: QueryResult<User> = await getPool().query(
+    const [rows]: QueryResult<User> = await pool.query(
       "SELECT id, email, username, foto_perfil, creado_en FROM users WHERE email = ?",
       [email]
     );
@@ -78,7 +78,7 @@ export class UserService {
    * Obtener usuario por username
    */
   async getUserByUsername(username: string): Promise<User | null> {
-    const [rows]: QueryResult<User> = await getPool().query(
+    const [rows]: QueryResult<User> = await pool.query(
       "SELECT id, email, username, foto_perfil, creado_en FROM users WHERE username = ?",
       [username]
     );
@@ -89,7 +89,7 @@ export class UserService {
    * Obtener usuario con contraseña para login
    */
   async getUserWithPassword(email: string): Promise<(User & { password: string }) | null> {
-    const [rows]: QueryResult<User & { password: string }> = await getPool().query(
+    const [rows]: QueryResult<User & { password: string }> = await pool.query(
       "SELECT * FROM users WHERE email = ?",
       [email]
     );
@@ -100,7 +100,7 @@ export class UserService {
    * Actualizar foto de perfil
    */
   async updateProfilePhoto(userId: string, photoBuffer: Buffer): Promise<void> {
-    await getPool().query(
+    await pool.query(
       "UPDATE users SET foto_perfil = ? WHERE id = ?",
       [photoBuffer, userId]
     );
@@ -113,10 +113,10 @@ export class UserService {
     // Verificar que el username no esté en uso
     const existing = await this.getUserByUsername(newUsername);
     if (existing && existing.id !== userId) {
-      throw new Error("El username ya está en uso");
+      throw new AppError(409, "El username ya está en uso");
     }
 
-    await getPool().query(
+    await pool.query(
       "UPDATE users SET username = ? WHERE id = ?",
       [newUsername, userId]
     );
@@ -126,7 +126,7 @@ export class UserService {
    * Eliminar usuario completamente (cascada)
    */
   async deleteUserCompletely(userId: string): Promise<void> {
-    const conn = await getPool().getConnection();
+    const conn = await pool.getConnection();
     try {
       await conn.beginTransaction();
       // Eliminar en orden para respetar foreign keys
@@ -154,7 +154,7 @@ export class UserService {
     const titulo = `Página de ${username}`;
     const contenido = `¡Hola! Esta es la página de ${username}.`;
     
-    await getPool().query(
+    await pool.query(
       "INSERT INTO paginas (user_id, propietario, titulo, contenido, descripcion, usuario, comentarios) VALUES (?, 1, ?, ?, 'visible', ?, '')",
       [userId, titulo, contenido, username]
     );
@@ -164,7 +164,7 @@ export class UserService {
    * Verificar si un usuario es propietario de una página
    */
   async isPageOwner(userId: string, pageId: number): Promise<boolean> {
-    const [rows]: QueryResult<{ user_id: string }> = await getPool().query(
+    const [rows]: QueryResult<{ user_id: string }> = await pool.query(
       "SELECT user_id FROM paginas WHERE id = ?",
       [pageId]
     );

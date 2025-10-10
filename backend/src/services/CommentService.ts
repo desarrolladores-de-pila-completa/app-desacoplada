@@ -4,14 +4,14 @@ import {
   CreateCommentRequest,
   AuthenticatedRequest 
 } from '../types/interfaces';
-const { getPool } = require("../middlewares/db");
+const { pool } = require("../middlewares/db");
 
 export class CommentService {
   /**
    * Crear un nuevo comentario
    */
   async createComment(userId: string, pageId: number, comentario: string): Promise<number> {
-    const [result] = await getPool().query(
+    const [result] = await pool.query(
       "INSERT INTO comentarios (pagina_id, user_id, comentario) VALUES (?, ?, ?)",
       [pageId, userId, comentario]
     );
@@ -23,7 +23,7 @@ export class CommentService {
    * Obtener comentarios de una página con información de usuario
    */
   async getPageComments(pageId: number, limit: number = 50, offset: number = 0): Promise<Comentario[]> {
-    const [rows]: QueryResult<Comentario> = await getPool().query(
+    const [rows]: QueryResult<Comentario> = await pool.query(
       `SELECT c.*, u.username 
        FROM comentarios c 
        LEFT JOIN users u ON c.user_id = u.id 
@@ -40,7 +40,7 @@ export class CommentService {
    * Obtener comentario por ID
    */
   async getCommentById(commentId: number): Promise<Comentario | null> {
-    const [rows]: QueryResult<Comentario> = await getPool().query(
+    const [rows]: QueryResult<Comentario> = await pool.query(
       `SELECT c.*, u.username 
        FROM comentarios c 
        LEFT JOIN users u ON c.user_id = u.id 
@@ -61,7 +61,7 @@ export class CommentService {
       throw new Error("No tienes permisos para editar este comentario");
     }
 
-    await getPool().query(
+    await pool.query(
       "UPDATE comentarios SET comentario = ? WHERE id = ? AND user_id = ?",
       [nuevoComentario, commentId, userId]
     );
@@ -77,14 +77,14 @@ export class CommentService {
       throw new Error("No tienes permisos para eliminar este comentario");
     }
 
-    await getPool().query("DELETE FROM comentarios WHERE id = ?", [commentId]);
+    await pool.query("DELETE FROM comentarios WHERE id = ?", [commentId]);
   }
 
   /**
    * Obtener comentarios de un usuario
    */
   async getUserComments(userId: string, limit: number = 20, offset: number = 0): Promise<Comentario[]> {
-    const [rows]: QueryResult<Comentario> = await getPool().query(
+    const [rows]: QueryResult<Comentario> = await pool.query(
       `SELECT c.*, u.username, p.titulo as pagina_titulo 
        FROM comentarios c 
        LEFT JOIN users u ON c.user_id = u.id 
@@ -102,7 +102,7 @@ export class CommentService {
    * Contar comentarios de una página
    */
   async countPageComments(pageId: number): Promise<number> {
-    const [rows]: QueryResult<{ count: number }> = await getPool().query(
+    const [rows]: QueryResult<{ count: number }> = await pool.query(
       "SELECT COUNT(*) as count FROM comentarios WHERE pagina_id = ?",
       [pageId]
     );
@@ -114,14 +114,14 @@ export class CommentService {
    * Eliminar todos los comentarios de una página
    */
   async deleteAllPageComments(pageId: number): Promise<void> {
-    await getPool().query("DELETE FROM comentarios WHERE pagina_id = ?", [pageId]);
+    await pool.query("DELETE FROM comentarios WHERE pagina_id = ?", [pageId]);
   }
 
   /**
    * Verificar si un usuario es propietario de un comentario
    */
   async isCommentOwner(commentId: number, userId: string): Promise<boolean> {
-    const [rows]: QueryResult<{ user_id: string }> = await getPool().query(
+    const [rows]: QueryResult<{ user_id: string }> = await pool.query(
       "SELECT user_id FROM comentarios WHERE id = ?",
       [commentId]
     );
@@ -135,7 +135,7 @@ export class CommentService {
    * (propietario del comentario o propietario de la página)
    */
   async canDeleteComment(commentId: number, userId: string): Promise<boolean> {
-    const [rows]: QueryResult<{ comment_user_id: string; page_user_id: string }> = await getPool().query(
+    const [rows]: QueryResult<{ comment_user_id: string; page_user_id: string }> = await pool.query(
       `SELECT c.user_id as comment_user_id, p.user_id as page_user_id 
        FROM comentarios c 
        INNER JOIN paginas p ON c.pagina_id = p.id 
@@ -155,7 +155,7 @@ export class CommentService {
    * Obtener comentarios recientes del sistema
    */
   async getRecentComments(limit: number = 10): Promise<Comentario[]> {
-    const [rows]: QueryResult<Comentario> = await getPool().query(
+    const [rows]: QueryResult<Comentario> = await pool.query(
       `SELECT c.*, u.username, p.titulo as pagina_titulo, p.id as pagina_id 
        FROM comentarios c 
        LEFT JOIN users u ON c.user_id = u.id 
@@ -175,7 +175,7 @@ export class CommentService {
   async searchComments(searchTerm: string, limit: number = 20, offset: number = 0): Promise<Comentario[]> {
     const searchPattern = `%${searchTerm}%`;
     
-    const [rows]: QueryResult<Comentario> = await getPool().query(
+    const [rows]: QueryResult<Comentario> = await pool.query(
       `SELECT c.*, u.username, p.titulo as pagina_titulo 
        FROM comentarios c 
        LEFT JOIN users u ON c.user_id = u.id 
