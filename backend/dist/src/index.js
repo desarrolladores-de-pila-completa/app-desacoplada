@@ -20,6 +20,7 @@ logger_1.default.info("Container de DI inicializado", { context: 'app' });
 // Importar rutas después de inicializar DI
 const authRoutes_1 = require("./routes/authRoutes");
 const paginaRoutes_1 = __importDefault(require("./routes/paginaRoutes"));
+const publicacionRoutes_1 = __importDefault(require("./routes/publicacionRoutes"));
 const rootPath = path_1.default.resolve(__dirname, '../../../');
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)({
@@ -82,7 +83,18 @@ app.use(["/api/paginas", "/api/auth"], (req, res, next) => {
 const feedRoutes_1 = __importDefault(require("./routes/feedRoutes"));
 app.use("/api/auth", authRoutes_1.router);
 app.use("/api/paginas", paginaRoutes_1.default);
+app.use("/api/publicaciones", publicacionRoutes_1.default);
 app.use("/api/feed", feedRoutes_1.default);
+// Endpoint para verificar esquema de tabla
+app.get('/test-db', async (req, res) => {
+    try {
+        const [rows] = await db_1.pool.query('DESCRIBE paginas');
+        res.json({ columns: rows });
+    }
+    catch (error) {
+        res.json({ error: error.message });
+    }
+});
 app.use(errorHandler_1.errorHandler);
 // Ruta SPA: sirve index.html en rutas no API
 app.get(/^\/(?!api).*/, (req, res) => {

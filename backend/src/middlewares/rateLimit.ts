@@ -4,7 +4,7 @@ import { Request, Response } from 'express';
 // Límite para operaciones de autenticación (login, register) - por IP
 export const authRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 5, // Máximo 5 intentos por IP en 15 minutos
+  max: process.env.NODE_ENV === 'development' ? 100 : 5, // Máximo 100 intentos en desarrollo, 5 en producción
   message: 'Demasiados intentos de autenticación. Inténtalo de nuevo en 15 minutos.',
   standardHeaders: true,
   legacyHeaders: false,
@@ -34,9 +34,9 @@ export const userRateLimit = rateLimit({
 
 // Límite general por IP para todas las rutas
 export const generalRateLimit = rateLimit({
-  windowMs: 60 * 1000, // 1 minuto
-  max: 100, // Máximo 100 solicitudes por IP por minuto
-  message: 'Demasiadas solicitudes. Inténtalo de nuevo en un minuto.',
+  windowMs: 15 * 1000, // 15 segundos
+  max: 100, // Máximo 100 solicitudes por IP por 15 segundos
+  message: 'Demasiadas solicitudes. Inténtalo de nuevo en 15 segundos.',
   standardHeaders: true,
   legacyHeaders: false,
 });

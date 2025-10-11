@@ -8,7 +8,7 @@ interface RequestWithFile extends Request {
   file?: MulterFile;
 }
 const multer = require("multer");
-import { register, login, logout, eliminarUsuario } from "../controllers/authController";
+import { register, login, logout, eliminarUsuario, me } from "../controllers/authController";
 import { authMiddleware } from "../middlewares/auth";
 import { pool } from "../middlewares/db";
 import { randomUUID } from "crypto";
@@ -18,11 +18,7 @@ const upload = multer();
 const router = Router();
 
 // Ruta para obtener el usuario autenticado
-router.get("/me", authMiddleware, async (req, res) => {
-  const user = (req as any).user;
-  if (!user || !user.id) return res.status(401).json({ error: "No autenticado" });
-  res.json(user);
-});
+router.get("/me", authMiddleware, me);
 
 // Endpoint para actualizar foto de perfil
 router.post("/me/foto", authMiddleware, upload.single("foto"), validateFileUpload, async (req: RequestWithFile, res: Response) => {

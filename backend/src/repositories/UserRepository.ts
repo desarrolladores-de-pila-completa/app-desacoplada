@@ -36,24 +36,24 @@ export class UserRepository implements IUserRepository {
   }
 
   async findById(id: string): Promise<User | null> {
-    const [rows]: QueryResult<User> = await pool.query(
-      "SELECT id, email, username, foto_perfil, creado_en FROM users WHERE id = ?",
+    const [rows]: QueryResult<User & { display_name: string }> = await pool.query(
+      "SELECT id, email, username, display_name, foto_perfil, creado_en FROM users WHERE id = ?",
       [id]
     );
     return rows.length > 0 ? (rows[0] ?? null) : null;
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    const [rows]: QueryResult<User> = await pool.query(
-      "SELECT id, email, username, foto_perfil, creado_en FROM users WHERE email = ?",
+    const [rows]: QueryResult<User & { display_name: string }> = await pool.query(
+      "SELECT id, email, username, display_name, foto_perfil, creado_en FROM users WHERE email = ?",
       [email]
     );
     return rows.length > 0 ? (rows[0] ?? null) : null;
   }
 
   async findByUsername(username: string): Promise<User | null> {
-    const [rows]: QueryResult<User> = await pool.query(
-      "SELECT id, email, username, foto_perfil, creado_en FROM users WHERE username = ?",
+    const [rows]: QueryResult<User & { display_name: string }> = await pool.query(
+      "SELECT id, email, username, display_name, foto_perfil, creado_en FROM users WHERE username = ?",
       [username]
     );
     return rows.length > 0 ? (rows[0] ?? null) : null;

@@ -10,6 +10,7 @@ const FeedService_1 = require("../services/FeedService");
 const AuthService_1 = require("../services/AuthService");
 const eventBus_1 = require("./eventBus");
 const repositories_1 = require("../repositories");
+const PublicacionService_1 = require("../services/PublicacionService");
 /**
  * Configuración de servicios para el container de DI
  * Registra todos los servicios como singletons
@@ -41,6 +42,10 @@ function configureServices() {
     diContainer_1.container.registerSingleton('FeedService', (c) => {
         const feedRepository = c.resolve('IFeedRepository');
         return new FeedService_1.FeedService(feedRepository);
+    });
+    diContainer_1.container.registerSingleton('PublicacionService', (c) => {
+        const publicacionRepository = new repositories_1.PublicacionRepository();
+        return new PublicacionService_1.PublicacionService(publicacionRepository);
     });
     // Servicios con dependencias
     diContainer_1.container.registerSingleton('AuthService', (c) => {

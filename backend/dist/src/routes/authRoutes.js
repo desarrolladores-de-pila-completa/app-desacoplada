@@ -14,12 +14,7 @@ const upload = multer();
 const router = (0, express_1.Router)();
 exports.router = router;
 // Ruta para obtener el usuario autenticado
-router.get("/me", auth_1.authMiddleware, async (req, res) => {
-    const user = req.user;
-    if (!user || !user.id)
-        return res.status(401).json({ error: "No autenticado" });
-    res.json(user);
-});
+router.get("/me", auth_1.authMiddleware, authController_1.me);
 // Endpoint para actualizar foto de perfil
 router.post("/me/foto", auth_1.authMiddleware, upload.single("foto"), security_1.validateFileUpload, async (req, res) => {
     const user = req.user;

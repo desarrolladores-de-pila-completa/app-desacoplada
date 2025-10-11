@@ -82,8 +82,10 @@ async function initDatabase() {
       user: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
     });
-    await connection.query(`CREATE DATABASE IF NOT EXISTS \`${process.env.DB_NAME}\``);
+    await connection.query(`CREATE DATABASE IF NOT EXISTS \`${process.env.DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
     logger.info('Base de datos verificada/creada', { database: process.env.DB_NAME, context: 'db' });
+    await connection.query(`CREATE DATABASE IF NOT EXISTS vvveb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+    logger.info('Base de datos vvveb verificada/creada', { database: 'vvveb', context: 'db' });
     await connection.end();
     logger.info('Conexión inicial cerrada. Pool ya inicializado con la base de datos', { context: 'db' });
 
@@ -99,27 +101,14 @@ async function initDatabase() {
       email VARCHAR(255) NOT NULL UNIQUE,
       password VARCHAR(255) NOT NULL,
       username VARCHAR(255) NOT NULL UNIQUE,
+      display_name VARCHAR(255),
       foto_perfil LONGBLOB,
       creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`);
     logger.info('Tabla verificada/creada correctamente', { table: 'users', context: 'db' });
 
-    // Migrar columnas de visibilidad y foto_perfil si no existen
+    // Migrar foto_perfil si no existe
     try {
-      const [colsPaginas]: any = await pool.query("SHOW COLUMNS FROM paginas");
-      const colNamesPaginas = colsPaginas.map((c: any) => c.Field);
-      const visCols = [
-        "visible_titulo",
-        "visible_contenido",
-        "visible_descripcion",
-        "visible_usuario",
-        "visible_comentarios"
-      ];
-      const missingPaginas = visCols.filter(col => !colNamesPaginas.includes(col));
-      if (missingPaginas.length > 0) {
-        await pool.query(`ALTER TABLE paginas ${missingPaginas.map(col => `ADD COLUMN ${col} TINYINT(1) DEFAULT 1`).join(", ")}`);
-        logger.info('Columnas de visibilidad añadidas automáticamente', { columns: missingPaginas, context: 'db' });
-      }
       // Forzar creación de columna foto_perfil en users
       try {
         await pool.query("ALTER TABLE users ADD COLUMN foto_perfil LONGBLOB NULL");
@@ -132,6 +121,19 @@ async function initDatabase() {
           logger.error('Error al crear columna foto_perfil en users', { error: error.message, stack: error.stack, context: 'db' });
         }
       }
+      // Migrar display_name si no existe
+      try {
+        await pool.query("ALTER TABLE users ADD COLUMN display_name VARCHAR(255) NULL");
+        logger.info('Columna display_name añadida a users', { context: 'db' });
+      } catch (err) {
+        const error = err as any;
+        if (error.code === 'ER_DUP_FIELDNAME') {
+          logger.info('La columna display_name ya existe en users', { context: 'db' });
+        } else {
+          logger.error('Error al crear columna display_name en users', { error: error.message, stack: error.stack, context: 'db' });
+        }
+      }
+  
       // Mostrar estructura de la tabla 'users' al iniciar
       const [descUsers]: any = await pool.query("DESCRIBE users");
       logger.info('Estructura actual de la tabla users', { structure: descUsers, context: 'db' });
@@ -143,55 +145,97 @@ async function initDatabase() {
     await pool.query(`CREATE TABLE IF NOT EXISTS paginas (
       id INT AUTO_INCREMENT PRIMARY KEY,
       user_id VARCHAR(36) NOT NULL,
-      propietario TINYINT(1) DEFAULT 0,
-      titulo VARCHAR(255),
-      contenido TEXT,
-      descripcion VARCHAR(32) DEFAULT 'visible',
       usuario VARCHAR(255),
-      comentarios TEXT,
-      oculto TINYINT(1) DEFAULT 0,
-      creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )`);
     logger.info('Tabla verificada/creada correctamente', { table: 'paginas', context: 'db' });
+
+
+    // Mostrar estructura de la tabla 'paginas' al iniciar
+    const [descPaginas]: any = await pool.query("DESCRIBE paginas");
+    logger.info('Estructura actual de la tabla paginas', { structure: descPaginas, context: 'db' });
+
     // Crear tabla 'feed' para entradas de usuarios
     await pool.query(`CREATE TABLE IF NOT EXISTS feed (
       id INT AUTO_INCREMENT PRIMARY KEY,
       user_id VARCHAR(36) NOT NULL,
+      pagina_id INT NULL,
       mensaje TEXT,
-      enlace VARCHAR(255),
-      creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      titulo VARCHAR(255),
+      contenido TEXT,
+      creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (pagina_id) REFERENCES paginas(id) ON DELETE CASCADE
     )`);
     logger.info('Tabla verificada/creada correctamente', { table: 'feed', context: 'db' });
-    // Migrar columnas de visibilidad y oculto si no existen
+
+    // Migrar columnas adicionales para feed si no existen
     try {
-      const [cols]: any = await pool.query("SHOW COLUMNS FROM paginas");
-      const colNames = cols.map((c: any) => c.Field);
-      const visCols = [
-        "visible_titulo",
-        "visible_contenido",
-        "visible_descripcion",
-        "visible_usuario",
-        "visible_comentarios",
-        "oculto"
-      ];
-      const missing = visCols.filter(col => !colNames.includes(col));
-      if (missing.length > 0) {
-        await pool.query(`ALTER TABLE paginas ${missing.map(col => `ADD COLUMN ${col} TINYINT(1) DEFAULT 1`).join(", ")}`);
-        logger.info('Columnas de visibilidad/oculto añadidas automáticamente', { columns: missing, context: 'db' });
-      }
+      await pool.query("ALTER TABLE feed ADD COLUMN pagina_id INT NULL");
+      logger.info('Columna pagina_id añadida a feed', { context: 'db' });
     } catch (err) {
-      console.error("Error al migrar columnas de visibilidad/oculto:", err);
+      const error = err as any;
+      if (error.code === 'ER_DUP_FIELDNAME') {
+        logger.info('La columna pagina_id ya existe en feed', { context: 'db' });
+      } else {
+        logger.error('Error al crear columna pagina_id en feed', { error: error.message, stack: error.stack, context: 'db' });
+      }
     }
-    // Mostrar estructura de la tabla 'paginas' al iniciar
-    const [descPaginas]: any = await pool.query("DESCRIBE paginas");
-    logger.info('Estructura actual de la tabla paginas', { structure: descPaginas, context: 'db' });
+    try {
+      await pool.query("ALTER TABLE feed ADD COLUMN titulo VARCHAR(255) NULL");
+      logger.info('Columna titulo añadida a feed', { context: 'db' });
+    } catch (err) {
+      const error = err as any;
+      if (error.code === 'ER_DUP_FIELDNAME') {
+        logger.info('La columna titulo ya existe en feed', { context: 'db' });
+      } else {
+        logger.error('Error al crear columna titulo en feed', { error: error.message, stack: error.stack, context: 'db' });
+      }
+    }
+    try {
+      await pool.query("ALTER TABLE feed ADD COLUMN contenido TEXT NULL");
+      logger.info('Columna contenido añadida a feed', { context: 'db' });
+    } catch (err) {
+      const error = err as any;
+      if (error.code === 'ER_DUP_FIELDNAME') {
+        logger.info('La columna contenido ya existe en feed', { context: 'db' });
+      } else {
+        logger.error('Error al crear columna contenido en feed', { error: error.message, stack: error.stack, context: 'db' });
+      }
+    }
+    try {
+      await pool.query("ALTER TABLE feed ADD COLUMN actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
+      logger.info('Columna actualizado_en añadida a feed', { context: 'db' });
+    } catch (err) {
+      const error = err as any;
+      if (error.code === 'ER_DUP_FIELDNAME') {
+        logger.info('La columna actualizado_en ya existe en feed', { context: 'db' });
+      } else {
+        logger.error('Error al crear columna actualizado_en en feed', { error: error.message, stack: error.stack, context: 'db' });
+      }
+    }
+    try {
+      await pool.query("ALTER TABLE feed ADD FOREIGN KEY (pagina_id) REFERENCES paginas(id) ON DELETE CASCADE");
+      logger.info('Foreign key pagina_id añadida a feed', { context: 'db' });
+    } catch (err) {
+      const error = err as any;
+      if (error.code === 'ER_DUP_KEYNAME' || error.code === 'ER_FK_DUP_NAME') {
+        logger.info('La foreign key pagina_id ya existe en feed', { context: 'db' });
+      } else {
+        logger.error('Error al crear foreign key pagina_id en feed', { error: error.message, stack: error.stack, context: 'db' });
+      }
+    }
+
     await pool.query(`CREATE TABLE IF NOT EXISTS comentarios (
       id INT AUTO_INCREMENT PRIMARY KEY,
       pagina_id INT NOT NULL,
       user_id VARCHAR(36) NULL,
       comentario TEXT NOT NULL,
       creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (pagina_id) REFERENCES paginas(id) ON DELETE CASCADE
+      FOREIGN KEY (pagina_id) REFERENCES paginas(id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
     )`);
     logger.info('Tabla verificada/creada correctamente', { table: 'comentarios', context: 'db' });
 
@@ -204,7 +248,8 @@ async function initDatabase() {
       filename VARCHAR(255),
       mimetype VARCHAR(100),
       size INT,
-      creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )`);
     logger.info('Tabla verificada/creada correctamente', { table: 'imagenes_comentarios', context: 'db' });
 
@@ -218,6 +263,18 @@ async function initDatabase() {
       FOREIGN KEY (pagina_id) REFERENCES paginas(id) ON DELETE CASCADE
     )`);
     logger.info('Tabla verificada/creada correctamente', { table: 'imagenes', context: 'db' });
+
+    // Crear tabla 'publicaciones'
+    await pool.query(`CREATE TABLE IF NOT EXISTS publicaciones (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id VARCHAR(36) NOT NULL,
+      titulo VARCHAR(255) NOT NULL,
+      contenido TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )`);
+    logger.info('Tabla verificada/creada correctamente', { table: 'publicaciones', context: 'db' });
   } catch (err) {
     logger.error('Error al crear/verificar las tablas', { error: (err as Error).message, stack: (err as Error).stack, context: 'db' });
   }

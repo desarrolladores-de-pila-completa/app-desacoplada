@@ -10,12 +10,27 @@ import useAuthStore from "../stores/authStore";
 import { useUserPage, useComments } from "../hooks/useFeed";
 
 function UserPage() {
-  const { username } = useParams();
+  const params = useParams();
   const { user: authUser, isAuthenticated } = useAuthStore();
   const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight });
 
+  // Determinar el path para la API
+  let path;
+  if (params.username && params.pagina && params.pagina.match(/^\d+$/)) {
+    // Si :pagina es numérico, es una publicación específica
+    path = `${params.username}/publicar/${params.pagina}`;
+  } else if (params.username && params.pagina) {
+    // Para cualquier :pagina no numérico, devolver lista de páginas
+    path = `${params.username}/list`;
+  } else if (params.username) {
+    // Ruta sin número de página: /:username/publicar -> usar página 1
+    path = `${params.username}/1`;
+  } else {
+    path = '';
+  }
+
   // Usar React Query para obtener datos
-  const { data: paginaUser, isLoading: isLoadingPage, error: pageError } = useUserPage(username);
+  const { data: paginaUser, isLoading: isLoadingPage, error: pageError } = useUserPage(path);
   const { data: comentarios = [], isLoading: isLoadingComments } = useComments(paginaUser?.id);
 
   // Borrado de usuario
@@ -64,30 +79,56 @@ function UserPage() {
   if (isLoadingPage) {
     return (
       <div style={{ maxWidth: 600, margin: "40px auto", textAlign: "center" }}>
-        <p>Cargando página...</p>
+        <p>Cargando...</p>
       </div>
     );
   }
 
-  if (pageError || !paginaUser) {
+  if (pageError) {
     return (
       <div style={{ maxWidth: 600, margin: "40px auto", background: "#fff", padding: 32, borderRadius: 12, boxShadow: "0 4px 24px #0002", textAlign: "center" }}>
-        <h2>Página de usuario no encontrada</h2>
-        <p>Este usuario aún no ha creado su página o el enlace es incorrecto.</p>
-        <div style={{
-          width: 120,
-          height: 120,
-          borderRadius: "50%",
-          background: '#e0e0e0',
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: 48,
-          color: '#888',
-          margin: "24px auto"
-        }}>
-          <span>👤</span>
-        </div>
+        <h2>Error al cargar</h2>
+        <p>{pageError.message}</p>
+      </div>
+    );
+  }
+
+  // Si es lista de páginas
+  if (Array.isArray(paginaUser)) {
+    return (
+      <div style={{ maxWidth: 900, margin: "40px auto", background: "#fff", padding: 32, borderRadius: 12, boxShadow: "0 4px 24px #0002" }}>
+        <h2>Páginas de {params.username}</h2>
+        <ul>
+          {paginaUser.map((page) => (
+            <li key={page.id}>
+              <h3>{page.titulo}</h3>
+              <p>{page.contenido?.substring(0, 100)}...</p>
+              <Link to={`/${params.username}/publicar/${page.id}`}>Ver página</Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  }
+
+  // Si es una publicación específica
+  if (paginaUser?.publicacion) {
+    const pub = paginaUser.publicacion;
+    return (
+      <div style={{ maxWidth: 900, margin: "40px auto", background: "#fff", padding: 32, borderRadius: 12, boxShadow: "0 4px 24px #0002" }}>
+        <h2>{pub.titulo}</h2>
+        <p>{pub.contenido}</p>
+        <p style={{ color: '#888', fontSize: '0.9em' }}>Publicado el {new Date(pub.created_at).toLocaleString()}</p>
+      </div>
+    );
+  }
+
+  // Si es página individual
+  if (!paginaUser) {
+    return (
+      <div style={{ maxWidth: 600, margin: "40px auto", background: "#fff", padding: 32, borderRadius: 12, boxShadow: "0 4px 24px #0002", textAlign: "center" }}>
+        <h2>Página no encontrada</h2>
+        <p>Esta página no existe.</p>
       </div>
     );
   }
@@ -96,8 +137,10 @@ function UserPage() {
     <Navbar />
     <div style={{    maxWidth: '100vw', minHeight: windowSize.height, margin: 0, background: '#fff', padding: 'clamp(8px, 4vw, 24px)', borderRadius: 0, boxShadow: 'none', position: 'relative', overflowY: 'auto', overflowX: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box', marginTop: '80px' }}>
       <div style={{  maxWidth: 900, margin: '0 auto', boxSizing: 'border-box', padding: '0 5vw', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-        <FotoPerfil user={authUser} setUser={() => {}} editable={authUser?.id === paginaUser?.user_id} authUserId={authUser?.id} id={paginaUser?.user_id || username} />
-        <UserHeader paginaUser={paginaUser} username={paginaUser?.usuario} authUserId={authUser?.id} onUsernameChange={() => {}} />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+          <FotoPerfil user={authUser} setUser={() => {}} editable={authUser?.id === paginaUser?.user_id} authUserId={authUser?.id} id={paginaUser?.user_id || username} />
+        </div>
+        <UserHeader paginaUser={paginaUser} username={params.username} authUserId={authUser?.id} onUsernameChange={() => {}} />
         <div style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', overflowX: 'hidden' }}>
           <ImageGrid paginaId={paginaUser?.id} editable={authUser?.id === paginaUser?.user_id} />
         </div>

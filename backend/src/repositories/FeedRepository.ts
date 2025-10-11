@@ -4,14 +4,12 @@ import { IFeedRepository } from './IFeedRepository';
 
 export class FeedRepository implements IFeedRepository {
   async findAll(limit: number = 20, offset: number = 0): Promise<FeedEntry[]> {
-    const [rows]: QueryResult<FeedEntry & { username: string; foto_perfil: Buffer }> = await pool.query(
-      `SELECT f.*, u.username, u.foto_perfil
-       FROM feed f
-       INNER JOIN users u ON f.user_id = u.id
-       INNER JOIN paginas p ON f.pagina_id = p.id
-       WHERE p.descripcion = 'visible'
-       ORDER BY f.actualizado_en DESC, f.creado_en DESC
-       LIMIT ? OFFSET ?`,
+    const [rows]: QueryResult<FeedEntry & { username: string; display_name: string; foto_perfil: Buffer }> = await pool.query(
+      `SELECT f.*, u.username, u.display_name, u.foto_perfil
+        FROM feed f
+        INNER JOIN users u ON f.user_id = u.id
+        ORDER BY f.actualizado_en DESC, f.creado_en DESC
+        LIMIT ? OFFSET ?`,
       [limit, offset]
     );
 
@@ -19,13 +17,13 @@ export class FeedRepository implements IFeedRepository {
   }
 
   async findByUser(userId: string, limit: number = 20, offset: number = 0): Promise<FeedEntry[]> {
-    const [rows]: QueryResult<FeedEntry & { username: string; foto_perfil: Buffer }> = await pool.query(
-      `SELECT f.*, u.username, u.foto_perfil
-       FROM feed f
-       INNER JOIN users u ON f.user_id = u.id
-       WHERE f.user_id = ?
-       ORDER BY f.actualizado_en DESC, f.creado_en DESC
-       LIMIT ? OFFSET ?`,
+    const [rows]: QueryResult<FeedEntry & { username: string; display_name: string; foto_perfil: Buffer }> = await pool.query(
+      `SELECT f.*, u.username, u.display_name, u.foto_perfil
+        FROM feed f
+        INNER JOIN users u ON f.user_id = u.id
+        WHERE f.user_id = ?
+        ORDER BY f.actualizado_en DESC, f.creado_en DESC
+        LIMIT ? OFFSET ?`,
       [userId, limit, offset]
     );
 
@@ -33,11 +31,11 @@ export class FeedRepository implements IFeedRepository {
   }
 
   async findById(feedId: number): Promise<FeedEntry | null> {
-    const [rows]: QueryResult<FeedEntry & { username: string; foto_perfil: Buffer }> = await pool.query(
-      `SELECT f.*, u.username, u.foto_perfil
-       FROM feed f
-       INNER JOIN users u ON f.user_id = u.id
-       WHERE f.id = ?`,
+    const [rows]: QueryResult<FeedEntry & { username: string; display_name: string; foto_perfil: Buffer }> = await pool.query(
+      `SELECT f.*, u.username, u.display_name, u.foto_perfil
+        FROM feed f
+        INNER JOIN users u ON f.user_id = u.id
+        WHERE f.id = ?`,
       [feedId]
     );
 
@@ -48,13 +46,12 @@ export class FeedRepository implements IFeedRepository {
   }
 
   async createForUser(userId: string, username: string): Promise<number> {
-    const enlace = `/pagina/${username}`;
     const fotoUrl = `/api/auth/user/${userId}/foto`;
-    const mensaje = `Nuevo usuario registrado: <img src='${fotoUrl}' alt='foto' style='width:32px;height:32px;border-radius:50%;vertical-align:middle;margin-right:8px;' /><a href='${enlace}'>${username}</a>`;
+    const mensaje = `Nuevo usuario registrado: <img src='${fotoUrl}' alt='foto' style='width:32px;height:32px;border-radius:50%;vertical-align:middle;margin-right:8px;' /><a href="/pagina/${username}">${username}</a>`;
 
     const [result] = await pool.query(
-      "INSERT INTO feed (user_id, mensaje, enlace) VALUES (?, ?, ?)",
-      [userId, mensaje, enlace]
+      "INSERT INTO feed (user_id, mensaje) VALUES (?, ?)",
+      [userId, mensaje]
     );
 
     return (result as any).insertId;
@@ -87,15 +84,14 @@ export class FeedRepository implements IFeedRepository {
   async search(searchTerm: string, limit: number = 20, offset: number = 0): Promise<FeedEntry[]> {
     const searchPattern = `%${searchTerm}%`;
 
-    const [rows]: QueryResult<FeedEntry & { username: string; foto_perfil: Buffer }> = await pool.query(
-      `SELECT f.*, u.username, u.foto_perfil
-       FROM feed f
-       INNER JOIN users u ON f.user_id = u.id
-       INNER JOIN paginas p ON f.pagina_id = p.id
-       WHERE (f.titulo LIKE ? OR f.contenido LIKE ?)
-       AND p.descripcion = 'visible'
-       ORDER BY f.actualizado_en DESC, f.creado_en DESC
-       LIMIT ? OFFSET ?`,
+    const [rows]: QueryResult<FeedEntry & { username: string; display_name: string; foto_perfil: Buffer }> = await pool.query(
+      `SELECT f.*, u.username, u.display_name, u.foto_perfil
+        FROM feed f
+        INNER JOIN users u ON f.user_id = u.id
+        INNER JOIN paginas p ON f.pagina_id = p.id
+        WHERE (f.titulo LIKE ? OR f.contenido LIKE ?)
+        ORDER BY f.actualizado_en DESC, f.creado_en DESC
+        LIMIT ? OFFSET ?`,
       [searchPattern, searchPattern, limit, offset]
     );
 
@@ -174,8 +170,17 @@ export class FeedRepository implements IFeedRepository {
   async cleanOrphaned(): Promise<number> {
     const [result] = await pool.query(
       `DELETE f FROM feed f
-       LEFT JOIN paginas p ON f.pagina_id = p.id
-       WHERE p.id IS NULL`
+        LEFT JOIN paginas p ON f.pagina_id = p.id
+        WHERE p.id IS NULL`
+    );
+
+    return (result as any).affectedRows;
+  }
+
+  async updateLegacyLinks(): Promise<number> {
+    // Actualizar enlaces antiguos que apuntan a /pagina/username a /username/pagina/1
+    const [result] = await pool.query(
+      `UPDATE feed SET enlace = CONCAT('/', SUBSTRING(enlace, 9), '/pagina/1') WHERE enlace LIKE '/pagina/%'`
     );
 
     return (result as any).affectedRows;
@@ -186,7 +191,7 @@ export class FeedRepository implements IFeedRepository {
     return this.findAll(limit, offset);
   }
 
-  private async enrichFeedWithImages(feedEntries: (FeedEntry & { username: string; foto_perfil: Buffer })[]): Promise<FeedEntry[]> {
+  private async enrichFeedWithImages(feedEntries: (FeedEntry & { username: string; display_name: string; foto_perfil: Buffer })[]): Promise<FeedEntry[]> {
     const enriched: FeedEntry[] = [];
 
     for (const entry of feedEntries) {
@@ -196,7 +201,19 @@ export class FeedRepository implements IFeedRepository {
         [(entry as any).pagina_id]
       );
 
-      enriched.push({
+      // Obtener el número de página
+      let pageNumber = 1; // Default
+      if ((entry as any).pagina_id) {
+        const pageRepo = (await import('./PageRepository')).PageRepository;
+        const repo = new pageRepo();
+        const num = await repo.getPageNumber((entry as any).pagina_id);
+        if (num) pageNumber = num;
+      }
+
+      // Limpiar enlaces del mensaje para evitar conflictos
+      const cleanMensaje = (entry as any).mensaje ? (entry as any).mensaje.replace(/<a[^>]*>(.*?)<\/a>/g, '$1') : '';
+
+      const result: any = {
         id: entry.id,
         user_id: entry.user_id,
         pagina_id: (entry as any).pagina_id,
@@ -204,13 +221,20 @@ export class FeedRepository implements IFeedRepository {
         contenido: entry.contenido,
         creado_en: entry.creado_en,
         actualizado_en: entry.actualizado_en,
-        username: entry.username,
+        username: entry.display_name || entry.username,
         imagenes: images,
+        pageNumber: pageNumber,
         // Convertir Buffer a base64 para el frontend
         foto_perfil_url: entry.foto_perfil ?
           `data:image/jpeg;base64,${entry.foto_perfil.toString('base64')}` :
           null
-      } as FeedEntry);
+      };
+
+      if (cleanMensaje) {
+        result.mensaje = cleanMensaje;
+      }
+
+      enriched.push(result);
     }
 
     return enriched;

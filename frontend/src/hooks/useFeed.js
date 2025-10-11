@@ -101,11 +101,27 @@ export const useDeleteComment = () => {
 };
 
 // Hook para obtener página de usuario
-export const useUserPage = (username) => {
+export const useUserPage = (path) => {
   return useQuery({
-    queryKey: ['userPage', username],
+    queryKey: ['userPage', path],
     queryFn: async () => {
-      const response = await fetch(`${API_BASE}/paginas/pagina/${username}`, {
+      let url;
+      if (path.includes('/list')) {
+        // Para lista de publicaciones
+        const username = path.split('/')[0];
+        url = `${API_BASE}/publicaciones/usuario/${username}`;
+      } else if (path.includes('/publicar/')) {
+        // Para publicación específica
+        const parts = path.split('/');
+        const username = parts[0];
+        const publicacionId = parts[2];
+        url = `${API_BASE}/paginas/${username}/publicar/${publicacionId}`;
+      } else {
+        // Para página específica (mantener compatibilidad)
+        url = `${API_BASE}/paginas/pagina/${path}`;
+      }
+
+      const response = await fetch(url, {
         credentials: 'include',
       });
 
@@ -115,7 +131,7 @@ export const useUserPage = (username) => {
 
       return response.json();
     },
-    enabled: !!username,
+    enabled: !!path,
     staleTime: 5 * 60 * 1000, // 5 minutos
   });
 };

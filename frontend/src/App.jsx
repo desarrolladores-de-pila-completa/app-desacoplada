@@ -7,6 +7,8 @@ import OutputMenu from "./components/OutputMenu";
 import RegisterPage from "./components/RegisterPage";
 import LoginPage from "./components/LoginPage";
 import UserPage from "./components/UserPage";
+import AccountPage from "./components/AccountPage";
+import CreatePublication from "./components/CreatePublication";
 import useAuthStore from "./stores/authStore";
 import { useFeed } from "./hooks/useFeed";
 
@@ -101,7 +103,11 @@ export default function App() {
             />
           }
         />
-  <Route path="/pagina/:username" element={<UserPage />} />
+        <Route path="/cuenta" element={<AccountPage />} />
+        <Route path="/:username/publicar" element={<CreatePublication />} />
+        <Route path="/pagina/:username" element={<UserPage />} />
+        <Route path="/:username/publicar/:pagina" element={<UserPage />} />
+        <Route path="/:username/nuevapublicacion" element={<UserPage />} />
       </Routes>
       <OutputMenu
         outputMsg={output.message}

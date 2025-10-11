@@ -20,19 +20,15 @@ class AuthService {
      * Registrar un nuevo usuario
      */
     async register(userData) {
+        console.log('AuthService.register called');
         // Generar username único
         const username = this.generateUniqueUsername();
+        console.log('Username generated:', username);
         // Crear usuario usando UserService
         const fullUserData = { ...userData, username };
+        console.log('Calling userService.createUser');
         const user = await this.userService.createUser(fullUserData);
-        // Crear entrada en el feed
-        try {
-            await this.feedService.createUserRegistrationEntry(user.id, user.username);
-        }
-        catch (error) {
-            console.error('Error creando entrada en feed:', error);
-            // No fallar el registro por esto
-        }
+        console.log('User created:', user.id);
         // Emitir evento de usuario registrado
         try {
             await this.eventBus.emit('user.registered', {
@@ -40,13 +36,16 @@ class AuthService {
                 username: user.username,
                 email: userData.email,
             });
+            console.log('Event emitted');
         }
         catch (error) {
             console.error('Error emitiendo evento user.registered:', error);
             // No fallar el registro por esto
         }
         // Generar token JWT
+        console.log('Generating token');
         const token = this.generateToken(user.id);
+        console.log('Token generated');
         return {
             user,
             token,
@@ -87,14 +86,16 @@ class AuthService {
      * Generar token JWT
      */
     generateToken(userId) {
-        return jsonwebtoken_1.default.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        const secret = process.env.JWT_SECRET || "clave-secreta";
+        return jsonwebtoken_1.default.sign({ userId }, secret, { expiresIn: '1h' });
     }
     /**
      * Verificar token JWT
      */
     verifyToken(token) {
         try {
-            const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET);
+            const secret = process.env.JWT_SECRET || "clave-secreta";
+            const decoded = jsonwebtoken_1.default.verify(token, secret);
             return decoded;
         }
         catch (error) {

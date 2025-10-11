@@ -23,20 +23,16 @@ export class AuthService {
     token: string;
     username: string;
   }> {
+    console.log('AuthService.register called');
     // Generar username único
     const username = this.generateUniqueUsername();
+    console.log('Username generated:', username);
 
     // Crear usuario usando UserService
     const fullUserData: UserCreateData = { ...userData, username };
+    console.log('Calling userService.createUser');
     const user = await this.userService.createUser(fullUserData);
-
-    // Crear entrada en el feed
-    try {
-      await this.feedService.createUserRegistrationEntry(user.id, user.username);
-    } catch (error) {
-      console.error('Error creando entrada en feed:', error);
-      // No fallar el registro por esto
-    }
+    console.log('User created:', user.id);
 
     // Emitir evento de usuario registrado
     try {
@@ -45,13 +41,16 @@ export class AuthService {
         username: user.username,
         email: userData.email,
       });
+      console.log('Event emitted');
     } catch (error) {
       console.error('Error emitiendo evento user.registered:', error);
       // No fallar el registro por esto
     }
 
     // Generar token JWT
+    console.log('Generating token');
     const token = this.generateToken(user.id);
+    console.log('Token generated');
 
     return {
       user,
@@ -103,9 +102,10 @@ export class AuthService {
    * Generar token JWT
    */
   private generateToken(userId: string): string {
+    const secret = process.env.JWT_SECRET || "clave-secreta";
     return jwt.sign(
       { userId },
-      process.env.JWT_SECRET!,
+      secret,
       { expiresIn: '1h' }
     );
   }
@@ -115,7 +115,8 @@ export class AuthService {
    */
   verifyToken(token: string): { userId: string } {
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
+      const secret = process.env.JWT_SECRET || "clave-secreta";
+      const decoded = jwt.verify(token, secret) as { userId: string };
       return decoded;
     } catch (error) {
       throw new AppError(401, 'Token inválido');

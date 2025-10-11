@@ -8,7 +8,6 @@
     "start": "npm run build && concurrently \"npm run start:backend\" \"npm run dev:frontend\"",
     "start:backend": "npm run build && npm run serve:backend",
     "serve:backend": "nodemon --watch backend/src --ext ts,json --exec \"npm run build && node backend/dist/src/index.js\"",
-    "start:frontend": "cd frontend && npm run dev",
     "dev:frontend": "cd frontend && npm run dev",
     "test:backend": "jest --config jest.config.js",
     "test:frontend": "cd frontend/app-desacoplada-react && npm test",

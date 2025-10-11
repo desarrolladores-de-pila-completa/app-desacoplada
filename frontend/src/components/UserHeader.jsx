@@ -62,8 +62,8 @@ function UserHeader({ paginaUser, username, authUserId, onUsernameChange }) {
 
   // Si el usuario borra el nombre, mostrar campo vacío (no "usuario")
   const [editMode, setEditMode] = React.useState(false);
-  // Prioridad: nombre de la URL > nombre editado > datos de página > email > texto ayuda
-  let displayName = params.username || newUsername;
+  // Prioridad: display_name > nombre editado > datos de página > email > texto ayuda
+  let displayName = paginaUser?.display_name || newUsername;
   if (!displayName) displayName = "Haz click aquí para poner tu nombre";
 
   const inputRef = React.useRef(null);

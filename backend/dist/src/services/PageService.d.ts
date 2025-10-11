@@ -10,9 +10,13 @@ export declare class PageService {
      */
     getPageWithImages(pageId: number): Promise<PaginaWithImages | null>;
     /**
-     * Obtener página por usuario (username)
-     */
+      * Obtener página por usuario (username)
+      */
     getPageByUsername(username: string): Promise<Pagina | null>;
+    /**
+      * Obtener página por usuario y número de página
+      */
+    getPageByUsernameAndPageNumber(username: string, pageNumber: number): Promise<Pagina | null>;
     /**
      * Obtener todas las páginas públicas con paginación
      */
@@ -51,12 +55,16 @@ export declare class PageService {
      */
     togglePageVisibility(pageId: number): Promise<string>;
     /**
-     * Obtener estadísticas de página
-     */
+      * Obtener estadísticas de página
+      */
     getPageStats(pageId: number): Promise<{
         comentarios: number;
         imagenes: number;
         visitas: number;
     }>;
+    /**
+      * Obtener el número de página de una página específica
+      */
+    getPageNumber(pageId: number): Promise<number | null>;
 }
 //# sourceMappingURL=PageService.d.ts.map
