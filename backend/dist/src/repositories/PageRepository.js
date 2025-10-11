@@ -4,8 +4,8 @@ exports.PageRepository = void 0;
 const db_1 = require("../middlewares/db");
 class PageRepository {
     async create(userId, pageData) {
-        const { titulo, contenido, descripcion, usuario, comentarios } = pageData;
-        const [result] = await db_1.pool.query("INSERT INTO paginas (user_id, propietario, titulo, contenido, descripcion, usuario, comentarios) VALUES (?, 1, ?, ?, ?, ?, ?)", [userId, titulo, contenido, descripcion || 'visible', usuario, comentarios || '']);
+        const { usuario } = pageData;
+        const [result] = await db_1.pool.query("INSERT INTO paginas (user_id, propietario, usuario) VALUES (?, 1, ?)", [userId, usuario]);
         return result.insertId;
     }
     async findById(pageId) {
@@ -28,7 +28,24 @@ class PageRepository {
     async findByUsername(username) {
         const [rows] = await db_1.pool.query(`SELECT p.* FROM paginas p
        INNER JOIN users u ON p.user_id = u.id
-       WHERE u.username = ?`, [username]);
+       WHERE u.username = ?
+       ORDER BY p.id DESC LIMIT 1`, [username]);
+        return rows.length > 0 ? (rows[0] ?? null) : null;
+    }
+    async findByUsernameAndPageNumber(username, pageNumber) {
+        // Obtener el user_id del username
+        const [userRows] = await db_1.pool.query("SELECT id FROM users WHERE username = ?", [username]);
+        if (userRows.length === 0)
+            return null;
+        const userId = userRows[0]?.id;
+        if (!userId)
+            return null;
+        // Obtener la página número pageNumber del usuario, ordenada por id ASC
+        const [rows] = await db_1.pool.query(`SELECT * FROM paginas
+       WHERE user_id = ?
+       ORDER BY id ASC
+       LIMIT 1 OFFSET ?`, [userId, pageNumber - 1] // OFFSET 0 para página 1, 1 para página 2, etc.
+        );
         return rows.length > 0 ? (rows[0] ?? null) : null;
     }
     async findPublic(limit = 20, offset = 0) {
@@ -36,30 +53,9 @@ class PageRepository {
         return rows;
     }
     async update(pageId, updateData) {
-        const fields = [];
-        const values = [];
-        // Construir query dinámicamente
-        if (updateData.titulo !== undefined) {
-            fields.push('titulo = ?');
-            values.push(updateData.titulo);
-        }
-        if (updateData.contenido !== undefined) {
-            fields.push('contenido = ?');
-            values.push(updateData.contenido);
-        }
-        if (updateData.descripcion !== undefined) {
-            fields.push('descripcion = ?');
-            values.push(updateData.descripcion);
-        }
-        if (updateData.comentarios !== undefined) {
-            fields.push('comentarios = ?');
-            values.push(updateData.comentarios);
-        }
-        if (fields.length === 0) {
-            throw new Error("No hay campos para actualizar");
-        }
-        values.push(pageId);
-        await db_1.pool.query(`UPDATE paginas SET ${fields.join(', ')} WHERE id = ?`, values);
+        // En la nueva estructura simplificada, no hay campos para actualizar
+        // Esta función se mantiene por compatibilidad pero no hace nada
+        return;
     }
     async delete(pageId) {
         // Eliminar imágenes primero (foreign key)
@@ -102,6 +98,20 @@ class PageRepository {
             imagenes: imagenesRows[0]?.count ?? 0,
             visitas: 0 // TODO: Implementar contador de visitas
         };
+    }
+    async getPageNumber(pageId) {
+        // Obtener el user_id de la página
+        const [pageRows] = await db_1.pool.query("SELECT user_id FROM paginas WHERE id = ?", [pageId]);
+        if (pageRows.length === 0)
+            return null;
+        const userId = pageRows[0]?.user_id;
+        if (!userId)
+            return null;
+        // Contar cuántas páginas tiene el usuario con id <= pageId, ordenadas por id ASC
+        const [countRows] = await db_1.pool.query(`SELECT COUNT(*) as count FROM paginas
+       WHERE user_id = ? AND id <= ?
+       ORDER BY id ASC`, [userId, pageId]);
+        return countRows[0]?.count ?? null;
     }
 }
 exports.PageRepository = PageRepository;

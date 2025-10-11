@@ -20,6 +20,7 @@ export interface User {
   id: string;
   email: string;
   username: string;
+  display_name?: string;
   foto_perfil?: Buffer;
   creado_en: Date;
 }
@@ -35,17 +36,8 @@ export interface Pagina {
   id: number;
   user_id: string;
   propietario: boolean;
-  titulo: string;
-  contenido: string;
-  descripcion: string;
   usuario: string;
-  comentarios: string;
   oculto: boolean;
-  visible_titulo: boolean;
-  visible_contenido: boolean;
-  visible_descripcion: boolean;
-  visible_usuario: boolean;
-  visible_comentarios: boolean;
   creado_en: Date;
 }
 
@@ -153,18 +145,11 @@ export interface ValidationError {
 // === ADDITIONAL DATA TYPES ===
 
 export interface CreatePaginaData {
-  titulo: string;
-  contenido: string;
-  descripcion?: string;
   usuario: string;
-  comentarios?: string;
 }
 
 export interface UpdatePaginaData {
-  titulo?: string;
-  contenido?: string;
-  descripcion?: string;
-  comentarios?: string;
+  // No hay campos para actualizar en la nueva estructura simplificada
 }
 
 export interface PaginaWithImages extends Pagina {
@@ -241,8 +226,7 @@ export interface UserRegisteredEvent extends EventPayload {
 export interface PageCreatedEvent extends EventPayload {
   pageId: number;
   userId: string;
-  title: string;
-  content: string;
+  username: string;
 }
 
 export interface CommentCreatedEvent extends EventPayload {

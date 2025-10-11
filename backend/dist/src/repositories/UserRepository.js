@@ -29,15 +29,15 @@ class UserRepository {
         return user;
     }
     async findById(id) {
-        const [rows] = await db_1.pool.query("SELECT id, email, username, foto_perfil, creado_en FROM users WHERE id = ?", [id]);
+        const [rows] = await db_1.pool.query("SELECT id, email, username, display_name, foto_perfil, creado_en FROM users WHERE id = ?", [id]);
         return rows.length > 0 ? (rows[0] ?? null) : null;
     }
     async findByEmail(email) {
-        const [rows] = await db_1.pool.query("SELECT id, email, username, foto_perfil, creado_en FROM users WHERE email = ?", [email]);
+        const [rows] = await db_1.pool.query("SELECT id, email, username, display_name, foto_perfil, creado_en FROM users WHERE email = ?", [email]);
         return rows.length > 0 ? (rows[0] ?? null) : null;
     }
     async findByUsername(username) {
-        const [rows] = await db_1.pool.query("SELECT id, email, username, foto_perfil, creado_en FROM users WHERE username = ?", [username]);
+        const [rows] = await db_1.pool.query("SELECT id, email, username, display_name, foto_perfil, creado_en FROM users WHERE username = ?", [username]);
         return rows.length > 0 ? (rows[0] ?? null) : null;
     }
     async findWithPassword(email) {

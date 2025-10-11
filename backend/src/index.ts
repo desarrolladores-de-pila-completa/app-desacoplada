@@ -17,6 +17,7 @@ logger.info("Container de DI inicializado", { context: 'app' });
 // Importar rutas después de inicializar DI
 import { router as authRoutes } from "./routes/authRoutes";
 import paginaRoutes from "./routes/paginaRoutes";
+import publicacionRoutes from "./routes/publicacionRoutes";
 
 const rootPath = path.resolve(__dirname, '../../../');
 
@@ -90,7 +91,19 @@ app.use(["/api/paginas", "/api/auth"], (req, res, next) => {
 import feedRoutes from "./routes/feedRoutes";
 app.use("/api/auth", authRoutes);
 app.use("/api/paginas", paginaRoutes);
+app.use("/api/publicaciones", publicacionRoutes);
 app.use("/api/feed", feedRoutes);
+
+// Endpoint para verificar esquema de tabla
+app.get('/test-db', async (req, res) => {
+  try {
+    const [rows] = await pool.query('DESCRIBE paginas');
+    res.json({ columns: rows });
+  } catch (error) {
+    res.json({ error: (error as Error).message });
+  }
+});
+
 app.use(errorHandler);
 
 
@@ -106,6 +119,8 @@ if (require.main === module) {
     try {
       await initDatabase();
       // pool ya está inicializado en initDatabase
+
+
       await pool.query("SELECT 1");
       logger.info("Conexión a MySQL exitosa", { context: 'app' });
 

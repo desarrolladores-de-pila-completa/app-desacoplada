@@ -7,3 +7,4 @@ export { UserRepository } from './UserRepository';
 export { PageRepository } from './PageRepository';
 export { CommentRepository } from './CommentRepository';
 export { FeedRepository } from './FeedRepository';
+export { PublicacionRepository } from './PublicacionRepository';

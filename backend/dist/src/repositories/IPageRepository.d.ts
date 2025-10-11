@@ -4,6 +4,7 @@ export interface IPageRepository {
     findById(pageId: number): Promise<Pagina | null>;
     findWithImages(pageId: number): Promise<PaginaWithImages | null>;
     findByUsername(username: string): Promise<Pagina | null>;
+    findByUsernameAndPageNumber(username: string, pageNumber: number): Promise<Pagina | null>;
     findPublic(limit: number, offset: number): Promise<Pagina[]>;
     update(pageId: number, updateData: UpdatePaginaData): Promise<void>;
     delete(pageId: number): Promise<void>;
@@ -17,5 +18,6 @@ export interface IPageRepository {
         imagenes: number;
         visitas: number;
     }>;
+    getPageNumber(pageId: number): Promise<number | null>;
 }
 //# sourceMappingURL=IPageRepository.d.ts.map

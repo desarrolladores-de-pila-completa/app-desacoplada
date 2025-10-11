@@ -32,14 +32,29 @@ export class PageService {
   }
 
   /**
-   * Obtener página por usuario (username)
-   */
+    * Obtener página por usuario (username)
+    */
   async getPageByUsername(username: string): Promise<Pagina | null> {
     const cacheKey = `page:byUsername:${username}`;
     const cached = cacheService.get<Pagina>(cacheKey);
     if (cached) return cached;
 
     const page = await this.pageRepository.findByUsername(username);
+    if (page) {
+      cacheService.set(cacheKey, page);
+    }
+    return page;
+  }
+
+  /**
+    * Obtener página por usuario y número de página
+    */
+  async getPageByUsernameAndPageNumber(username: string, pageNumber: number): Promise<Pagina | null> {
+    const cacheKey = `page:byUsernameAndPage:${username}:${pageNumber}`;
+    const cached = cacheService.get<Pagina>(cacheKey);
+    if (cached) return cached;
+
+    const page = await this.pageRepository.findByUsernameAndPageNumber(username, pageNumber);
     if (page) {
       cacheService.set(cacheKey, page);
     }
@@ -66,16 +81,17 @@ export class PageService {
    async createPage(userId: string, pageData: CreatePaginaData): Promise<number> {
      const pageId = await this.pageRepository.create(userId, pageData);
 
-     // Crear entrada en el feed
-     await this.feedRepository.createForPage(userId, pageId, pageData.titulo, pageData.contenido);
+     // Crear entrada en el feed para nuevo perfil
+     const mensaje = `Nuevo perfil creado: ${pageData.usuario}`;
+     const enlace = `/pagina/${pageData.usuario}`;
+     await this.feedRepository.createForUser(userId, pageData.usuario);
 
      // Emitir evento de página creada
      try {
        await this.eventBus.emit('page.created', {
          pageId,
          userId,
-         title: pageData.titulo,
-         content: pageData.contenido,
+         username: pageData.usuario,
        });
      } catch (error) {
        console.error('Error emitiendo evento page.created:', error);
@@ -95,13 +111,7 @@ export class PageService {
     cacheService.invalidatePattern(`page:withImages:${pageId}`);
     cacheService.invalidatePattern(`page:byUsername:`); // Invalidar todas las búsquedas por username, ya que podría cambiar
 
-    // Actualizar el feed si cambió titulo o contenido
-    if (updateData.titulo || updateData.contenido) {
-      const page = await this.pageRepository.findById(pageId);
-      if (page) {
-        await this.feedRepository.updateForPage(pageId, page.titulo, page.contenido);
-      }
-    }
+    // Nota: Las páginas ya no tienen contenido propio, solo campos básicos
   }
 
   /**
@@ -125,11 +135,7 @@ export class PageService {
     // Invalidar caché de la página
     cacheService.invalidatePattern(`page:withImages:${pageId}`);
 
-    // Actualizar el feed si es necesario
-    const page = await this.pageRepository.findById(pageId);
-    if (page) {
-      await this.feedRepository.updateForPage(pageId, page.titulo, page.contenido);
-    }
+    // Nota: Las páginas ya no tienen contenido propio para actualizar en el feed
 
     return imageId;
   }
@@ -143,11 +149,7 @@ export class PageService {
     // Invalidar caché de la página
     cacheService.invalidatePattern(`page:withImages:${pageId}`);
 
-    // Actualizar el feed
-    const page = await this.pageRepository.findById(pageId);
-    if (page) {
-      await this.feedRepository.updateForPage(pageId, page.titulo, page.contenido);
-    }
+    // Nota: Las páginas ya no tienen contenido propio para actualizar en el feed
   }
 
   /**
@@ -176,9 +178,16 @@ export class PageService {
   }
 
   /**
-   * Obtener estadísticas de página
-   */
+    * Obtener estadísticas de página
+    */
   async getPageStats(pageId: number): Promise<{ comentarios: number; imagenes: number; visitas: number }> {
     return await this.pageRepository.getStats(pageId);
+  }
+
+  /**
+    * Obtener el número de página de una página específica
+    */
+  async getPageNumber(pageId: number): Promise<number | null> {
+    return await this.pageRepository.getPageNumber(pageId);
   }
 }

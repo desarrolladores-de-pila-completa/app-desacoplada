@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import Navbar from "./Navbar";
 import useAuthStore from "../stores/authStore";
 
@@ -75,6 +75,7 @@ function RegisterPage({ showOutput }) {
           {isLoading ? "Registrando..." : "Registrar"}
         </button>
       </form>
+      <p style={{ textAlign: 'center', marginTop: 16 }}>¿Tienes una cuenta? <Link to="/login">Inicia Sesión</Link></p>
       {/* Cartel de página personal oculto tras registro, solo redirige */}
     </div>
     </>

@@ -4,7 +4,7 @@ import { pool } from "../middlewares/db";
 import { Router } from "express";
 // import rateLimit from "express-rate-limit";
 
-import { paginasPublicas, guardarComentario, eliminarComentario, obtenerPagina, actualizarVisibilidad, consultarVisibilidad, actualizarPropietario, actualizarDescripcion, actualizarUsuarioPagina, actualizarComentariosPagina, consultarPropietario, consultarDescripcion, consultarUsuarioPagina, consultarComentariosPagina, eliminarUsuarioTotal } from "../controllers/paginaController";
+import { paginasPublicas, guardarComentario, eliminarComentario, obtenerPagina, actualizarUsuarioPagina, eliminarUsuarioTotal, obtenerPaginaPorUsernameYNumero, obtenerPaginasPublicasPorUsuario, guardarHtmlVvveb } from "../controllers/paginaController";
 import { authMiddleware } from "../middlewares/auth";
 import { ValidationService, validateRequest } from '../services/ValidationService';
 import { userRateLimit } from '../middlewares/rateLimit';
@@ -14,11 +14,36 @@ import rateLimit from "express-rate-limit";
 const limiter = rateLimit({ windowMs: 60 * 1000, max: 100 });
 
 const router = Router();
-// Endpoint para consultar visibilidad general de la página
-router.get("/:id/visibilidad", consultarVisibilidad);
-// Endpoint para consultar visibilidad de campos de la página
-import { consultarVisibilidadCampos } from "../controllers/paginaController";
-router.get("/:id/visibilidad-campos", consultarVisibilidadCampos);
+
+// Endpoint para crear nueva página (simplificado)
+router.post("/", authMiddleware, async (req: any, res: any) => {
+  const { usuario } = req.body;
+  const userId = req.user.id;
+
+  try {
+    // Crear la página
+    const [result] = await pool.query(
+      "INSERT INTO paginas (user_id, usuario) VALUES (?, ?)",
+      [userId, usuario]
+    );
+
+    const pageId = (result as any).insertId;
+
+    // Crear entrada en el feed
+    const mensaje = `Nuevo perfil creado: <a href="/pagina/${usuario}">${usuario}</a>`;
+    await pool.query(
+      "INSERT INTO feed (user_id, mensaje) VALUES (?, ?)",
+      [userId, mensaje]
+    );
+
+    res.json({ message: "Página creada", id: pageId });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al crear página" });
+  }
+});
+
+// Ruta eliminada: consultarVisibilidadCampos (función eliminada)
 
 
 const upload = multer();
@@ -41,15 +66,83 @@ router.get("/:id/comentarios", async (req: any, res: any) => {
 router.get("/", limiter, paginasPublicas);
 router.get("/:id", obtenerPagina);
 
-// Endpoint para obtener la página por username
-import { obtenerPaginaPorUsername } from "../controllers/paginaController";
-router.get("/pagina/:username", obtenerPaginaPorUsername);
+// Endpoint para obtener la página por username (comentado, usar con número)
+// import { obtenerPaginaPorUsername } from "../controllers/paginaController";
+// router.get("/pagina/:username", obtenerPaginaPorUsername);
+
+// Endpoint para obtener la página por username y número de página
+router.get("/pagina/:username/:pageNumber", obtenerPaginaPorUsernameYNumero);
+
+// Endpoint para obtener lista de páginas públicas de un usuario
+router.get("/paginas/:username", obtenerPaginasPublicasPorUsuario);
+
+// Endpoint para obtener una publicación específica por ID
+router.get("/:username/publicar/:publicacionId", async (req: any, res: any) => {
+  const { username, publicacionId } = req.params;
+
+  try {
+    // Obtener user_id del username
+    const [userRows]: any = await pool.query("SELECT id FROM users WHERE username = ?", [username]);
+    if (userRows.length === 0) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+    const userId = userRows[0].id;
+
+    // Obtener la publicación específica
+    const [rows]: any = await pool.query(
+      "SELECT id, titulo, contenido, created_at FROM publicaciones WHERE id = ? AND user_id = ?",
+      [publicacionId, userId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Publicación no encontrada" });
+    }
+
+    res.json({ publicacion: rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al obtener publicación" });
+  }
+});
+
+// Endpoint para publicar contenido en una página específica
+router.post("/:username/publicar/:numeroDePagina", authMiddleware, userRateLimit, async (req: any, res: any) => {
+  const { username } = req.params;
+  const { titulo, contenido } = req.body;
+  const userId = req.user.id;
+
+  try {
+    // Verificar que el usuario autenticado es el propietario
+    const { getService } = require('../utils/servicesConfig');
+    const userService = getService('UserService');
+    const user = await userService.getUserById(userId);
+    if (!user || user.username !== username) {
+      return res.status(403).json({ error: "No autorizado" });
+    }
+
+    // Crear la publicación en la tabla publicaciones
+    const [result] = await pool.query(
+      "INSERT INTO publicaciones (user_id, titulo, contenido) VALUES (?, ?, ?)",
+      [userId, titulo, contenido]
+    );
+
+    const publicacionId = (result as any).insertId;
+
+    // No crear entrada en el feed para publicaciones
+
+    res.json({ message: "Publicación creada", id: publicacionId });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al crear publicación" });
+  }
+});
 
 // Endpoint para obtener página por user_id (UUID sin guiones)
 import { obtenerPaginaPorUserId } from "../controllers/paginaController";
 router.get("/pagina/id/:user_id", obtenerPaginaPorUserId);
 // Endpoint para actualizar el nombre de usuario de la página
 router.post("/:id/usuario", authMiddleware, validateRequest(ValidationService.validateUpdateUsername), actualizarUsuarioPagina);
+// Rutas eliminadas: actualizarPropietario, actualizarDescripcion (funciones eliminadas)
 // Comentarios
 router.post("/:id/comentarios", authMiddleware, userRateLimit, validateRequest(ValidationService.validateCreateComment), guardarComentario);
 router.delete("/:id/comentarios/:commentId", authMiddleware, userRateLimit, eliminarComentario);
@@ -136,5 +229,8 @@ router.get("/comment-images/:id", async (req: any, res: any) => {
 
 // Endpoint para eliminar usuario y todo su rastro
 router.delete("/usuario/:id", authMiddleware, userRateLimit, eliminarUsuarioTotal);
+
+// Endpoint para guardar HTML de VvvebJs
+router.post("/guardar-html", authMiddleware, userRateLimit, guardarHtmlVvveb);
 
 export default router;

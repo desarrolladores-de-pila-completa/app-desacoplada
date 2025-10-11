@@ -24,6 +24,7 @@ export declare class FeedRepository implements IFeedRepository {
         updated: number;
     }>;
     cleanOrphaned(): Promise<number>;
+    updateLegacyLinks(): Promise<number>;
     findFollowing(userId: string, limit?: number, offset?: number): Promise<FeedEntry[]>;
     private enrichFeedWithImages;
 }

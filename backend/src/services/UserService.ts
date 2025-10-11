@@ -15,48 +15,64 @@ export class UserService {
    * Crear un nuevo usuario con página personal
    */
   async createUser(userData: UserCreateData): Promise<User> {
+    console.log('UserService.createUser called');
     const { email, password, username, file } = userData;
 
     // Verificar si el usuario ya existe
+    console.log('Checking existing user');
     const existingUser = await this.userRepository.findByEmail(email);
     if (existingUser) {
       throw new AppError(409, "email ya registrado");
     }
 
     // Verificar username único
+    console.log('Checking existing username');
     const existingUsername = await this.userRepository.findByUsername(username);
     if (existingUsername) {
       throw new AppError(409, "El username ya está en uso");
     }
 
     // Hash de contraseña
+    console.log('Hashing password');
     const hashedPassword = await bcrypt.hash(password, 10);
     const userId = randomUUID();
+    console.log('UserId generated:', userId);
 
     // Generar avatar
     let avatarBuffer: Buffer;
     if (file && file.buffer) {
       avatarBuffer = file.buffer;
     } else {
+      console.log('Generating avatar');
       avatarBuffer = await generarAvatarBuffer(username);
     }
+    console.log('Avatar generated');
 
     // Usar transacción para asegurar atomicidad
+    console.log('Getting connection');
     const conn = await pool.getConnection();
     try {
+      console.log('Beginning transaction');
       await conn.beginTransaction();
 
       // Insertar usuario
+      console.log('Inserting user');
       await conn.query(
-        "INSERT INTO users (id, email, password, username, foto_perfil) VALUES (?, ?, ?, ?, ?)",
-        [userId, email, hashedPassword, username, avatarBuffer]
+        "INSERT INTO users (id, email, password, username, display_name, foto_perfil) VALUES (?, ?, ?, ?, ?, ?)",
+        [userId, email, hashedPassword, username, username, avatarBuffer]
       );
+      console.log('User inserted');
 
       // Crear página personal
+      console.log('Creating user page');
       await this.createUserPage(userId, username, email, conn);
+      console.log('User page created');
 
+      console.log('Committing transaction');
       await conn.commit();
+      console.log('Transaction committed');
     } catch (err) {
+      console.log('Rolling back transaction');
       await conn.rollback();
       throw err;
     } finally {
@@ -64,10 +80,12 @@ export class UserService {
     }
 
     // Retornar usuario creado (sin contraseña)
+    console.log('Finding user by id');
     const user = await this.userRepository.findById(userId);
     if (!user) {
       throw new AppError(500, "Error al crear usuario");
     }
+    console.log('User found');
     return user;
   }
 
@@ -160,13 +178,10 @@ export class UserService {
    * Crear página personal para usuario nuevo
    */
   private async createUserPage(userId: string, username: string, email: string, conn?: any): Promise<void> {
-    const titulo = `Página de ${username}`;
-    const contenido = `¡Hola! Esta es la página de ${username}.`;
-
     const queryConn = conn || pool;
     await queryConn.query(
-      "INSERT INTO paginas (user_id, propietario, titulo, contenido, descripcion, usuario, comentarios) VALUES (?, 1, ?, ?, 'visible', ?, '')",
-      [userId, titulo, contenido, username]
+      "INSERT INTO paginas (user_id, usuario) VALUES (?, ?)",
+      [userId, username]
     );
   }
 

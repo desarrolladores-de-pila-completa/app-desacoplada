@@ -69,7 +69,7 @@ function FotoPerfil({ user, setUser, editable, authUserId, id }) {
   };
 
   return (
-    <div style={{ textAlign: "center", marginBottom: 24 }}>
+    <div style={{ textAlign: "left", marginBottom: 0 }}>
       {preview ? (
         <img
           src={preview}
@@ -82,7 +82,7 @@ function FotoPerfil({ user, setUser, editable, authUserId, id }) {
             border: editable ? "3px solid #1976d2" : "2px solid #ccc",
             boxShadow: editable ? "0 0 8px #1976d2" : undefined,
             display: "block",
-            margin: "0 auto 12px auto",
+            margin: "0 0 12px 0",
             cursor: editable ? "pointer" : "default",
             transition: "box-shadow 0.2s, border 0.2s"
           }}
@@ -106,7 +106,7 @@ function FotoPerfil({ user, setUser, editable, authUserId, id }) {
           justifyContent: "center",
           fontSize: 32,
           color: '#888',
-          margin: "0 auto 12px auto"
+          margin: "0 0 12px 0"
         }}>
           <span>👤</span>
         </div>

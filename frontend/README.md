@@ -1,16 +1,55 @@
-# React + Vite
+# Frontend Web - App Desacoplada
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aplicación web React construida con Vite para el proyecto app-desacoplada.
 
-Currently, two official plugins are available:
+## Características
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **React 19** con hooks modernos
+- **Vite** para desarrollo rápido y build optimizado
+- **React Router** para navegación SPA
+- **React Query (TanStack Query)** para gestión de estado del servidor
+- **Zustand** para estado global de autenticación
+- **ESLint** configurado para calidad de código
 
-## React Compiler
+## Funcionalidades
 
-The React Compiler is not enabled on this template. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Registro y login de usuarios
+- Creación y visualización de publicaciones
+- Sistema de páginas de usuario con imágenes y comentarios
+- Feed público
+- Navegación entre perfiles
+- Mensajes de feedback (Toast/Snackbar)
 
-## Expanding the ESLint configuration
+## Instalación
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+npm install
+```
+
+## Desarrollo
+
+```bash
+npm run dev
+```
+
+La aplicación estará disponible en `http://localhost:5173`
+
+## Build
+
+```bash
+npm run build
+```
+
+## Pruebas
+
+```bash
+npm run test
+```
+
+## Estructura del Proyecto
+
+- `src/components/` - Componentes React
+- `src/hooks/` - Hooks personalizados (useFeed, useUserPage, etc.)
+- `src/stores/` - Stores Zustand
+- `src/config/` - Configuración de API
+- `src/tests/` - Pruebas

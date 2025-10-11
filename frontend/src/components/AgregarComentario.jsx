@@ -14,12 +14,30 @@ function AgregarComentario({ paginaId }) {
   const [uploading, setUploading] = useState(false);
   const createCommentMutation = useCreateComment();
   const rootRef = useRef();
+  const winboxRef = useRef();
 
+  // Actualizar el formulario en el WinBox cuando cambie el estado
   useEffect(() => {
-    if (rootRef.current) {
+    if (rootRef.current && winboxRef.current) {
+      // Preservar el foco del textarea antes de re-renderizar
+      const activeElement = winboxRef.current.body.querySelector('textarea');
+      const selectionStart = activeElement?.selectionStart;
+      const selectionEnd = activeElement?.selectionEnd;
+      
       rootRef.current.render(<Formulario />);
+      
+      // Restaurar el foco y posición del cursor después de re-renderizar
+      if (activeElement && typeof selectionStart === 'number') {
+        setTimeout(() => {
+          const newTextarea = winboxRef.current.body.querySelector('textarea');
+          if (newTextarea) {
+            newTextarea.focus();
+            newTextarea.setSelectionRange(selectionStart, selectionEnd);
+          }
+        }, 0);
+      }
     }
-  }, [comentario]);
+  }, [comentario, uploading, createCommentMutation.isPending, createCommentMutation.isSuccess, createCommentMutation.isError]);
 
   // Función auxiliar para obtener CSRF token
   async function getCsrfToken() {
@@ -88,7 +106,7 @@ function AgregarComentario({ paginaId }) {
   };
 
   const Formulario = () => (
-    <div style={{ boxSizing: 'border-box', background: '#f7f7f7', borderRadius: 8, padding: 8 }}>
+    <div style={{ boxSizing: 'border-box', background: '#f7f7f7', borderRadius: 8, padding: 8, direction: 'ltr', unicodeBidi: 'normal' }}>
       <label>Agregar comentario:</label>
       <textarea
         value={comentario}
@@ -96,7 +114,8 @@ function AgregarComentario({ paginaId }) {
         placeholder="Escribe tu comentario"
         rows={6}
         autoFocus
-        style={{ width: '100%', padding: 8, boxSizing: 'border-box', resize: 'none' }}
+        dir="ltr"
+        style={{ width: '100%', padding: 8, boxSizing: 'border-box', resize: 'none', textAlign: 'left', unicodeBidi: 'normal' }}
       ></textarea>
       <input
         type="file"
@@ -134,11 +153,19 @@ function AgregarComentario({ paginaId }) {
         y: 'center',
         drag: false,
         keys: false,
+        dir: 'ltr',
         onclose: () => {
           rootRef.current = null;
+          winboxRef.current = null;
         },
       });
+      winboxRef.current = winbox;
       winbox.body.innerHTML = '';
+      winbox.body.style.direction = 'ltr';
+      winbox.body.dir = 'ltr';
+      const style = document.createElement('style');
+      style.textContent = '* { direction: ltr !important; }';
+      winbox.body.appendChild(style);
       const root = createRoot(winbox.body);
       rootRef.current = root;
       root.render(<Formulario />);

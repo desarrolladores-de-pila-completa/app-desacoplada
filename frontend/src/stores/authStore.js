@@ -6,6 +6,7 @@ const useAuthStore = create((set, get) => ({
   user: null,
   isAuthenticated: false,
   isLoading: false,
+  isCheckingAuth: true,
   error: null,
 
   // Acciones
@@ -112,18 +113,21 @@ const useAuthStore = create((set, get) => ({
         const user = await response.json();
         set({
           user,
-          isAuthenticated: true
+          isAuthenticated: true,
+          isCheckingAuth: false
         });
       } else {
         set({
           user: null,
-          isAuthenticated: false
+          isAuthenticated: false,
+          isCheckingAuth: false
         });
       }
     } catch (error) {
       set({
         user: null,
-        isAuthenticated: false
+        isAuthenticated: false,
+        isCheckingAuth: false
       });
     }
   },

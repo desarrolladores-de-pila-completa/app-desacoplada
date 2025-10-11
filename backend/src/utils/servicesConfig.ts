@@ -11,11 +11,13 @@ import {
   PageRepository,
   CommentRepository,
   FeedRepository,
+  PublicacionRepository,
   IUserRepository,
   IPageRepository,
   ICommentRepository,
   IFeedRepository
 } from '../repositories';
+import { PublicacionService } from '../services/PublicacionService';
 
 /**
  * Configuración de servicios para el container de DI
@@ -53,6 +55,11 @@ export function configureServices(): void {
   container.registerSingleton('FeedService', (c) => {
     const feedRepository = c.resolve<IFeedRepository>('IFeedRepository');
     return new FeedService(feedRepository);
+  });
+
+  container.registerSingleton('PublicacionService', (c) => {
+    const publicacionRepository = new PublicacionRepository();
+    return new PublicacionService(publicacionRepository);
   });
 
   // Servicios con dependencias

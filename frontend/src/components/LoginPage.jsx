@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import Navbar from "./Navbar";
 import useAuthStore from "../stores/authStore";
 
@@ -63,6 +63,7 @@ function LoginPage({ showOutput }) {
           {isLoading ? "Iniciando sesión..." : "Login"}
         </button>
       </form>
+      <p style={{ textAlign: 'center', marginTop: 16 }}>¿No estás registrado? <Link to="/registro">Regístrate</Link></p>
     </div>
     </>
   );

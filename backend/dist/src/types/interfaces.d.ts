@@ -15,6 +15,7 @@ export interface User {
     id: string;
     email: string;
     username: string;
+    display_name?: string;
     foto_perfil?: Buffer;
     creado_en: Date;
 }
@@ -28,17 +29,8 @@ export interface Pagina {
     id: number;
     user_id: string;
     propietario: boolean;
-    titulo: string;
-    contenido: string;
-    descripcion: string;
     usuario: string;
-    comentarios: string;
     oculto: boolean;
-    visible_titulo: boolean;
-    visible_contenido: boolean;
-    visible_descripcion: boolean;
-    visible_usuario: boolean;
-    visible_comentarios: boolean;
     creado_en: Date;
 }
 export interface PaginaCreateData {
@@ -127,17 +119,9 @@ export interface ValidationError {
     message: string;
 }
 export interface CreatePaginaData {
-    titulo: string;
-    contenido: string;
-    descripcion?: string;
     usuario: string;
-    comentarios?: string;
 }
 export interface UpdatePaginaData {
-    titulo?: string;
-    contenido?: string;
-    descripcion?: string;
-    comentarios?: string;
 }
 export interface PaginaWithImages extends Pagina {
     imagenes: ImagenData[];
@@ -187,8 +171,7 @@ export interface UserRegisteredEvent extends EventPayload {
 export interface PageCreatedEvent extends EventPayload {
     pageId: number;
     userId: string;
-    title: string;
-    content: string;
+    username: string;
 }
 export interface CommentCreatedEvent extends EventPayload {
     commentId: number;

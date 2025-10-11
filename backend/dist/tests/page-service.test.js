@@ -10,17 +10,8 @@ describe('PageService', () => {
         id: 1,
         user_id: 'user-123',
         propietario: true,
-        titulo: 'Test Page',
-        contenido: 'Test content',
-        descripcion: 'Test description',
         usuario: 'testuser',
-        comentarios: 'Test comments',
         oculto: false,
-        visible_titulo: true,
-        visible_contenido: true,
-        visible_descripcion: true,
-        visible_usuario: true,
-        visible_comentarios: true,
         creado_en: new Date()
     };
     const mockPageWithImages = {
@@ -184,27 +175,22 @@ describe('PageService', () => {
     });
     describe('createPage', () => {
         const createData = {
-            titulo: 'New Page',
-            contenido: 'New content',
-            descripcion: 'New description',
-            usuario: 'newuser',
-            comentarios: 'New comments'
+            usuario: 'newuser'
         };
         it('should create page successfully', async () => {
             // Arrange
             mockPageRepository.create.mockResolvedValue(1);
-            mockFeedRepository.createForPage.mockResolvedValue(1);
+            mockFeedRepository.createForUser.mockResolvedValue(1);
             mockEventBus.emit.mockResolvedValue();
             // Act
             const result = await pageService.createPage('user-123', createData);
             // Assert
             expect(mockPageRepository.create).toHaveBeenCalledWith('user-123', createData);
-            expect(mockFeedRepository.createForPage).toHaveBeenCalledWith('user-123', 1, createData.titulo, createData.contenido);
+            expect(mockFeedRepository.createForUser).toHaveBeenCalledWith('user-123', 'newuser');
             expect(mockEventBus.emit).toHaveBeenCalledWith('page.created', {
                 pageId: 1,
                 userId: 'user-123',
-                title: createData.titulo,
-                content: createData.contenido
+                username: 'newuser'
             });
             expect(result).toBe(1);
         });
@@ -234,17 +220,7 @@ describe('PageService', () => {
             expect(invalidateSpy).toHaveBeenCalledWith('page:byUsername:');
             invalidateSpy.mockRestore();
         });
-        it('should update feed when title or content changes', async () => {
-            // Arrange
-            const updateData = { titulo: 'Updated Title', contenido: 'Updated content' };
-            mockPageRepository.update.mockResolvedValue();
-            mockPageRepository.findById.mockResolvedValue(mockPage);
-            mockFeedRepository.updateForPage.mockResolvedValue();
-            // Act
-            await pageService.updatePage(1, updateData);
-            // Assert
-            expect(mockFeedRepository.updateForPage).toHaveBeenCalledWith(1, mockPage.titulo, mockPage.contenido);
-        });
+        // Test eliminado: las páginas ya no tienen contenido propio para actualizar en el feed
     });
     describe('deletePage', () => {
         it('should delete page and invalidate cache', async () => {
@@ -265,38 +241,32 @@ describe('PageService', () => {
         });
     });
     describe('addImageToPage', () => {
-        it('should add image to page and update feed', async () => {
+        it('should add image to page', async () => {
             // Arrange
             const imageBuffer = Buffer.from('fake-image');
             const cacheService = require('../src/services/CacheService').cacheService;
             const invalidateSpy = jest.spyOn(cacheService, 'invalidatePattern');
             mockPageRepository.addImage.mockResolvedValue(1);
-            mockPageRepository.findById.mockResolvedValue(mockPage);
-            mockFeedRepository.updateForPage.mockResolvedValue();
             // Act
             const result = await pageService.addImageToPage(1, imageBuffer, 'image/jpeg');
             // Assert
             expect(mockPageRepository.addImage).toHaveBeenCalledWith(1, imageBuffer, 'image/jpeg');
             expect(invalidateSpy).toHaveBeenCalledWith('page:withImages:1');
-            expect(mockFeedRepository.updateForPage).toHaveBeenCalledWith(1, mockPage.titulo, mockPage.contenido);
             expect(result).toBe(1);
             invalidateSpy.mockRestore();
         });
     });
     describe('removeImage', () => {
-        it('should remove image and update feed', async () => {
+        it('should remove image', async () => {
             // Arrange
             const cacheService = require('../src/services/CacheService').cacheService;
             const invalidateSpy = jest.spyOn(cacheService, 'invalidatePattern');
             mockPageRepository.removeImage.mockResolvedValue();
-            mockPageRepository.findById.mockResolvedValue(mockPage);
-            mockFeedRepository.updateForPage.mockResolvedValue();
             // Act
             await pageService.removeImage(1, 1);
             // Assert
             expect(mockPageRepository.removeImage).toHaveBeenCalledWith(1, 1);
             expect(invalidateSpy).toHaveBeenCalledWith('page:withImages:1');
-            expect(mockFeedRepository.updateForPage).toHaveBeenCalledWith(1, mockPage.titulo, mockPage.contenido);
             invalidateSpy.mockRestore();
         });
     });
