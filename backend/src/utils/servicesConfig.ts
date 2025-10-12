@@ -14,13 +14,16 @@ import {
   FeedRepository,
   ChatRepository,
   PublicacionRepository,
+  PrivateMessageRepository,
   IUserRepository,
   IPageRepository,
   ICommentRepository,
   IFeedRepository,
-  IChatRepository
+  IChatRepository,
+  IPrivateMessageRepository
 } from '../repositories';
 import { PublicacionService } from '../services/PublicacionService';
+import { PrivateMessageService } from '../services/PrivateMessageService';
 
 /**
  * Configuración de servicios para el container de DI
@@ -36,6 +39,7 @@ export function configureServices(): void {
   container.registerSingleton('ICommentRepository', () => new CommentRepository());
   container.registerSingleton('IFeedRepository', () => new FeedRepository());
   container.registerSingleton('IChatRepository', () => new ChatRepository());
+  container.registerSingleton('IPrivateMessageRepository', () => new PrivateMessageRepository());
 
   // Servicios con dependencias de repositorios
   container.registerSingleton('UserService', (c) => {
@@ -64,6 +68,11 @@ export function configureServices(): void {
   container.registerSingleton('ChatService', (c) => {
     const chatRepository = c.resolve<IChatRepository>('IChatRepository');
     return new ChatService(chatRepository);
+  });
+
+  container.registerSingleton('PrivateMessageService', (c) => {
+    const privateMessageRepository = c.resolve<IPrivateMessageRepository>('IPrivateMessageRepository');
+    return new PrivateMessageService(privateMessageRepository);
   });
 
   container.registerSingleton('PublicacionService', (c) => {

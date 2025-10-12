@@ -17,10 +17,38 @@ function Navbar({ onFeedClick }) {
   };
 
   return (
-    <nav style={{ position: "fixed", top: 0, left: 0, right: 0, width: "100%", display: "flex", gap: "24px", alignItems: "center", padding: "16px 24px", background: "#f0f0f0", borderBottom: "1px solid #ccc", zIndex: 1000 }}>
-      <Link to="/" id="nav-feed" onClick={onFeedClick}>Feed</Link>
+    <nav style={{ display: "flex", gap: "24px", alignItems: "center", padding: "16px 24px", background: "#f0f0f0", borderBottom: "1px solid #ccc" }}>
+      <Link
+        to="/"
+        id="nav-feed"
+        onClick={onFeedClick}
+        style={{
+          padding: '8px 16px',
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          color: '#fff',
+          textDecoration: 'none',
+          borderRadius: '8px',
+          fontWeight: 'bold',
+          fontSize: '1em',
+          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+          transition: 'all 0.3s ease',
+          border: '2px solid transparent'
+        }}
+        onMouseEnter={(e) => {
+          e.target.style.transform = 'translateY(-2px)';
+          e.target.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
+          e.target.style.borderColor = '#fff';
+        }}
+        onMouseLeave={(e) => {
+          e.target.style.transform = 'translateY(0)';
+          e.target.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+          e.target.style.borderColor = 'transparent';
+        }}
+      >
+        🏠 Feed
+      </Link>
 
-      {isAuthenticated && <Link to={`/${user?.username}/publicar`} style={{ padding: '8px 16px', background: '#1976d2', color: '#fff', borderRadius: 4, textDecoration: 'none', fontWeight: 'bold' }}>Publicación</Link>}
+      {isAuthenticated && <span style={{ padding: '8px 16px', background: '#1976d2', color: '#fff', borderRadius: 4, fontWeight: 'bold', opacity: 0.6, cursor: 'not-allowed' }} title="Función aún no disponible">Publicación</span>}
       {!isCheckingAuth && (
         <div style={{ position: 'relative' }}>
           {isAuthenticated ? (
