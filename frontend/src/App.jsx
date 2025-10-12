@@ -3,6 +3,7 @@ import "./App.css";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Feed from "./components/Feed";
+import Footer from "./components/Footer";
 import OutputMenu from "./components/OutputMenu";
 import RegisterPage from "./components/RegisterPage";
 import LoginPage from "./components/LoginPage";
@@ -44,6 +45,7 @@ function MainApp({ showOutput }) {
     <>
       <Navbar onFeedClick={goToFeed} />
       <Feed feed={feed} />
+      <Footer feed={feed} />
     </>
   );
 }
@@ -69,7 +71,7 @@ export default function App() {
     } else {
       setOutput({ message, type });
     }
-    setOutputMinimized(false);
+    setOutputMinimized(true);
   }, []);
 
   function toggleOutputMinimize() {

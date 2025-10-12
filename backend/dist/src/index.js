@@ -81,10 +81,12 @@ app.use(["/api/paginas", "/api/auth"], (req, res, next) => {
     next();
 });
 const feedRoutes_1 = __importDefault(require("./routes/feedRoutes"));
+const chatRoutes_1 = __importDefault(require("./routes/chatRoutes"));
 app.use("/api/auth", authRoutes_1.router);
 app.use("/api/paginas", paginaRoutes_1.default);
 app.use("/api/publicaciones", publicacionRoutes_1.default);
 app.use("/api/feed", feedRoutes_1.default);
+app.use("/api/chat", chatRoutes_1.default);
 // Endpoint para verificar esquema de tabla
 app.get('/test-db', async (req, res) => {
     try {

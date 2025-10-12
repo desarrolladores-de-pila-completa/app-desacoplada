@@ -7,6 +7,7 @@ const UserService_1 = require("../services/UserService");
 const PageService_1 = require("../services/PageService");
 const CommentService_1 = require("../services/CommentService");
 const FeedService_1 = require("../services/FeedService");
+const ChatService_1 = require("../services/ChatService");
 const AuthService_1 = require("../services/AuthService");
 const eventBus_1 = require("./eventBus");
 const repositories_1 = require("../repositories");
@@ -23,6 +24,7 @@ function configureServices() {
     diContainer_1.container.registerSingleton('IPageRepository', () => new repositories_1.PageRepository());
     diContainer_1.container.registerSingleton('ICommentRepository', () => new repositories_1.CommentRepository());
     diContainer_1.container.registerSingleton('IFeedRepository', () => new repositories_1.FeedRepository());
+    diContainer_1.container.registerSingleton('IChatRepository', () => new repositories_1.ChatRepository());
     // Servicios con dependencias de repositorios
     diContainer_1.container.registerSingleton('UserService', (c) => {
         const userRepository = c.resolve('IUserRepository');
@@ -42,6 +44,10 @@ function configureServices() {
     diContainer_1.container.registerSingleton('FeedService', (c) => {
         const feedRepository = c.resolve('IFeedRepository');
         return new FeedService_1.FeedService(feedRepository);
+    });
+    diContainer_1.container.registerSingleton('ChatService', (c) => {
+        const chatRepository = c.resolve('IChatRepository');
+        return new ChatService_1.ChatService(chatRepository);
     });
     diContainer_1.container.registerSingleton('PublicacionService', (c) => {
         const publicacionRepository = new repositories_1.PublicacionRepository();

@@ -3,6 +3,7 @@ import { UserService } from '../services/UserService';
 import { PageService } from '../services/PageService';
 import { CommentService } from '../services/CommentService';
 import { FeedService } from '../services/FeedService';
+import { ChatService } from '../services/ChatService';
 import { AuthService } from '../services/AuthService';
 import { eventBus } from './eventBus';
 import { IEventBus } from '../types/interfaces';
@@ -11,11 +12,13 @@ import {
   PageRepository,
   CommentRepository,
   FeedRepository,
+  ChatRepository,
   PublicacionRepository,
   IUserRepository,
   IPageRepository,
   ICommentRepository,
-  IFeedRepository
+  IFeedRepository,
+  IChatRepository
 } from '../repositories';
 import { PublicacionService } from '../services/PublicacionService';
 
@@ -32,6 +35,7 @@ export function configureServices(): void {
   container.registerSingleton('IPageRepository', () => new PageRepository());
   container.registerSingleton('ICommentRepository', () => new CommentRepository());
   container.registerSingleton('IFeedRepository', () => new FeedRepository());
+  container.registerSingleton('IChatRepository', () => new ChatRepository());
 
   // Servicios con dependencias de repositorios
   container.registerSingleton('UserService', (c) => {
@@ -55,6 +59,11 @@ export function configureServices(): void {
   container.registerSingleton('FeedService', (c) => {
     const feedRepository = c.resolve<IFeedRepository>('IFeedRepository');
     return new FeedService(feedRepository);
+  });
+
+  container.registerSingleton('ChatService', (c) => {
+    const chatRepository = c.resolve<IChatRepository>('IChatRepository');
+    return new ChatService(chatRepository);
   });
 
   container.registerSingleton('PublicacionService', (c) => {

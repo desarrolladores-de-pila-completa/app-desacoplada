@@ -15,9 +15,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.9.3",
-    "sanitize-html": "^2.17.0",
     "winbox": "^0.2.82",
-    "winston": "^3.8.2",
     "zustand": "^5.0.8"
   },
   "devDependencies": {
