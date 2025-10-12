@@ -89,10 +89,12 @@ app.use(["/api/paginas", "/api/auth"], (req, res, next) => {
 
 
 import feedRoutes from "./routes/feedRoutes";
+import chatRoutes from "./routes/chatRoutes";
 app.use("/api/auth", authRoutes);
 app.use("/api/paginas", paginaRoutes);
 app.use("/api/publicaciones", publicacionRoutes);
 app.use("/api/feed", feedRoutes);
+app.use("/api/chat", chatRoutes);
 
 // Endpoint para verificar esquema de tabla
 app.get('/test-db', async (req, res) => {

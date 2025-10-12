@@ -3,6 +3,7 @@ import { View, Text, FlatList, ActivityIndicator, StyleSheet, Image, Linking } f
 import { useNavigation } from '@react-navigation/native';
 import api from '../utils/api';
 import Toast from './Toast';
+import GlobalChat from './GlobalChat';
 
 const Feed = () => {
   const navigation = useNavigation();
@@ -92,12 +93,12 @@ const Feed = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Feed</Text>
       <FlatList
         data={posts}
         keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
         renderItem={renderFeedItem}
       />
+      <GlobalChat />
       {toast.visible && (
         <Toast
           visible={toast.visible}

@@ -275,6 +275,16 @@ async function initDatabase() {
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )`);
     logger.info('Tabla verificada/creada correctamente', { table: 'publicaciones', context: 'db' });
+
+    // Crear tabla 'global_chat' para mensajes de chat global
+    await pool.query(`CREATE TABLE IF NOT EXISTS global_chat (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id VARCHAR(36) NOT NULL,
+      message TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )`);
+    logger.info('Tabla verificada/creada correctamente', { table: 'global_chat', context: 'db' });
   } catch (err) {
     logger.error('Error al crear/verificar las tablas', { error: (err as Error).message, stack: (err as Error).stack, context: 'db' });
   }
