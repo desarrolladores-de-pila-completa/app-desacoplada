@@ -40,6 +40,9 @@ app.use((0, cors_1.default)({
 // WebSocket server
 const wss = new ws_1.default.Server({ port: 3001 });
 const clients = new Map();
+const rooms = new Map(); // sala -> Set de userIds
+// Crear sala global por defecto
+rooms.set('global', new Set());
 wss.on('connection', (ws, request) => {
     logger_1.default.info('Nuevo cliente WebSocket conectado', { context: 'websocket' });
     ws.on('message', async (message) => {
@@ -47,29 +50,87 @@ wss.on('connection', (ws, request) => {
             const data = JSON.parse(message.toString());
             if (data.type === 'register' && data.userId) {
                 clients.set(data.userId, ws);
-                logger_1.default.info(`Usuario registrado en WebSocket: ${data.userId}`, { context: 'websocket' });
+                // Agregar usuario a la sala global
+                rooms.get('global').add(data.userId);
+                logger_1.default.info(`Usuario registrado en WebSocket y unido a sala global: ${data.userId}`, { context: 'websocket' });
                 // Notificar a otros usuarios que este usuario está en línea
                 // Para usuarios registrados, obtener su display_name
+                // Para usuarios invitados, usar el nombre directamente
                 let displayName = data.userId;
-                if (data.userId && !data.userId.startsWith('guest-')) {
-                    try {
-                        const [userRows] = await db_1.pool.query("SELECT display_name FROM users WHERE id = ?", [data.userId]);
-                        if (userRows && userRows.length > 0 && userRows[0].display_name) {
-                            displayName = userRows[0].display_name;
+                // Notificar solo a usuarios en la sala global
+                const globalRoom = rooms.get('global');
+                globalRoom.forEach((userId) => {
+                    if (userId !== data.userId) {
+                        const client = clients.get(userId);
+                        if (client && client.readyState === ws_1.default.OPEN) {
+                            client.send(JSON.stringify({
+                                type: 'user_online',
+                                username: displayName
+                            }));
                         }
                     }
-                    catch (error) {
-                        logger_1.default.error('Error obteniendo display_name para notificación:', { error: error.message, context: 'websocket' });
-                    }
+                });
+            }
+            else if (data.type === 'private_message' && data.to && data.message) {
+                // Manejar mensaje privado
+                const targetClient = clients.get(data.to);
+                if (targetClient && targetClient.readyState === ws_1.default.OPEN) {
+                    targetClient.send(JSON.stringify({
+                        type: 'private_message',
+                        data: {
+                            id: Date.now(),
+                            sender_username: data.from,
+                            receiver_username: data.to,
+                            message: data.message,
+                            created_at: new Date().toISOString()
+                        }
+                    }));
+                    logger_1.default.info(`Mensaje privado enviado de ${data.from} a ${data.to}`, { context: 'websocket' });
                 }
-                clients.forEach((client, userId) => {
-                    if (userId !== data.userId && client.readyState === ws_1.default.OPEN) {
-                        client.send(JSON.stringify({
-                            type: 'user_online',
-                            username: displayName
-                        }));
+                else {
+                    logger_1.default.warn(`Cliente destino ${data.to} no encontrado o no conectado`, { context: 'websocket' });
+                }
+            }
+            else if (data.type === 'global_message' && data.message) {
+                // Manejar mensaje global
+                const globalRoom = rooms.get('global');
+                globalRoom.forEach((userId) => {
+                    if (userId !== data.from) {
+                        const client = clients.get(userId);
+                        if (client && client.readyState === ws_1.default.OPEN) {
+                            client.send(JSON.stringify({
+                                type: 'global_message',
+                                data: {
+                                    id: Date.now(),
+                                    username: data.from,
+                                    message: data.message,
+                                    created_at: new Date().toISOString()
+                                }
+                            }));
+                        }
                     }
                 });
+                logger_1.default.info(`Mensaje global enviado por ${data.from}`, { context: 'websocket' });
+            }
+            else if (data.type === 'private_message' && data.to && data.message) {
+                // Manejar mensaje privado
+                const targetClient = clients.get(data.to);
+                if (targetClient && targetClient.readyState === ws_1.default.OPEN) {
+                    targetClient.send(JSON.stringify({
+                        type: 'private_message',
+                        data: {
+                            id: Date.now(),
+                            sender_username: data.from,
+                            receiver_username: data.to,
+                            message: data.message,
+                            created_at: new Date().toISOString()
+                        }
+                    }));
+                    logger_1.default.info(`Mensaje privado enviado de ${data.from} a ${data.to}`, { context: 'websocket' });
+                }
+                else {
+                    logger_1.default.warn(`Cliente destino ${data.to} no encontrado o no conectado`, { context: 'websocket' });
+                }
             }
         }
         catch (error) {
@@ -88,22 +149,18 @@ wss.on('connection', (ws, request) => {
         }
         if (disconnectedUser) {
             logger_1.default.info(`Usuario desconectado de WebSocket: ${disconnectedUser}`, { context: 'websocket' });
+            // Remover usuario de todas las salas
+            rooms.forEach((roomUsers, roomName) => {
+                roomUsers.delete(disconnectedUser);
+            });
             // Notificar a otros usuarios que este usuario se desconectó
-            // Para usuarios registrados, obtener su display_name para la notificación
+            // Usar el nombre directamente
             let displayName = disconnectedUser;
-            if (disconnectedUser && !disconnectedUser.startsWith('guest-')) {
-                try {
-                    const [userRows] = await db_1.pool.query("SELECT display_name FROM users WHERE id = ?", [disconnectedUser]);
-                    if (userRows && userRows.length > 0 && userRows[0].display_name) {
-                        displayName = userRows[0].display_name;
-                    }
-                }
-                catch (error) {
-                    logger_1.default.error('Error obteniendo display_name para desconexión:', { error: error.message, context: 'websocket' });
-                }
-            }
-            clients.forEach((client) => {
-                if (client.readyState === ws_1.default.OPEN) {
+            // Notificar solo a usuarios en la sala global
+            const globalRoom = rooms.get('global');
+            globalRoom.forEach((userId) => {
+                const client = clients.get(userId);
+                if (client && client.readyState === ws_1.default.OPEN) {
                     client.send(JSON.stringify({
                         type: 'user_offline',
                         username: displayName
@@ -164,12 +221,14 @@ app.use(["/api/paginas", "/api/auth"], (req, res, next) => {
 const feedRoutes_1 = __importDefault(require("./routes/feedRoutes"));
 const chatRoutes_1 = __importDefault(require("./routes/chatRoutes"));
 const privateRoutes_1 = __importDefault(require("./routes/privateRoutes"));
+const guestRoutes_1 = __importDefault(require("./routes/guestRoutes"));
 app.use("/api/auth", authRoutes_1.router);
 app.use("/api/paginas", paginaRoutes_1.default);
 app.use("/api/publicaciones", publicacionRoutes_1.default);
 app.use("/api/feed", feedRoutes_1.default);
 app.use("/api/chat", chatRoutes_1.default);
 app.use("/api/private", privateRoutes_1.default);
+app.use("/api/guest", guestRoutes_1.default);
 // Endpoint para verificar esquema de tabla
 app.get('/test-db', async (req, res) => {
     try {

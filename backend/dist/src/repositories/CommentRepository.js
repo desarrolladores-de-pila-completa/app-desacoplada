@@ -37,13 +37,19 @@ class CommentRepository {
         await db_1.pool.query("UPDATE comentarios SET comentario = ? WHERE id = ? AND user_id = ?", [newComment, commentId, userId]);
     }
     async delete(commentId, userId) {
-        await db_1.pool.query("DELETE FROM comentarios WHERE id = ?", [commentId]);
+        // Primero eliminar las imágenes asociadas al comentario
+        await db_1.pool.query("DELETE FROM imagenes_comentarios WHERE comentario_id = ?", [commentId]);
+        // Luego eliminar el comentario
+        await db_1.pool.query("DELETE FROM comentarios WHERE id = ? AND user_id = ?", [commentId, userId]);
     }
     async countByPage(pageId) {
         const [rows] = await db_1.pool.query("SELECT COUNT(*) as count FROM comentarios WHERE pagina_id = ?", [pageId]);
         return rows[0]?.count || 0;
     }
     async deleteAllByPage(pageId) {
+        // Primero eliminar las imágenes asociadas a los comentarios de la página
+        await db_1.pool.query("DELETE FROM imagenes_comentarios WHERE comentario_id IN (SELECT id FROM comentarios WHERE pagina_id = ?)", [pageId]);
+        // Luego eliminar los comentarios
         await db_1.pool.query("DELETE FROM comentarios WHERE pagina_id = ?", [pageId]);
     }
     async isOwner(commentId, userId) {

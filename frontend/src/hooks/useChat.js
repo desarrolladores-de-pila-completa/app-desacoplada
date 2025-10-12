@@ -22,14 +22,27 @@ export function useGlobalChat(limit = 50, offset = 0) {
   });
 }
 
-export function usePrivateChat(userId, limit = 50, offset = 0) {
+export function usePrivateChat(userId, limit = 50, offset = 0, guestUser = null) {
   return useQuery({
     queryKey: ['privateChat', userId, limit, offset],
     queryFn: async () => {
-      const response = await fetch(`${API_BASE}/private/${userId}?limit=${limit}&offset=${offset}`, {
+      const fetchOptions = {
         credentials: 'include',
-      });
+      };
+
+      // Si es un usuario invitado, enviar su nombre en el header
+      if (guestUser && guestUser.username) {
+        fetchOptions.headers = {
+          'x-guest-username': guestUser.username
+        };
+      }
+
+      const response = await fetch(`${API_BASE}/private/${encodeURIComponent(userId)}?limit=${limit}&offset=${offset}`, fetchOptions);
       if (!response.ok) {
+        // Para usuarios autenticados que obtienen 401, devolver array vacío
+        if (response.status === 401) {
+          return [];
+        }
         throw new Error('Error al obtener mensajes privados');
       }
       return response.json();
@@ -39,12 +52,12 @@ export function usePrivateChat(userId, limit = 50, offset = 0) {
   });
 }
 
-export function useSendPrivateMessage(userId) {
+export function useSendPrivateMessage(userId, guestUser = null, authUser = null) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (message) => {
-      const response = await fetch(`${API_BASE}/private/${userId}`, {
+      const response = await fetch(`${API_BASE}/private/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -52,8 +65,7 @@ export function useSendPrivateMessage(userId) {
         credentials: 'include',
         body: JSON.stringify({
           message,
-          senderId: `guest-${Date.now()}`, // ID único para invitados
-          senderUsername: 'Invitado' // Nombre genérico para invitados
+          senderUsername: guestUser ? guestUser.username : (authUser ? authUser.username : null) // Usar nombre del usuario si existe
         }),
       });
       if (!response.ok) {
@@ -70,6 +82,7 @@ export function useSendPrivateMessage(userId) {
     enabled: !!userId,
   });
 }
+
 
 export function useSendMessage() {
   const queryClient = useQueryClient();

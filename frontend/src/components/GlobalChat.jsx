@@ -8,7 +8,7 @@
   // Función para conectar a WebSocket
   const connectWebSocket = (userId, onMessage) => {
     const ws = new WebSocket('ws://localhost:3001');
-  
+
     ws.onopen = () => {
       console.log('WebSocket conectado');
       // Registrar usuario en el servidor WebSocket
@@ -17,7 +17,7 @@
         userId: userId
       }));
     };
-  
+
     ws.onmessage = (event) => {
       try {
         const message = JSON.parse(event.data);
@@ -26,17 +26,17 @@
         console.error('Error procesando mensaje WebSocket:', error);
       }
     };
-  
+
     ws.onclose = () => {
       console.log('WebSocket desconectado');
       // Reconectar después de 5 segundos
       setTimeout(() => connectWebSocket(userId, onMessage), 5000);
     };
-  
+
     ws.onerror = (error) => {
       console.error('Error WebSocket:', error);
     };
-  
+
     return ws;
   };
 
@@ -52,25 +52,73 @@ function GlobalChat() {
   const [ws, setWs] = useState(null); // WebSocket connection
   const [onlineUsers, setOnlineUsers] = useState(new Set()); // Usuarios conectados al feed
   const [guestUser, setGuestUser] = useState(null); // Usuario invitado (automático para chat público)
+  const [guestNameInput, setGuestNameInput] = useState(""); // Input para nombre de invitado
+  const [localPrivateMessages, setLocalPrivateMessages] = useState([]); // Estado local para mensajes privados
+  const [localGlobalMessages, setLocalGlobalMessages] = useState([]); // Estado local para mensajes globales
   const chatContainerRef = useRef(null); // Referencia al contenedor del chat
+
+  // Función para hacer scroll al final del chat
+  const scrollToBottom = () => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  };
 
   const { data: messages, isLoading, error } = useGlobalChat(50, 0);
   const sendMessageMutation = useSendMessage();
 
-  // Usuarios conectados al feed (solo usuarios registrados, excluyendo al usuario actual)
+  // Usuarios conectados al feed (filtrados según el tipo de usuario actual)
   const feedOnlineUsers = Array.from(onlineUsers).filter(user => {
     const currentUsername = authUser?.username || guestUser?.username;
+    // Mostrar todos los usuarios conectados excepto el usuario actual
     return user !== currentUsername;
   });
 
-  const { data: privateMessages, isLoading: privateLoading, error: privateError } = usePrivateChat(privateUserId && isPrivateChat ? privateUserId : null, 50, 0);
-  const sendPrivateMessageMutation = useSendPrivateMessage(privateUserId && isPrivateChat ? privateUserId : null);
+  const { data: privateMessages, isLoading: privateLoading, error: privateError, refetch: refetchPrivateMessages } = usePrivateChat(privateUserId && isPrivateChat ? privateUserId : null, 50, 0, guestUser);
+  const sendPrivateMessageMutation = useSendPrivateMessage(privateUserId && isPrivateChat ? privateUserId : null, guestUser, authUser);
 
-  // Efecto para conectar WebSocket cuando el usuario está autenticado
+
+  // Efecto para hacer scroll al final cuando se cargan mensajes
   useEffect(() => {
-    if (authUser && !ws) {
-      const userId = authUser.id;
-      const websocket = connectWebSocket(userId, (message) => {
+    if (messages && messages.length > 0) {
+      setTimeout(() => {
+        if (chatContainerRef.current) {
+          chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        }
+      }, 100);
+    }
+  }, [messages]);
+
+  // Efecto para hacer scroll al final cuando se cargan mensajes privados
+  useEffect(() => {
+    if (privateMessages && privateMessages.length > 0) {
+      setTimeout(() => scrollToBottom(), 100);
+    }
+  }, [privateMessages]);
+
+  // Efecto adicional para asegurar scroll al final después de renderizar
+  useEffect(() => {
+    const timer = setTimeout(() => scrollToBottom(), 200);
+    return () => clearTimeout(timer);
+  }, [isPrivateChat, messages, privateMessages]);
+
+
+  // Función para manejar el envío del nombre de usuario
+  const handleGuestNameSubmit = async (e) => {
+    e.preventDefault();
+    if (!guestNameInput.trim()) return;
+
+    try {
+      // Sanitizar el nombre: reemplazar espacios con guiones
+      const sanitizedName = guestNameInput.trim().replace(/\s+/g, '-');
+
+      // Configurar el usuario con el nombre elegido (sin guardar en BD)
+      console.log('Usuario configurado:', { username: sanitizedName });
+      setGuestUser({ username: sanitizedName });
+      setGuestNameInput("");
+
+      // Registrar usuario en WebSocket con el nombre elegido
+      const websocket = connectWebSocket(sanitizedName, (message) => {
         if (message.type === 'private_message') {
           const privateMessage = message.data;
           console.log('Mensaje privado recibido via WebSocket:', privateMessage);
@@ -96,9 +144,16 @@ function GlobalChat() {
             // Marcar como notificado
             setNotifiedMessages(prev => new Set([...prev, messageKey]));
 
-            // Hacer scroll al final cuando llega un nuevo mensaje
-            setTimeout(() => scrollToBottom(), 100);
+            // Agregar mensaje recibido a la lista local
+            setLocalPrivateMessages(prev => [...prev, privateMessage]);
+
+            scrollToBottom();
           }
+        } else if (message.type === 'global_message') {
+          // Nuevo mensaje global recibido
+          console.log('Mensaje global recibido:', message.data);
+          // Agregar mensaje recibido a la lista local
+          setLocalGlobalMessages(prev => [...prev, message.data]);
         } else if (message.type === 'user_online') {
           // Actualizar lista de usuarios conectados al feed
           console.log('Usuario conectado:', message.username);
@@ -113,147 +168,110 @@ function GlobalChat() {
           });
         }
       });
-
       setWs(websocket);
-
-      return () => {
-        if (websocket) {
-          websocket.close();
-        }
-      };
+    } catch (error) {
+      console.error('Error registrando usuario:', error);
     }
-  }, [authUser, ws, isPrivateChat, notifiedMessages]);
+  };
 
-  // Efecto para hacer scroll al final cuando se cargan mensajes
-  useEffect(() => {
-    if (messages && messages.length > 0) {
-      setTimeout(() => scrollToBottom(), 100);
-    }
-  }, [messages]);
+  // Si no hay usuario configurado, mostrar el prompt dentro del div del chat
+  if (!guestUser) {
+    return (
+      <React.Fragment>
+        <div id="salas" style={{ border: '1px solid rgb(221, 221, 221)', overflow: 'auto', paddingBottom: '10px', marginBottom: '10px', marginTop: '10px' }}>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <span style={{ fontWeight: 'bold' }}>Salas:</span>
+            <button
+              style={{
+                padding: '4px 8px',
+                background: '#007bff',
+                color: 'white',
+                border: 'none',
+                borderRadius: 4,
+                cursor: 'pointer'
+              }}
+            >
+              Sala Global
+            </button>
+          </div>
+        </div>
 
-  // Efecto para hacer scroll al final cuando se cargan mensajes privados
-  useEffect(() => {
-    if (privateMessages && privateMessages.length > 0) {
-      setTimeout(() => scrollToBottom(), 100);
-    }
-  }, [privateMessages]);
+        <div style={{ display: 'flex', marginBottom: '10px' }}>
+          <div id="chat" style={{ minHeight: 400, maxHeight: 800, overflow: 'hidden', border: '1px solid rgb(221, 221, 221)', position: 'relative', zIndex: 1, flex: 1 }}>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+              height: '100%',
+              padding: '20px'
+            }}>
+              <h3 style={{ marginTop: 0, marginBottom: '20px' }}>
+                {isAuthenticated ? 'Ingresa tu nombre de usuario para chatear' : 'Ingresa tu nombre para chatear'}
+              </h3>
+              <form onSubmit={handleGuestNameSubmit} style={{ width: '100%', maxWidth: '400px' }}>
+                <input
+                  type="text"
+                  value={guestNameInput || ""}
+                  onChange={(e) => setGuestNameInput(e.target.value)}
+                  placeholder="Tu nombre..."
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    marginBottom: '10px',
+                    boxSizing: 'border-box',
+                    fontSize: '16px'
+                  }}
+                  autoFocus
+                />
+                <button
+                  type="submit"
+                  disabled={!guestNameInput.trim()}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    backgroundColor: '#007bff',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '16px'
+                  }}
+                >
+                  Entrar al chat
+                </button>
+              </form>
+            </div>
+          </div>
 
-  // Efecto adicional para asegurar scroll al final después de renderizar
-  useEffect(() => {
-    const timer = setTimeout(() => scrollToBottom(), 200);
-    return () => clearTimeout(timer);
-  }, [isPrivateChat, messages, privateMessages]);
+          <div id="usuarios-registrados" style={{ border: '1px solid rgb(221, 221, 221)', maxWidth: 300, minWidth: 200, maxHeight: 800, overflow: 'auto', padding: 10 }}>
+            <h5>Usuarios en línea:</h5>
+            <div>Ninguno</div>
+          </div>
+        </div>
 
-  // Chat público - asignar usuario invitado automáticamente si no está autenticado
-  useEffect(() => {
-    if (!isAuthenticated && !guestUser) {
-      const guestId = `Invitado-${crypto.randomUUID().slice(0, 8)}`;
-      setGuestUser({ username: guestId, id: guestId });
-      // Registrar usuario invitado en WebSocket
-      const websocket = connectWebSocket(guestId, (message) => {
-        if (message.type === 'private_message') {
-          const privateMessage = message.data;
-          console.log('Mensaje privado recibido via WebSocket (invitado):', privateMessage);
+        <div id="enviar" style={{ border: '1px solid #ddd', marginBottom: '10px', position: 'relative', zIndex: 2 }}>
+          <form style={{ display: 'flex', gap: 8 }}>
+            <input
+              type="text"
+              placeholder="Escribe un mensaje..."
+              style={{ flex: 1, padding: 8, border: '1px solid #ddd', borderRadius: 4, position: 'relative', zIndex: 3 }}
+              disabled
+            />
+            <button
+              style={{ padding: '8px 16px', background: '#007bff', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', position: 'relative', zIndex: 3 }}
+              disabled
+            >
+              Enviar
+            </button>
+          </form>
+        </div>
+      </React.Fragment>
+    );
+  }
 
-          // Verificar si ya notificamos este mensaje
-          const messageKey = `${privateMessage.sender_username}-${privateMessage.id}`;
-          if (!notifiedMessages.has(messageKey)) {
-            // Agregar sala privada si no existe
-            setActiveRooms(prev => {
-              const privateRoom = `private-${privateMessage.sender_username}`;
-              if (!prev.includes(privateRoom)) {
-                console.log(`Nueva sala privada abierta con ${privateMessage.sender_username} (invitado)`);
-                // Si no estamos en una sala privada, abrir esta nueva
-                if (!isPrivateChat) {
-                  setPrivateUserId(privateMessage.sender_username);
-                  setIsPrivateChat(true);
-                }
-                return [...prev, privateRoom];
-              }
-              return prev;
-            });
-
-            // Marcar como notificado
-            setNotifiedMessages(prev => new Set([...prev, messageKey]));
-
-            // Hacer scroll al final cuando llega un nuevo mensaje
-            setTimeout(() => scrollToBottom(), 100);
-          }
-        } else if (message.type === 'user_online') {
-          // Actualizar lista de usuarios conectados al feed
-          console.log('Usuario conectado (invitado):', message.username);
-          setOnlineUsers(prev => new Set([...prev, message.username]));
-        } else if (message.type === 'user_offline') {
-          // Remover usuario de la lista de conectados
-          console.log('Usuario desconectado (invitado):', message.username);
-          setOnlineUsers(prev => {
-            const newSet = new Set(prev);
-            newSet.delete(message.username);
-            return newSet;
-          });
-        }
-      });
-      setWs(websocket);
-    }
-  }, [isAuthenticated, guestUser]);
-
-  // Efecto de respaldo para verificar mensajes privados no leídos periódicamente (por si WebSocket falla)
-  useEffect(() => {
-    const checkUnreadPrivateMessages = async () => {
-      if (!authUser && !guestUser) return;
-
-      try {
-        // Verificar cada usuario en línea si hay mensajes privados no leídos
-        for (const user of onlineUsers) {
-          if (user !== authUser?.username && user !== guestUser?.username) {
-            const response = await fetch(`${API_BASE}/private/${user}?limit=1&offset=0`, {
-              credentials: 'include',
-            });
-
-            if (response.ok) {
-              const messages = await response.json();
-              if (messages && messages.length > 0) {
-                // Verificar si el último mensaje es para el usuario actual
-                const lastMessage = messages[0];
-                if (lastMessage.receiver_username === authUser?.username || lastMessage.receiver_username === guestUser?.username) {
-                  // Verificar si ya notificamos este mensaje
-                  const messageKey = `${lastMessage.sender_username}-${lastMessage.id}`;
-                  if (!notifiedMessages.has(messageKey)) {
-                    // Agregar sala privada si no existe
-                    setActiveRooms(prev => {
-                      const privateRoom = `private-${lastMessage.sender_username}`;
-                      if (!prev.includes(privateRoom)) {
-                        console.log(`Nuevo mensaje privado de ${lastMessage.sender_username} (fallback)`);
-                        // Si no estamos en una sala privada, abrir esta nueva
-                        if (!isPrivateChat) {
-                          setPrivateUserId(lastMessage.sender_username);
-                          setIsPrivateChat(true);
-                        }
-                        return [...prev, privateRoom];
-                      }
-                      return prev;
-                    });
-
-                    // Marcar como notificado
-                    setNotifiedMessages(prev => new Set([...prev, messageKey]));
-                  }
-                }
-              }
-            } else if (response.status === 401) {
-              // Si no está autenticado, no intentar verificar mensajes privados
-              console.log('Usuario no autenticado para verificar mensajes privados');
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Error checking unread messages (fallback):', error);
-      }
-    };
-
-    // Verificar cada 30 segundos como respaldo (menos frecuente que antes)
-    const interval = setInterval(checkUnreadPrivateMessages, 30000);
-    return () => clearInterval(interval);
-  }, [authUser, guestUser, onlineUsers, isPrivateChat, notifiedMessages]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -261,11 +279,35 @@ function GlobalChat() {
     if (!message.trim()) return;
 
     try {
-      const messageData = guestUser ? { message: message.trim(), guestUsername: guestUser.username } : { message: message.trim() };
-      await sendMessageMutation.mutateAsync(messageData);
-      setMessage("");
-      // Hacer scroll al final después de enviar mensaje
-      setTimeout(() => scrollToBottom(), 100);
+      // Enviar mensaje global via WebSocket
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+          type: 'global_message',
+          from: guestUser?.username || authUser?.username,
+          message: message.trim()
+        }));
+        setMessage("");
+
+        // Agregar el mensaje a la lista local para mostrarlo inmediatamente
+        const newMessage = {
+          id: Date.now(),
+          username: guestUser?.username || authUser?.username,
+          message: message.trim(),
+          created_at: new Date().toISOString()
+        };
+
+        // Agregar mensaje a la lista local
+        setLocalGlobalMessages(prev => [...prev, newMessage]);
+
+        scrollToBottom();
+      } else {
+        // Fallback a la API REST si WebSocket no está disponible
+        const messageData = guestUser ? { message: message.trim(), guestUsername: guestUser.username } : { message: message.trim() };
+        await sendMessageMutation.mutateAsync(messageData);
+        setMessage("");
+        // Hacer scroll al final después de enviar mensaje
+        setTimeout(() => scrollToBottom(), 100);
+      }
     } catch (error) {
       console.error('Error sending message:', error);
     }
@@ -277,16 +319,53 @@ function GlobalChat() {
     if (!privateMessage.trim()) return;
 
     try {
-      await sendPrivateMessageMutation.mutateAsync(privateMessage.trim());
-      setPrivateMessage("");
-      // Hacer scroll al final después de enviar mensaje privado
-      setTimeout(() => scrollToBottom(), 100);
+      // Enviar mensaje privado via WebSocket
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+          type: 'private_message',
+          from: guestUser?.username || authUser?.username,
+          to: privateUserId,
+          message: privateMessage.trim()
+        }));
+        setPrivateMessage("");
+
+        // Agregar el mensaje a la lista local para mostrarlo inmediatamente
+        const newMessage = {
+          id: Date.now(),
+          sender_username: guestUser?.username || authUser?.username,
+          receiver_username: privateUserId,
+          message: privateMessage.trim(),
+          created_at: new Date().toISOString()
+        };
+
+        // Agregar mensaje a la lista local
+        setLocalPrivateMessages(prev => [...prev, newMessage]);
+
+        scrollToBottom();
+      } else {
+        // Fallback a la API REST si WebSocket no está disponible
+        await sendPrivateMessageMutation.mutateAsync(privateMessage.trim());
+        setPrivateMessage("");
+        // Refrescar mensajes privados después de enviar
+        setTimeout(() => {
+          if (refetchPrivateMessages) {
+            refetchPrivateMessages();
+          }
+          scrollToBottom();
+        }, 100);
+      }
     } catch (error) {
       console.error('Error sending private message:', error);
     }
   };
 
   const handleUserClick = (user) => {
+    // No permitir chatear consigo mismo
+    const currentUsername = authUser?.username || guestUser?.username;
+    if (user === currentUsername) {
+      return; // No hacer nada si hace clic en sí mismo
+    }
+
     setPrivateUserId(user);
     setIsPrivateChat(true);
     // Agregar la sala privada si no existe
@@ -299,12 +378,7 @@ function GlobalChat() {
     });
   };
 
-  // Funciones de invitado ya no necesarias para chat público
 
-  const handleBackToGlobal = () => {
-    setIsPrivateChat(false);
-    setPrivateMessage("");
-  };
 
   const switchToRoom = (roomType, userId = null) => {
     if (roomType === 'global') {
@@ -318,13 +392,6 @@ function GlobalChat() {
     setTimeout(() => scrollToBottom(), 100);
   };
 
-  // Función para hacer scroll al final del chat
-  const scrollToBottom = () => {
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-      console.log('Scroll to bottom executed, scrollTop:', chatContainerRef.current.scrollTop, 'scrollHeight:', chatContainerRef.current.scrollHeight);
-    }
-  };
 
   const closePrivateRoom = (userId) => {
     console.log(`Cerrando chat privado con ${userId}`);
@@ -345,7 +412,8 @@ function GlobalChat() {
     });
   };
 
-  // Chat público - no requiere autenticación
+
+
 
   return (
     <React.Fragment>
@@ -420,7 +488,7 @@ function GlobalChat() {
   </div>
 
   <div style={{ display: 'flex', marginBottom: '10px' }}>
-    <div id="chat" style={{ minHeight: 400, overflow: 'hidden', border: '1px solid rgb(221, 221, 221)', position: 'relative', zIndex: 1 }}>
+    <div id="chat" style={{ minHeight: 400, maxHeight: 800, overflow: 'hidden', border: '1px solid rgb(221, 221, 221)', position: 'relative', zIndex: 1 }}>
        <div ref={chatContainerRef} style={{ overflowY: 'auto', height: '100%', minWidth: 800, position: 'relative' }}>
           {isPrivateChat ? (
             <>
@@ -433,17 +501,19 @@ function GlobalChat() {
                 </div>
               )}
 
-              {privateMessages && privateMessages.map((msg) => (
-                <div key={msg.id} id={msg.id}>
-                  <div>
-                    <strong>{msg.sender_username}</strong> → <strong>{msg.receiver_username}</strong>
+              {[...(privateMessages || []), ...localPrivateMessages].map((msg) => {
+                return (
+                  <div key={msg.id} id={msg.id}>
+                    <div>
+                      <strong>{msg.sender_username || msg.sender_id}</strong> → <strong>{msg.receiver_username || msg.receiver_id}</strong>
+                    </div>
+                    <div style={{ wordWrap: 'break-word', maxWidth: '100%' }}>{msg.message}</div>
+                    <div>
+                      {new Date(msg.created_at).toLocaleString()}
+                    </div>
                   </div>
-                  <div style={{ wordWrap: 'break-word', maxWidth: '100%' }}>{msg.message}</div>
-                  <div>
-                    {new Date(msg.created_at).toLocaleString()}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </>
           ) : (
             <>
@@ -456,7 +526,7 @@ function GlobalChat() {
                 </div>
               )}
 
-              {messages && messages.slice().reverse().map((msg) => (
+              {[...(messages || []), ...localGlobalMessages].map((msg) => (
                 <div key={msg.id} id={msg.id}>
                   <div>
                     <strong>{msg.username || msg.display_name || guestUser?.username}</strong>
@@ -486,7 +556,7 @@ function GlobalChat() {
         )}
       </div>
 
-        <div id="usuarios-registrados" style={{ border: '1px solid rgb(221, 221, 221)', maxWidth: 300, maxHeight: 800, overflow: 'auto', padding: 10 }}>
+        <div id="usuarios-registrados" style={{ border: '1px solid rgb(221, 221, 221)', maxWidth: 300, minWidth: 200, maxHeight: 800, overflow: 'auto', padding: 10 }}>
           <h5>Usuarios en línea:</h5>
           {feedOnlineUsers.length === 0 ? (
             <div>Ninguno</div>

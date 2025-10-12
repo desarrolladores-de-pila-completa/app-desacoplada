@@ -1,9 +1,7 @@
 import { Router } from "express";
 import { authMiddleware } from "../middlewares/auth";
-import { ValidationService, validateRequest } from '../services/ValidationService';
 import { userRateLimit } from '../middlewares/rateLimit';
 import {
-  crearPublicacion,
   obtenerPublicacion,
   obtenerPublicacionesPorUsuario,
   obtenerTodasLasPublicaciones

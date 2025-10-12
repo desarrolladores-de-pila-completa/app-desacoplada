@@ -65,7 +65,10 @@ export class CommentRepository implements ICommentRepository {
   }
 
   async delete(commentId: number, userId: string): Promise<void> {
-    await pool.query("DELETE FROM comentarios WHERE id = ?", [commentId]);
+    // Primero eliminar las imágenes asociadas al comentario
+    await pool.query("DELETE FROM imagenes_comentarios WHERE comentario_id = ?", [commentId]);
+    // Luego eliminar el comentario
+    await pool.query("DELETE FROM comentarios WHERE id = ? AND user_id = ?", [commentId, userId]);
   }
 
   async countByPage(pageId: number): Promise<number> {
@@ -78,6 +81,9 @@ export class CommentRepository implements ICommentRepository {
   }
 
   async deleteAllByPage(pageId: number): Promise<void> {
+    // Primero eliminar las imágenes asociadas a los comentarios de la página
+    await pool.query("DELETE FROM imagenes_comentarios WHERE comentario_id IN (SELECT id FROM comentarios WHERE pagina_id = ?)", [pageId]);
+    // Luego eliminar los comentarios
     await pool.query("DELETE FROM comentarios WHERE pagina_id = ?", [pageId]);
   }
 

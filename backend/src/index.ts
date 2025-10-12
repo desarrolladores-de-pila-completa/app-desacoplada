@@ -42,6 +42,10 @@ app.use(
 // WebSocket server
 const wss = new WebSocket.Server({ port: 3001 });
 const clients = new Map<string, WebSocket>();
+const rooms = new Map<string, Set<string>>(); // sala -> Set de userIds
+
+// Crear sala global por defecto
+rooms.set('global', new Set());
 
 wss.on('connection', (ws: WebSocket, request: IncomingMessage) => {
   logger.info('Nuevo cliente WebSocket conectado', { context: 'websocket' });
@@ -51,30 +55,86 @@ wss.on('connection', (ws: WebSocket, request: IncomingMessage) => {
       const data = JSON.parse(message.toString());
       if (data.type === 'register' && data.userId) {
         clients.set(data.userId, ws);
-        logger.info(`Usuario registrado en WebSocket: ${data.userId}`, { context: 'websocket' });
+
+        // Agregar usuario a la sala global
+        rooms.get('global')!.add(data.userId);
+
+        logger.info(`Usuario registrado en WebSocket y unido a sala global: ${data.userId}`, { context: 'websocket' });
 
         // Notificar a otros usuarios que este usuario está en línea
         // Para usuarios registrados, obtener su display_name
+        // Para usuarios invitados, usar el nombre directamente
         let displayName = data.userId;
-        if (data.userId && !data.userId.startsWith('guest-')) {
-          try {
-            const [userRows]: any = await pool.query("SELECT display_name FROM users WHERE id = ?", [data.userId]);
-            if (userRows && userRows.length > 0 && userRows[0].display_name) {
-              displayName = userRows[0].display_name;
-            }
-          } catch (error) {
-            logger.error('Error obteniendo display_name para notificación:', { error: (error as Error).message, context: 'websocket' });
-          }
-        }
 
-        clients.forEach((client, userId) => {
-          if (userId !== data.userId && client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify({
-              type: 'user_online',
-              username: displayName
-            }));
+        // Notificar solo a usuarios en la sala global
+        const globalRoom = rooms.get('global')!;
+        globalRoom.forEach((userId) => {
+          if (userId !== data.userId) {
+            const client = clients.get(userId);
+            if (client && client.readyState === WebSocket.OPEN) {
+              client.send(JSON.stringify({
+                type: 'user_online',
+                username: displayName
+              }));
+            }
           }
         });
+      } else if (data.type === 'private_message' && data.to && data.message) {
+        // Manejar mensaje privado
+        const targetClient = clients.get(data.to);
+        if (targetClient && targetClient.readyState === WebSocket.OPEN) {
+          targetClient.send(JSON.stringify({
+            type: 'private_message',
+            data: {
+              id: Date.now(),
+              sender_username: data.from,
+              receiver_username: data.to,
+              message: data.message,
+              created_at: new Date().toISOString()
+            }
+          }));
+          logger.info(`Mensaje privado enviado de ${data.from} a ${data.to}`, { context: 'websocket' });
+        } else {
+          logger.warn(`Cliente destino ${data.to} no encontrado o no conectado`, { context: 'websocket' });
+        }
+      } else if (data.type === 'global_message' && data.message) {
+        // Manejar mensaje global
+        const globalRoom = rooms.get('global')!;
+        globalRoom.forEach((userId) => {
+          if (userId !== data.from) {
+            const client = clients.get(userId);
+            if (client && client.readyState === WebSocket.OPEN) {
+              client.send(JSON.stringify({
+                type: 'global_message',
+                data: {
+                  id: Date.now(),
+                  username: data.from,
+                  message: data.message,
+                  created_at: new Date().toISOString()
+                }
+              }));
+            }
+          }
+        });
+        logger.info(`Mensaje global enviado por ${data.from}`, { context: 'websocket' });
+      } else if (data.type === 'private_message' && data.to && data.message) {
+        // Manejar mensaje privado
+        const targetClient = clients.get(data.to);
+        if (targetClient && targetClient.readyState === WebSocket.OPEN) {
+          targetClient.send(JSON.stringify({
+            type: 'private_message',
+            data: {
+              id: Date.now(),
+              sender_username: data.from,
+              receiver_username: data.to,
+              message: data.message,
+              created_at: new Date().toISOString()
+            }
+          }));
+          logger.info(`Mensaje privado enviado de ${data.from} a ${data.to}`, { context: 'websocket' });
+        } else {
+          logger.warn(`Cliente destino ${data.to} no encontrado o no conectado`, { context: 'websocket' });
+        }
       }
     } catch (error) {
       logger.error('Error procesando mensaje WebSocket:', { error: (error as Error).message, context: 'websocket' });
@@ -95,22 +155,20 @@ wss.on('connection', (ws: WebSocket, request: IncomingMessage) => {
     if (disconnectedUser) {
       logger.info(`Usuario desconectado de WebSocket: ${disconnectedUser}`, { context: 'websocket' });
 
-      // Notificar a otros usuarios que este usuario se desconectó
-      // Para usuarios registrados, obtener su display_name para la notificación
-      let displayName = disconnectedUser;
-      if (disconnectedUser && !disconnectedUser.startsWith('guest-')) {
-        try {
-          const [userRows]: any = await pool.query("SELECT display_name FROM users WHERE id = ?", [disconnectedUser]);
-          if (userRows && userRows.length > 0 && userRows[0].display_name) {
-            displayName = userRows[0].display_name;
-          }
-        } catch (error) {
-          logger.error('Error obteniendo display_name para desconexión:', { error: (error as Error).message, context: 'websocket' });
-        }
-      }
+      // Remover usuario de todas las salas
+      rooms.forEach((roomUsers, roomName) => {
+        roomUsers.delete(disconnectedUser);
+      });
 
-      clients.forEach((client) => {
-        if (client.readyState === WebSocket.OPEN) {
+      // Notificar a otros usuarios que este usuario se desconectó
+      // Usar el nombre directamente
+      let displayName = disconnectedUser;
+  
+      // Notificar solo a usuarios en la sala global
+      const globalRoom = rooms.get('global')!;
+      globalRoom.forEach((userId) => {
+        const client = clients.get(userId);
+        if (client && client.readyState === WebSocket.OPEN) {
           client.send(JSON.stringify({
             type: 'user_offline',
             username: displayName
@@ -179,12 +237,14 @@ app.use(["/api/paginas", "/api/auth"], (req, res, next) => {
 import feedRoutes from "./routes/feedRoutes";
 import chatRoutes from "./routes/chatRoutes";
 import privateRoutes from "./routes/privateRoutes";
+import guestRoutes from "./routes/guestRoutes";
 app.use("/api/auth", authRoutes);
 app.use("/api/paginas", paginaRoutes);
 app.use("/api/publicaciones", publicacionRoutes);
 app.use("/api/feed", feedRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/private", privateRoutes);
+app.use("/api/guest", guestRoutes);
 
 // Endpoint para verificar esquema de tabla
 app.get('/test-db', async (req, res) => {
