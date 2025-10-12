@@ -23,7 +23,7 @@ function Footer({ feed }) {
       {userRegistrations.length > 0 ? (
         <ul>
           {userRegistrations.map((row) => (
-            <li key={row.id}>
+            <li key={row.id} id={`registro-${row.id}`}>
               <span dangerouslySetInnerHTML={{ __html: row.mensaje }}></span>
               {row.creado_en && (
                 <span style={{ color: '#888', marginLeft: '8px' }}>{new Date(row.creado_en).toLocaleString()}</span>

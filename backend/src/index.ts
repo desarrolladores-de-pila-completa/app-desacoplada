@@ -9,6 +9,8 @@ import { configureServices } from "./utils/servicesConfig";
 import { getCsrfCookieOptions } from "./utils/cookieConfig";
 import { generalRateLimit } from "./middlewares/rateLimit";
 import logger from "./utils/logger";
+import WebSocket from "ws";
+import { IncomingMessage } from "http";
 
 // Inicializar el container de DI antes de importar rutas
 configureServices();
@@ -36,6 +38,92 @@ app.use(
     credentials: true,
   })
 );
+
+// WebSocket server
+const wss = new WebSocket.Server({ port: 3001 });
+const clients = new Map<string, WebSocket>();
+
+wss.on('connection', (ws: WebSocket, request: IncomingMessage) => {
+  logger.info('Nuevo cliente WebSocket conectado', { context: 'websocket' });
+
+  ws.on('message', async (message: Buffer) => {
+    try {
+      const data = JSON.parse(message.toString());
+      if (data.type === 'register' && data.userId) {
+        clients.set(data.userId, ws);
+        logger.info(`Usuario registrado en WebSocket: ${data.userId}`, { context: 'websocket' });
+
+        // Notificar a otros usuarios que este usuario está en línea
+        // Para usuarios registrados, obtener su display_name
+        let displayName = data.userId;
+        if (data.userId && !data.userId.startsWith('guest-')) {
+          try {
+            const [userRows]: any = await pool.query("SELECT display_name FROM users WHERE id = ?", [data.userId]);
+            if (userRows && userRows.length > 0 && userRows[0].display_name) {
+              displayName = userRows[0].display_name;
+            }
+          } catch (error) {
+            logger.error('Error obteniendo display_name para notificación:', { error: (error as Error).message, context: 'websocket' });
+          }
+        }
+
+        clients.forEach((client, userId) => {
+          if (userId !== data.userId && client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({
+              type: 'user_online',
+              username: displayName
+            }));
+          }
+        });
+      }
+    } catch (error) {
+      logger.error('Error procesando mensaje WebSocket:', { error: (error as Error).message, context: 'websocket' });
+    }
+  });
+
+  ws.on('close', async () => {
+    // Encontrar y remover el usuario desconectado
+    let disconnectedUser: string | undefined;
+    for (const [userId, client] of clients.entries()) {
+      if (client === ws) {
+        disconnectedUser = userId;
+        clients.delete(userId);
+        break;
+      }
+    }
+
+    if (disconnectedUser) {
+      logger.info(`Usuario desconectado de WebSocket: ${disconnectedUser}`, { context: 'websocket' });
+
+      // Notificar a otros usuarios que este usuario se desconectó
+      // Para usuarios registrados, obtener su display_name para la notificación
+      let displayName = disconnectedUser;
+      if (disconnectedUser && !disconnectedUser.startsWith('guest-')) {
+        try {
+          const [userRows]: any = await pool.query("SELECT display_name FROM users WHERE id = ?", [disconnectedUser]);
+          if (userRows && userRows.length > 0 && userRows[0].display_name) {
+            displayName = userRows[0].display_name;
+          }
+        } catch (error) {
+          logger.error('Error obteniendo display_name para desconexión:', { error: (error as Error).message, context: 'websocket' });
+        }
+      }
+
+      clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify({
+            type: 'user_offline',
+            username: displayName
+          }));
+        }
+      });
+    }
+  });
+
+  ws.on('error', (error) => {
+    logger.error('Error en conexión WebSocket:', { error: error.message, context: 'websocket' });
+  });
+});
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.static(path.join(rootPath, 'frontend')));
@@ -90,11 +178,13 @@ app.use(["/api/paginas", "/api/auth"], (req, res, next) => {
 
 import feedRoutes from "./routes/feedRoutes";
 import chatRoutes from "./routes/chatRoutes";
+import privateRoutes from "./routes/privateRoutes";
 app.use("/api/auth", authRoutes);
 app.use("/api/paginas", paginaRoutes);
 app.use("/api/publicaciones", publicacionRoutes);
 app.use("/api/feed", feedRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/private", privateRoutes);
 
 // Endpoint para verificar esquema de tabla
 app.get('/test-db', async (req, res) => {
@@ -137,3 +227,14 @@ if (require.main === module) {
 }
 
 export default app;
+
+// Función para notificar a un usuario en tiempo real via WebSocket
+export function notifyUser(userId: string, message: any) {
+  const client = clients.get(userId);
+  if (client && client.readyState === WebSocket.OPEN) {
+    client.send(JSON.stringify(message));
+    logger.info(`Mensaje enviado via WebSocket a usuario ${userId}`, { context: 'websocket' });
+  } else {
+    logger.warn(`Cliente WebSocket no encontrado o no conectado para usuario ${userId}`, { context: 'websocket' });
+  }
+}

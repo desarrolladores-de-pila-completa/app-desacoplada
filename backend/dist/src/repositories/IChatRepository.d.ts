@@ -1,11 +1,11 @@
 export interface IChatRepository {
     findAll(limit: number, offset: number): Promise<ChatMessage[]>;
-    create(userId: string, message: string): Promise<number>;
+    create(userId: string | null, message: string, guestUsername?: string): Promise<number>;
     deleteByUser(userId: string): Promise<void>;
 }
 export interface ChatMessage {
     id: number;
-    user_id: string;
+    user_id: string | null;
     message: string;
     created_at: string;
     username: string;

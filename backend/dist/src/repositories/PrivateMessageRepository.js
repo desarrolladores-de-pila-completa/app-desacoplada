@@ -4,12 +4,17 @@ exports.PrivateMessageRepository = void 0;
 const db_1 = require("../middlewares/db");
 class PrivateMessageRepository {
     async findBetweenUsers(userId1, userId2, limit = 50, offset = 0) {
-        const [rows] = await db_1.pool.query(`SELECT pm.*, u1.username as sender_username, u2.username as receiver_username
+        const [rows] = await db_1.pool.query(`SELECT pm.*,
+        CASE
+          WHEN u1.id IS NOT NULL THEN COALESCE(u1.display_name, u1.username)
+          ELSE pm.sender_id
+        END as sender_username,
+        COALESCE(u2.display_name, u2.username) as receiver_username
         FROM private_messages pm
-        INNER JOIN users u1 ON pm.sender_id = u1.id
+        LEFT JOIN users u1 ON pm.sender_id = u1.id
         INNER JOIN users u2 ON pm.receiver_id = u2.id
         WHERE (pm.sender_id = ? AND pm.receiver_id = ?) OR (pm.sender_id = ? AND pm.receiver_id = ?)
-        ORDER BY pm.created_at DESC
+        ORDER BY pm.created_at ASC
         LIMIT ? OFFSET ?`, [userId1, userId2, userId2, userId1, limit, offset]);
         return rows.map(row => ({
             id: row.id,

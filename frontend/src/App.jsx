@@ -45,7 +45,6 @@ function MainApp({ showOutput }) {
     <>
       <Navbar onFeedClick={goToFeed} />
       <Feed feed={feed} />
-      <Footer feed={feed} />
     </>
   );
 }

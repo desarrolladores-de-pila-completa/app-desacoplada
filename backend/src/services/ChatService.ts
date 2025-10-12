@@ -18,18 +18,18 @@ export class ChatService {
   }
 
   /**
-   * Crear un nuevo mensaje en el chat global
+   * Crear un nuevo mensaje en el chat global (soporta invitados)
    */
-  async createMessage(userId: string, message: string): Promise<number> {
-    console.log('ChatService.createMessage:', { userId, message });
+  async createMessage(userId: string | null, message: string, guestUsername?: string): Promise<number> {
+    console.log('ChatService.createMessage:', { userId, guestUsername, message });
     // Validar mensaje (longitud, etc.)
     if (!message || message.trim().length === 0) {
       throw new Error('El mensaje no puede estar vacío');
     }
 
     const trimmedMessage = message.trim();
-    console.log('Llamando a repository.create:', { userId, trimmedMessage });
-    const messageId = await this.chatRepository.create(userId, trimmedMessage);
+    console.log('Llamando a repository.create:', { userId, guestUsername, trimmedMessage });
+    const messageId = await this.chatRepository.create(userId, trimmedMessage, guestUsername);
     console.log('Repository.create retornó:', messageId);
     // Invalidar caché
     cacheService.invalidatePattern(`chat:global:`);

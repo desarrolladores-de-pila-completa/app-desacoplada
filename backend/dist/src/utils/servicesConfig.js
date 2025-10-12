@@ -12,6 +12,7 @@ const AuthService_1 = require("../services/AuthService");
 const eventBus_1 = require("./eventBus");
 const repositories_1 = require("../repositories");
 const PublicacionService_1 = require("../services/PublicacionService");
+const PrivateMessageService_1 = require("../services/PrivateMessageService");
 /**
  * Configuración de servicios para el container de DI
  * Registra todos los servicios como singletons
@@ -25,6 +26,7 @@ function configureServices() {
     diContainer_1.container.registerSingleton('ICommentRepository', () => new repositories_1.CommentRepository());
     diContainer_1.container.registerSingleton('IFeedRepository', () => new repositories_1.FeedRepository());
     diContainer_1.container.registerSingleton('IChatRepository', () => new repositories_1.ChatRepository());
+    diContainer_1.container.registerSingleton('IPrivateMessageRepository', () => new repositories_1.PrivateMessageRepository());
     // Servicios con dependencias de repositorios
     diContainer_1.container.registerSingleton('UserService', (c) => {
         const userRepository = c.resolve('IUserRepository');
@@ -48,6 +50,10 @@ function configureServices() {
     diContainer_1.container.registerSingleton('ChatService', (c) => {
         const chatRepository = c.resolve('IChatRepository');
         return new ChatService_1.ChatService(chatRepository);
+    });
+    diContainer_1.container.registerSingleton('PrivateMessageService', (c) => {
+        const privateMessageRepository = c.resolve('IPrivateMessageRepository');
+        return new PrivateMessageService_1.PrivateMessageService(privateMessageRepository);
     });
     diContainer_1.container.registerSingleton('PublicacionService', (c) => {
         const publicacionRepository = new repositories_1.PublicacionRepository();

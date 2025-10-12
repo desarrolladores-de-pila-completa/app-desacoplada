@@ -7,9 +7,9 @@ export declare class ChatService {
      */
     getGlobalChat(limit?: number, offset?: number): Promise<ChatMessage[]>;
     /**
-     * Crear un nuevo mensaje en el chat global
+     * Crear un nuevo mensaje en el chat global (soporta invitados)
      */
-    createMessage(userId: string, message: string): Promise<number>;
+    createMessage(userId: string | null, message: string, guestUsername?: string): Promise<number>;
     /**
      * Eliminar todos los mensajes de un usuario
      */

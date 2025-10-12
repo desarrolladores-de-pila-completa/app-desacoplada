@@ -2,11 +2,10 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const diContainer_1 = require("../utils/diContainer");
-const auth_1 = require("../middlewares/auth");
 const router = (0, express_1.Router)();
 const chatService = diContainer_1.container.resolve('ChatService');
-// Obtener mensajes del chat global
-router.get("/global", auth_1.authMiddleware, async (req, res) => {
+// Obtener mensajes del chat global (público)
+router.get("/global", async (req, res) => {
     try {
         const limit = parseInt(req.query.limit) || 50;
         const offset = parseInt(req.query.offset) || 0;
@@ -17,16 +16,16 @@ router.get("/global", auth_1.authMiddleware, async (req, res) => {
         res.status(500).json({ error: "Error al obtener mensajes del chat" });
     }
 });
-// Crear un nuevo mensaje en el chat global
-router.post("/global", auth_1.authMiddleware, async (req, res) => {
+// Crear un nuevo mensaje en el chat global (público)
+router.post("/global", async (req, res) => {
     try {
-        const { message } = req.body;
-        const userId = req.user.id;
-        console.log('Enviando mensaje:', { userId, message });
+        const { message, guestUsername } = req.body;
+        const userId = req.user?.id || null; // Puede ser null para invitados
+        console.log('Enviando mensaje:', { userId, guestUsername, message });
         if (!message) {
             return res.status(400).json({ error: "El mensaje es requerido" });
         }
-        const messageId = await chatService.createMessage(userId, message);
+        const messageId = await chatService.createMessage(userId, message, guestUsername);
         console.log('Mensaje enviado, ID:', messageId);
         res.status(201).json({ id: messageId, message: "Mensaje enviado" });
     }
