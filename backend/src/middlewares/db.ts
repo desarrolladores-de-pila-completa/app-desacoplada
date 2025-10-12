@@ -276,48 +276,10 @@ async function initDatabase() {
     )`);
     logger.info('Tabla verificada/creada correctamente', { table: 'publicaciones', context: 'db' });
 
-    // Crear tabla 'global_chat' para mensajes de chat global (solo usuarios registrados)
-    await pool.query(`CREATE TABLE IF NOT EXISTS global_chat (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      user_id VARCHAR(36) NOT NULL,
-      message TEXT NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-    )`);
-    logger.info('Tabla verificada/creada correctamente', { table: 'global_chat', context: 'db' });
 
-    // Crear tabla 'invitados_global_chat' para mensajes de usuarios invitados
-    await pool.query(`CREATE TABLE IF NOT EXISTS invitados_global_chat (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      guest_username VARCHAR(255) NOT NULL,
-      message TEXT NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`);
-    logger.info('Tabla verificada/creada correctamente', { table: 'invitados_global_chat', context: 'db' });
 
-    // Crear tabla 'private_messages' para mensajes privados
-    await pool.query(`CREATE TABLE IF NOT EXISTS private_messages (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      sender_id VARCHAR(255) NOT NULL,
-      receiver_id VARCHAR(36) NOT NULL,
-      message TEXT NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
-    )`);
 
-    // Eliminar la restricción de clave foránea del sender_id si existe
-    try {
-      await pool.query("ALTER TABLE private_messages DROP FOREIGN KEY private_messages_ibfk_1");
-      logger.info('Restricción de clave foránea eliminada del sender_id en private_messages', { context: 'db' });
-    } catch (err) {
-      const error = err as any;
-      if (error.code === 'ER_CANT_DROP_FIELD_OR_KEY') {
-        logger.info('La restricción de clave foránea ya fue eliminada o no existe en private_messages', { context: 'db' });
-      } else {
-        logger.error('Error al eliminar restricción de clave foránea en private_messages', { error: error.message, stack: error.stack, context: 'db' });
-      }
-    }
-    logger.info('Tabla verificada/creada correctamente', { table: 'private_messages', context: 'db' });
+
   } catch (err) {
     logger.error('Error al crear/verificar las tablas', { error: (err as Error).message, stack: (err as Error).stack, context: 'db' });
   }

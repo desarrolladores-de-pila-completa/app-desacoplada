@@ -292,6 +292,9 @@ export async function eliminarComentario(req: Request, res: Response) {
     if (!rows || rows.length === 0) return sendError(res, 404, "Comentario no encontrado");
     if (String(rows[0].user_id) !== String(userId)) return sendError(res, 403, "No autorizado para eliminar este comentario");
 
+    // Eliminar las imágenes asociadas al comentario primero
+    await pool.query("DELETE FROM imagenes_comentarios WHERE comentario_id = ?", [commentId]);
+
     // Eliminar el comentario
     await pool.query("DELETE FROM comentarios WHERE id = ?", [commentId]);
 

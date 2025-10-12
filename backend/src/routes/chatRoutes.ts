@@ -1,45 +1,91 @@
 import { Router } from "express";
-import { ChatService } from "../services";
-import { container } from "../utils/diContainer";
-import { authMiddleware } from "../middlewares/auth";
+import { pool } from "../middlewares/db";
 
 const router = Router();
-const chatService = container.resolve('ChatService') as any;
 
-// Obtener mensajes del chat global (público)
+// Obtener mensajes del chat global (vacío para chat solo WebSocket)
 router.get("/global", async (req, res) => {
   try {
     const limit = parseInt(req.query.limit as string) || 50;
     const offset = parseInt(req.query.offset as string) || 0;
 
-    const messages = await chatService.getGlobalChat(limit, offset);
-    res.json(messages);
+    // Devolver array vacío ya que los mensajes se manejan solo por WebSocket
+    res.json([]);
   } catch (err) {
     res.status(500).json({ error: "Error al obtener mensajes del chat" });
   }
 });
 
-// Crear un nuevo mensaje en el chat global (público)
+// Obtener mensajes privados (vacío para chat solo WebSocket)
+router.get("/private/:userId", async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 50;
+    const offset = parseInt(req.query.offset as string) || 0;
+
+    // Devolver array vacío ya que los mensajes se manejan solo por WebSocket
+    res.json([]);
+  } catch (err) {
+    res.status(500).json({ error: "Error al obtener mensajes privados" });
+  }
+});
+
+// Enviar mensaje al chat global (no hace nada, solo para compatibilidad)
 router.post("/global", async (req, res) => {
   try {
-    const { message, guestUsername } = req.body;
-    const userId = (req as any).user?.id || null; // Puede ser null para invitados
-    console.log('Enviando mensaje:', { userId, guestUsername, message });
+    // No almacenar mensajes, solo devolver éxito
+    res.status(201).json({ id: Date.now(), message: "Mensaje enviado" });
+  } catch (err) {
+    res.status(500).json({ error: "Error al enviar mensaje" });
+  }
+});
 
-    if (!message) {
-      return res.status(400).json({ error: "El mensaje es requerido" });
+// Enviar mensaje privado (no hace nada, solo para compatibilidad)
+router.post("/private", async (req, res) => {
+  try {
+    // No almacenar mensajes, solo devolver éxito
+    res.status(201).json({ id: Date.now(), message: "Mensaje privado enviado" });
+  } catch (err) {
+    res.status(500).json({ error: "Error al enviar mensaje privado" });
+  }
+});
+
+// Registrar usuario invitado
+router.post("/guest/register", async (req, res) => {
+  try {
+    const { guestUsername } = req.body;
+
+    if (!guestUsername || guestUsername.trim().length === 0) {
+      return res.status(400).json({ error: "El nombre de usuario es requerido" });
     }
 
-    const messageId = await chatService.createMessage(userId, message, guestUsername);
-    console.log('Mensaje enviado, ID:', messageId);
-    res.status(201).json({ id: messageId, message: "Mensaje enviado" });
+    const trimmedUsername = guestUsername.trim();
+
+    // Verificar si el nombre ya existe
+    const [existing] = await pool.query(
+      "SELECT id FROM usuariosinvitados WHERE guest_username = ?",
+      [trimmedUsername]
+    );
+
+    if ((existing as any[]).length > 0) {
+      return res.status(409).json({ error: "El nombre de usuario ya está en uso" });
+    }
+
+    // Insertar el nuevo usuario invitado
+    const [result] = await pool.query(
+      "INSERT INTO usuariosinvitados (guest_username) VALUES (?)",
+      [trimmedUsername]
+    );
+
+    const guestId = (result as any).insertId;
+
+    res.status(201).json({
+      id: guestId,
+      username: trimmedUsername,
+      message: "Usuario invitado registrado exitosamente"
+    });
   } catch (err: any) {
-    console.error('Error en POST /chat/global:', err);
-    if (err.message.includes('vacío') || err.message.includes('largo')) {
-      res.status(400).json({ error: err.message });
-    } else {
-      res.status(500).json({ error: "Error al enviar mensaje" });
-    }
+    console.error('Error registrando usuario invitado:', err);
+    res.status(500).json({ error: "Error al registrar usuario invitado" });
   }
 });
 
