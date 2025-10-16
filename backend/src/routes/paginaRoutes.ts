@@ -233,4 +233,40 @@ router.delete("/usuario/:id", authMiddleware, userRateLimit, eliminarUsuarioTota
 // Endpoint para guardar HTML de VvvebJs
 router.post("/guardar-html", authMiddleware, userRateLimit, guardarHtmlVvveb);
 
+// Endpoint para guardar página creada con PageBuilder
+router.post("/guardar-pagina", authMiddleware, userRateLimit, async (req: any, res: any) => {
+  const { titulo, contenido, username } = req.body;
+  const userId = req.user.id;
+
+  try {
+    // Verificar que el usuario autenticado es el propietario
+    const { getService } = require('../utils/servicesConfig');
+    const userService = getService('UserService');
+    const user = await userService.getUserById(userId);
+    if (!user || user.username !== username) {
+      return res.status(403).json({ error: "No autorizado" });
+    }
+
+    // Crear la página con el contenido HTML generado por VvvebJs
+    const [result] = await pool.query(
+      "INSERT INTO paginas (user_id, titulo, contenido, propietario, usuario, oculto, creado_en) VALUES (?, ?, ?, 1, ?, 0, NOW())",
+      [userId, titulo || "Página creada con PageBuilder", contenido, username]
+    );
+
+    const pageId = (result as any).insertId;
+
+    // Crear entrada en el feed
+    const mensaje = `Nueva página creada: <a href="/pagina/${username}">${titulo || "Página creada con PageBuilder"}</a>`;
+    await pool.query(
+      "INSERT INTO feed (user_id, mensaje) VALUES (?, ?)",
+      [userId, mensaje]
+    );
+
+    res.json({ message: "Página creada", id: pageId });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al crear página" });
+  }
+});
+
 export default router;

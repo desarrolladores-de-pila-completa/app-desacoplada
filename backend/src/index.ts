@@ -40,7 +40,7 @@ app.use(
 );
 
 // WebSocket server
-const wss = new WebSocket.Server({ port: 3001 });
+const wss = new WebSocket.Server({ port: 3002 });
 const clients = new Map<string, WebSocket>();
 const rooms = new Map<string, Set<string>>(); // sala -> Set de userIds
 
