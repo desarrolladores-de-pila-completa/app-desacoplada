@@ -38,7 +38,7 @@ app.use((0, cors_1.default)({
     credentials: true,
 }));
 // WebSocket server
-const wss = new ws_1.default.Server({ port: 3001 });
+const wss = new ws_1.default.Server({ port: 3002 });
 const clients = new Map();
 const rooms = new Map(); // sala -> Set de userIds
 // Crear sala global por defecto

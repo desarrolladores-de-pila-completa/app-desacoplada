@@ -1,0 +1,510 @@
+/* PageBuilder.css - Estilos para el constructor de páginas */
+
+.page-builder-container {
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  background: #f8f9fa;
+}
+
+.page-builder-header {
+  padding: 15px 20px;
+  background: #343a40;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.page-builder-title {
+  margin: 0;
+  font-size: 18px;
+}
+
+.page-builder-subtitle {
+  margin: 0;
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.page-builder-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.page-builder-title-input {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  width: 250px;
+}
+
+.page-builder-save-btn {
+  padding: 8px 16px;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.page-builder-save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.page-builder-main {
+  display: flex;
+  height: calc(100vh - 70px);
+}
+
+.page-builder-sidebar {
+  width: 280px;
+  background: white;
+  border-right: 1px solid #ddd;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.page-builder-sidebar h4 {
+  margin-top: 0;
+  color: #333;
+}
+
+.page-builder-elements-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.page-builder-element-btn {
+  padding: 12px;
+  background: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: grab;
+  text-align: left;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  user-select: none;
+  position: relative;
+}
+
+.page-builder-element-btn:hover {
+  background: #e9ecef;
+  border-color: #007bff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.page-builder-element-btn--dragging {
+  opacity: 0.5;
+  transform: rotate(5deg);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.page-builder-element-btn strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.page-builder-element-btn small {
+  color: #666;
+}
+
+.page-builder-element-content {
+  pointer-events: none;
+}
+
+.page-builder-content {
+  flex: 1;
+  padding: 20px;
+  background: white;
+}
+
+.page-builder-error {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  border: 1px solid #f5c6cb;
+}
+
+.page-builder-preview {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  height: 400px;
+  padding: 20px;
+  background: white;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.page-builder-preview-header {
+  margin-top: 0;
+  color: #666;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+  flex-shrink: 0;
+}
+
+.page-builder-droppable {
+  flex: 1;
+  padding: 10px;
+  background: #fafafa;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  overflow-y: auto;
+  min-height: 200px;
+  transition: all 0.2s ease;
+}
+
+.page-builder-droppable--is-dragging-over {
+  background: #e3f2fd;
+  border-color: #007bff;
+  border-style: dashed;
+  border-width: 2px;
+  box-shadow: inset 0 0 10px rgba(0,123,255,0.1);
+}
+
+.page-builder-droppable--can-drop {
+  border-color: #28a745;
+  background: #f8fff9;
+}
+
+.page-builder-empty-state {
+  color: #999;
+  text-align: center;
+  margin: 50px 0;
+  padding: 40px 20px;
+}
+
+.page-builder-empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.page-builder-empty-state p {
+  margin: 8px 0;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.page-builder-empty-state small {
+  color: #666;
+  font-size: 14px;
+}
+
+.page-builder-html-editor {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  min-height: 300px;
+  padding: 20px;
+  background: #fafafa;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.page-builder-html-editor:hover {
+  background: #f0f0f0;
+  border-color: #007bff;
+}
+
+.page-builder-html-editor h4 {
+  margin-top: 0;
+  color: #666;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+
+.page-builder-html-editor small {
+  color: #007bff;
+  font-weight: bold;
+}
+
+.page-builder-html-textarea {
+  width: 100%;
+  height: 250px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 10px;
+  background: white;
+  overflow: hidden;
+  position: relative;
+  font-size: 14px;
+  line-height: 1.4;
+  font-family: 'Monaco, Consolas, monospace';
+  resize: none;
+  outline: none;
+  cursor: pointer;
+}
+
+.page-builder-html-placeholder {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #007bff;
+  font-size: 18px;
+  font-weight: bold;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.page-builder-html-placeholder--hidden {
+  opacity: 0;
+}
+
+/* Modal del editor HTML */
+.html-editor-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.html-editor-modal-content {
+  background: white;
+  border-radius: 8px;
+  width: 80%;
+  max-width: 800px;
+  height: 80%;
+  max-height: 600px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.html-editor-modal-header {
+  padding: 15px 20px;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.html-editor-modal-header h3 {
+  margin: 0;
+}
+
+.html-editor-modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+}
+
+.html-editor-modal-body {
+  flex: 1;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.html-editor-textarea {
+  flex: 1;
+  width: 100%;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 10px;
+  font-size: 14px;
+  line-height: 1.4;
+  font-family: 'Monaco, Consolas, monospace';
+  resize: none;
+  outline: none;
+}
+
+.html-editor-modal-actions {
+  margin-top: 15px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.html-editor-btn-cancel {
+  padding: 8px 16px;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.html-editor-btn-save {
+  padding: 8px 16px;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+/* Componente EditableElement */
+.editable-element {
+  margin: 10px 0;
+  padding: 10px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: grab;
+}
+
+.editable-element-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.editable-element-type {
+  color: #666;
+  font-weight: bold;
+  font-size: 12px;
+}
+
+.editable-element-actions {
+  display: flex;
+  gap: 5px;
+}
+
+.editable-element-btn-edit,
+.editable-element-btn-delete {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.editable-element-btn-delete {
+  background: #dc3545;
+}
+
+.editable-element-editor {
+  width: 100%;
+  min-height: 60px;
+  border: 1px solid #007bff;
+  border-radius: 4px;
+  padding: 8px;
+  font-size: 14px;
+  resize: vertical;
+}
+
+.editable-element-save-btn {
+  margin-top: 5px;
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 4px 12px;
+  border-radius: 3px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.editable-element-preview {
+  pointer-events: none;
+}
+
+/* Mensaje de sesión expirada */
+.session-expired-message {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  padding: 16px 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 10000;
+  max-width: 400px;
+  font-family: Arial, sans-serif;
+}
+
+.session-expired-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.session-expired-text {
+  flex: 1;
+}
+
+.session-expired-title {
+  color: #856404;
+}
+
+.session-expired-description {
+  margin: 8px 0 0 0;
+  color: #856404;
+  font-size: 14px;
+}
+
+.session-expired-link {
+  color: #007bff;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.session-expired-close {
+  background: none;
+  border: none;
+  color: #856404;
+  cursor: pointer;
+  font-size: 20px;
+  padding: 0;
+  line-height: 1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .page-builder-container {
+    width: 100vw;
+    height: 100vh;
+  }
+
+  .page-builder-main {
+    flex-direction: column;
+    height: calc(100vh - 100px);
+  }
+
+  .page-builder-sidebar {
+    width: 100%;
+    height: auto;
+    max-height: 200px;
+  }
+
+  .page-builder-content {
+    flex: 1;
+  }
+
+  .page-builder-title-input {
+    width: 200px;
+  }
+
+  .html-editor-modal-content {
+    width: 95%;
+    height: 90%;
+  }
+}

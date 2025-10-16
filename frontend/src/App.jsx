@@ -10,6 +10,7 @@ import LoginPage from "./components/LoginPage";
 import UserPage from "./components/UserPage";
 import AccountPage from "./components/AccountPage";
 import CreatePublication from "./components/CreatePublication";
+import PageBuilder from "./components/PageBuilder";
 import useAuthStore from "./stores/authStore";
 import { useFeed } from "./hooks/useFeed";
 
@@ -105,7 +106,7 @@ export default function App() {
           }
         />
         <Route path="/cuenta" element={<AccountPage />} />
-        <Route path="/:username/publicar" element={<CreatePublication />} />
+        <Route path="/:username/publicar" element={<PageBuilder />} />
         <Route path="/pagina/:username" element={<UserPage />} />
         <Route path="/:username/publicar/:pagina" element={<UserPage />} />
         <Route path="/:username/nuevapublicacion" element={<UserPage />} />

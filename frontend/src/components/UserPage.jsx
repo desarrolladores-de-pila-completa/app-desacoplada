@@ -132,6 +132,37 @@ function UserPage() {
       </div>
     );
   }
+
+  // Renderizar contenido HTML si existe
+  const renderContent = (content) => {
+    if (!content) return null;
+
+    // Si el contenido es HTML, renderizarlo directamente
+    if (content.includes('<') && content.includes('>')) {
+      return (
+        <div
+          dangerouslySetInnerHTML={{ __html: content }}
+          style={{
+            lineHeight: '1.6',
+            fontSize: '16px',
+            color: '#333'
+          }}
+        />
+      );
+    }
+
+    // Si no es HTML, mostrar como texto plano
+    return (
+      <div style={{
+        whiteSpace: 'pre-wrap',
+        lineHeight: '1.6',
+        fontSize: '16px',
+        color: '#333'
+      }}>
+        {content}
+      </div>
+    );
+  };
   return (
   <>
     <Navbar />
@@ -141,6 +172,36 @@ function UserPage() {
           <FotoPerfil user={authUser} setUser={() => {}} editable={authUser?.id === paginaUser?.user_id} authUserId={authUser?.id} id={paginaUser?.user_id || username} />
         </div>
         <UserHeader paginaUser={paginaUser} username={params.username} authUserId={authUser?.id} onUsernameChange={() => {}} />
+
+        {/* Mostrar contenido de la página si existe */}
+        {paginaUser?.contenido && (
+          <div style={{
+            width: '100%',
+            maxWidth: '100%',
+            marginBottom: '32px',
+            padding: '24px',
+            background: '#f8f9fa',
+            borderRadius: '8px',
+            border: '1px solid #e9ecef'
+          }}>
+            <h3 style={{ marginTop: 0, marginBottom: '16px', color: '#333' }}>
+              {paginaUser.titulo || 'Página'}
+            </h3>
+            <div style={{ marginBottom: '20px' }}>
+              {renderContent(paginaUser.contenido)}
+            </div>
+            <p style={{
+              color: '#888',
+              fontSize: '0.9em',
+              marginTop: '16px',
+              borderTop: '1px solid #e9ecef',
+              paddingTop: '8px'
+            }}>
+              Publicado el {new Date(paginaUser.created_at).toLocaleString()}
+            </p>
+          </div>
+        )}
+
         <div style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', overflowX: 'hidden' }}>
           <ImageGrid paginaId={paginaUser?.id} editable={authUser?.id === paginaUser?.user_id} />
         </div>
