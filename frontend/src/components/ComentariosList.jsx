@@ -1,8 +1,3 @@
-function formatUUID(uuid) {
-  if (!uuid || uuid.length !== 32) return uuid;
-  return `${uuid.slice(0,8)}-${uuid.slice(8,12)}-${uuid.slice(12,16)}-${uuid.slice(16,20)}-${uuid.slice(20)}`;
-}
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { createRoot } from "react-dom/client";
@@ -10,6 +5,11 @@ import WinBox from "winbox/src/js/winbox.js";
 import "winbox/dist/css/winbox.min.css";
 import useAuthStore from "../stores/authStore";
 import { useDeleteComment } from "../hooks/useFeed";
+
+function formatUUID(uuid) {
+  if (!uuid || uuid.length !== 32) return uuid;
+  return `${uuid.slice(0,8)}-${uuid.slice(8,12)}-${uuid.slice(12,16)}-${uuid.slice(16,20)}-${uuid.slice(20)}`;
+}
 
 function ComentariosList({ comentarios, pageId }) {
   const { user } = useAuthStore();

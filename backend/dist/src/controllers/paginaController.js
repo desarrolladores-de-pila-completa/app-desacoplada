@@ -18,8 +18,9 @@ exports.eliminarUsuarioTotal = eliminarUsuarioTotal;
 exports.paginasPublicas = paginasPublicas;
 exports.guardarComentario = guardarComentario;
 exports.eliminarComentario = eliminarComentario;
-exports.guardarHtmlVvveb = guardarHtmlVvveb;
 const logger_1 = __importDefault(require("../utils/logger"));
+const db_1 = require("../middlewares/db");
+const servicesConfig_1 = require("../utils/servicesConfig");
 // Obtener página por user_id (UUID sin guiones)
 async function obtenerPaginaPorUserId(req, res) {
     const userId = req.params.user_id;
@@ -170,9 +171,6 @@ async function actualizarUsuarioPagina(req, res) {
         res.status(500).json({ error: "Error al actualizar usuario de página" });
     }
 }
-// Función eliminada: actualizarComentariosPagina (campo eliminado)
-// Actualizar visibilidad y oculto de una página
-const db_1 = require("../middlewares/db");
 async function actualizarVisibilidad(req, res) {
     const paginaId = req.params.id;
     const { oculto } = req.body;
@@ -222,7 +220,6 @@ async function obtenerPagina(req, res) {
         sendError(res, 500, "Error al obtener página");
     }
 }
-const servicesConfig_1 = require("../utils/servicesConfig");
 const userService = (0, servicesConfig_1.getService)('UserService');
 // Eliminar usuario y todo su rastro (perfil, comentarios, imágenes, feed)
 async function eliminarUsuarioTotal(req, res) {
@@ -312,35 +309,6 @@ async function eliminarComentario(req, res) {
     catch (err) {
         console.error(err);
         sendError(res, 500, "Error al eliminar comentario");
-    }
-}
-// Guardar HTML generado por VvvebJs
-async function guardarHtmlVvveb(req, res) {
-    const { html, file, action } = req.body;
-    const userId = req.userId;
-    if (!userId)
-        return sendError(res, 401, "Debes estar autenticado");
-    if (!html)
-        return sendError(res, 400, "HTML requerido");
-    try {
-        // Por ahora, guardar en una nueva página o actualizar existente
-        // Asumir que se pasa un pageId o crear nueva
-        const pageId = req.params.id || req.body.pageId;
-        if (pageId) {
-            // Actualizar página existente
-            await db_1.pool.query("UPDATE paginas SET contenido = ? WHERE id = ? AND user_id = ?", [html, pageId, userId]);
-            res.json({ message: "Página actualizada" });
-        }
-        else {
-            // Crear nueva página
-            const titulo = req.body.titulo || "Página creada con VvvebJs";
-            const [result] = await db_1.pool.query("INSERT INTO paginas (user_id, titulo, contenido, propietario, usuario, oculto, creado_en) VALUES (?, ?, ?, 1, ?, 0, NOW())", [userId, titulo, html, req.body.usuario || 'pagina']);
-            res.json({ message: "Página creada", id: result.insertId });
-        }
-    }
-    catch (err) {
-        console.error(err);
-        sendError(res, 500, "Error al guardar HTML");
     }
 }
 //# sourceMappingURL=paginaController.js.map

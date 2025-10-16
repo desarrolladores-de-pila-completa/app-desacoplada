@@ -4,15 +4,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const db_1 = require("../middlewares/db");
-// Endpoint para obtener todas las páginas públicas
 const express_1 = require("express");
-// import rateLimit from "express-rate-limit";
+const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
 const paginaController_1 = require("../controllers/paginaController");
 const auth_1 = require("../middlewares/auth");
 const ValidationService_1 = require("../services/ValidationService");
 const rateLimit_1 = require("../middlewares/rateLimit");
 const multer = require("multer");
-const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
 const limiter = (0, express_rate_limit_1.default)({ windowMs: 60 * 1000, max: 100 });
 const router = (0, express_1.Router)();
 // Endpoint para crear nueva página (simplificado)
@@ -102,8 +100,7 @@ router.post("/:username/publicar/:numeroDePagina", auth_1.authMiddleware, rateLi
     }
 });
 // Endpoint para obtener página por user_id (UUID sin guiones)
-const paginaController_2 = require("../controllers/paginaController");
-router.get("/pagina/id/:user_id", paginaController_2.obtenerPaginaPorUserId);
+router.get("/pagina/id/:user_id", paginaController_1.obtenerPaginaPorUserId);
 // Endpoint para actualizar el nombre de usuario de la página
 router.post("/:id/usuario", auth_1.authMiddleware, (0, ValidationService_1.validateRequest)(ValidationService_1.ValidationService.validateUpdateUsername), paginaController_1.actualizarUsuarioPagina);
 // Rutas eliminadas: actualizarPropietario, actualizarDescripcion (funciones eliminadas)
@@ -189,8 +186,6 @@ router.get("/comment-images/:id", async (req, res) => {
 });
 // Endpoint para eliminar usuario y todo su rastro
 router.delete("/usuario/:id", auth_1.authMiddleware, rateLimit_1.userRateLimit, paginaController_1.eliminarUsuarioTotal);
-// Endpoint para guardar HTML de VvvebJs
-router.post("/guardar-html", auth_1.authMiddleware, rateLimit_1.userRateLimit, paginaController_1.guardarHtmlVvveb);
 // Endpoint para guardar página creada con PageBuilder
 router.post("/guardar-pagina", auth_1.authMiddleware, rateLimit_1.userRateLimit, async (req, res) => {
     const { titulo, contenido, username } = req.body;
@@ -203,7 +198,7 @@ router.post("/guardar-pagina", auth_1.authMiddleware, rateLimit_1.userRateLimit,
         if (!user || user.username !== username) {
             return res.status(403).json({ error: "No autorizado" });
         }
-        // Crear la página con el contenido HTML generado por VvvebJs
+        // Crear la página con el contenido HTML generado por PageBuilder
         const [result] = await db_1.pool.query("INSERT INTO paginas (user_id, titulo, contenido, propietario, usuario, oculto, creado_en) VALUES (?, ?, ?, 1, ?, 0, NOW())", [userId, titulo || "Página creada con PageBuilder", contenido, username]);
         const pageId = result.insertId;
         // Crear entrada en el feed

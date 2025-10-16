@@ -2,6 +2,7 @@
 
 // Define Multer File type
 import { Readable } from 'stream';
+import { Request, Response } from 'express';
 
 export interface MulterFile {
   fieldname: string;
@@ -92,7 +93,6 @@ export interface ImagenData {
 }
 
 // Request interfaces extendidas
-import { Request, Response } from 'express';
 
 export interface AuthenticatedRequest extends Request {
   user: User;

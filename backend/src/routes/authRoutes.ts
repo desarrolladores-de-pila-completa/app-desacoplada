@@ -3,16 +3,16 @@ import { MulterFile } from '../types/interfaces';
 import { validateFileUpload } from '../middlewares/security';
 import { ValidationService, validateRequest } from '../services/ValidationService';
 import { authRateLimit } from '../middlewares/rateLimit';
-
-interface RequestWithFile extends Request {
-  file?: MulterFile;
-}
-const multer = require("multer");
 import { register, login, logout, eliminarUsuario, me } from "../controllers/authController";
 import { authMiddleware } from "../middlewares/auth";
 import { pool } from "../middlewares/db";
 import { randomUUID } from "crypto";
+const multer = require("multer");
 const bcrypt = require("bcryptjs");
+
+interface RequestWithFile extends Request {
+  file?: MulterFile;
+}
 
 const upload = multer();
 const router = Router();

@@ -1,4 +1,8 @@
 import logger from "../utils/logger";
+import { pool } from "../middlewares/db";
+import { Request, Response } from "express";
+import { UserService } from "../services/UserService";
+import { getService } from '../utils/servicesConfig';
 
 // Obtener página por user_id (UUID sin guiones)
 export async function obtenerPaginaPorUserId(req: Request, res: Response) {
@@ -149,8 +153,6 @@ export async function actualizarUsuarioPagina(req: RequestWithValidatedData, res
 
 // Función eliminada: actualizarComentariosPagina (campo eliminado)
 // Actualizar visibilidad y oculto de una página
-import { pool } from "../middlewares/db";
-import { Request, Response } from "express";
 
 interface RequestWithValidatedData extends Request {
   validatedData?: any;
@@ -198,9 +200,6 @@ export async function obtenerPagina(req: Request, res: Response) {
     sendError(res, 500, "Error al obtener página");
   }
 }
-
-import { UserService } from "../services/UserService";
-import { getService } from '../utils/servicesConfig';
 
 const userService = getService<UserService>('UserService');
 
@@ -305,35 +304,3 @@ export async function eliminarComentario(req: Request, res: Response) {
   }
 }
 
-// Guardar HTML generado por VvvebJs
-export async function guardarHtmlVvveb(req: Request, res: Response) {
-  const { html, file, action } = req.body;
-  const userId = (req as any).userId;
-
-  if (!userId) return sendError(res, 401, "Debes estar autenticado");
-
-  if (!html) return sendError(res, 400, "HTML requerido");
-
-  try {
-    // Por ahora, guardar en una nueva página o actualizar existente
-    // Asumir que se pasa un pageId o crear nueva
-    const pageId = req.params.id || req.body.pageId;
-
-    if (pageId) {
-      // Actualizar página existente
-      await pool.query("UPDATE paginas SET contenido = ? WHERE id = ? AND user_id = ?", [html, pageId, userId]);
-      res.json({ message: "Página actualizada" });
-    } else {
-      // Crear nueva página
-      const titulo = req.body.titulo || "Página creada con VvvebJs";
-      const [result] = await pool.query(
-        "INSERT INTO paginas (user_id, titulo, contenido, propietario, usuario, oculto, creado_en) VALUES (?, ?, ?, 1, ?, 0, NOW())",
-        [userId, titulo, html, req.body.usuario || 'pagina']
-      );
-      res.json({ message: "Página creada", id: (result as any).insertId });
-    }
-  } catch (err) {
-    console.error(err);
-    sendError(res, 500, "Error al guardar HTML");
-  }
-}
