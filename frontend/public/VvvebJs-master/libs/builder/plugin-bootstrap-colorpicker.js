@@ -15,6 +15,4 @@ let ColorInput = { ...ColorInput, ...{
 		let colorpicker = $('.input-group', colorinput).colorpicker();
 		return colorinput;
 	},
-  }
-);
-
+  };
