@@ -1,4 +1,5 @@
 import { Readable } from 'stream';
+import { Request } from 'express';
 export interface MulterFile {
     fieldname: string;
     originalname: string;
@@ -77,7 +78,6 @@ export interface ImagenData {
     imagen: Buffer;
     creado_en: Date;
 }
-import { Request } from 'express';
 export interface AuthenticatedRequest extends Request {
     user: User;
     userId: string;

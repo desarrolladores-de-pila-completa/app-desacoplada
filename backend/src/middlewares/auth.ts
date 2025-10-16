@@ -2,10 +2,9 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import logger from "../utils/logger";
+import { pool } from "./db";
 
 const SECRET = process.env.JWT_SECRET || "clave-secreta";
-
-import { pool } from "./db";
 
 export async function authMiddleware(req: Request, res: Response, next: NextFunction) {
   const token = req.cookies.token;

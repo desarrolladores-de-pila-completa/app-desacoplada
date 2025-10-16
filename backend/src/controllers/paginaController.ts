@@ -1,4 +1,8 @@
 import logger from "../utils/logger";
+import { pool } from "../middlewares/db";
+import { Request, Response } from "express";
+import { UserService } from "../services/UserService";
+import { getService } from '../utils/servicesConfig';
 
 // Obtener página por user_id (UUID sin guiones)
 export async function obtenerPaginaPorUserId(req: Request, res: Response) {
@@ -149,8 +153,6 @@ export async function actualizarUsuarioPagina(req: RequestWithValidatedData, res
 
 // Función eliminada: actualizarComentariosPagina (campo eliminado)
 // Actualizar visibilidad y oculto de una página
-import { pool } from "../middlewares/db";
-import { Request, Response } from "express";
 
 interface RequestWithValidatedData extends Request {
   validatedData?: any;
@@ -198,9 +200,6 @@ export async function obtenerPagina(req: Request, res: Response) {
     sendError(res, 500, "Error al obtener página");
   }
 }
-
-import { UserService } from "../services/UserService";
-import { getService } from '../utils/servicesConfig';
 
 const userService = getService<UserService>('UserService');
 

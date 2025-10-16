@@ -1,16 +1,12 @@
 import { pool } from "../middlewares/db";
-
-// Endpoint para obtener todas las páginas públicas
 import { Router } from "express";
-// import rateLimit from "express-rate-limit";
-
-import { paginasPublicas, guardarComentario, eliminarComentario, obtenerPagina, actualizarUsuarioPagina, eliminarUsuarioTotal, obtenerPaginaPorUsernameYNumero, obtenerPaginasPublicasPorUsuario } from "../controllers/paginaController";
+import rateLimit from "express-rate-limit";
+import { paginasPublicas, guardarComentario, eliminarComentario, obtenerPagina, actualizarUsuarioPagina, eliminarUsuarioTotal, obtenerPaginaPorUsernameYNumero, obtenerPaginasPublicasPorUsuario, obtenerPaginaPorUserId } from "../controllers/paginaController";
 import { authMiddleware } from "../middlewares/auth";
 import { ValidationService, validateRequest } from '../services/ValidationService';
 import { userRateLimit } from '../middlewares/rateLimit';
 const multer = require("multer");
 
-import rateLimit from "express-rate-limit";
 const limiter = rateLimit({ windowMs: 60 * 1000, max: 100 });
 
 const router = Router();
@@ -138,7 +134,6 @@ router.post("/:username/publicar/:numeroDePagina", authMiddleware, userRateLimit
 });
 
 // Endpoint para obtener página por user_id (UUID sin guiones)
-import { obtenerPaginaPorUserId } from "../controllers/paginaController";
 router.get("/pagina/id/:user_id", obtenerPaginaPorUserId);
 // Endpoint para actualizar el nombre de usuario de la página
 router.post("/:id/usuario", authMiddleware, validateRequest(ValidationService.validateUpdateUsername), actualizarUsuarioPagina);

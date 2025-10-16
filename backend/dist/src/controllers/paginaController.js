@@ -19,6 +19,8 @@ exports.paginasPublicas = paginasPublicas;
 exports.guardarComentario = guardarComentario;
 exports.eliminarComentario = eliminarComentario;
 const logger_1 = __importDefault(require("../utils/logger"));
+const db_1 = require("../middlewares/db");
+const servicesConfig_1 = require("../utils/servicesConfig");
 // Obtener página por user_id (UUID sin guiones)
 async function obtenerPaginaPorUserId(req, res) {
     const userId = req.params.user_id;
@@ -169,9 +171,6 @@ async function actualizarUsuarioPagina(req, res) {
         res.status(500).json({ error: "Error al actualizar usuario de página" });
     }
 }
-// Función eliminada: actualizarComentariosPagina (campo eliminado)
-// Actualizar visibilidad y oculto de una página
-const db_1 = require("../middlewares/db");
 async function actualizarVisibilidad(req, res) {
     const paginaId = req.params.id;
     const { oculto } = req.body;
@@ -221,7 +220,6 @@ async function obtenerPagina(req, res) {
         sendError(res, 500, "Error al obtener página");
     }
 }
-const servicesConfig_1 = require("../utils/servicesConfig");
 const userService = (0, servicesConfig_1.getService)('UserService');
 // Eliminar usuario y todo su rastro (perfil, comentarios, imágenes, feed)
 async function eliminarUsuarioTotal(req, res) {

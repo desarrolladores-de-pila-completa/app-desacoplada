@@ -6,8 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.authMiddleware = authMiddleware;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const logger_1 = __importDefault(require("../utils/logger"));
-const SECRET = process.env.JWT_SECRET || "clave-secreta";
 const db_1 = require("./db");
+const SECRET = process.env.JWT_SECRET || "clave-secreta";
 async function authMiddleware(req, res, next) {
     const token = req.cookies.token;
     logger_1.default.debug('Verificando token de cookie', { token: token ? 'presente' : 'ausente', context: 'auth' });

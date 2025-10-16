@@ -1,3 +1,4 @@
+import { Request, Response } from "express";
 export declare function obtenerPaginaPorUserId(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
 export declare function obtenerPaginaPorUsername(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
 export declare function obtenerPaginasPublicasPorUsuario(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
@@ -6,7 +7,6 @@ export declare function consultarPropietario(req: Request, res: Response): Promi
 export declare function consultarUsuarioPagina(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
 export declare function actualizarPropietario(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
 export declare function actualizarUsuarioPagina(req: RequestWithValidatedData, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
-import { Request, Response } from "express";
 interface RequestWithValidatedData extends Request {
     validatedData?: any;
 }

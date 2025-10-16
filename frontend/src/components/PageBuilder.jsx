@@ -86,13 +86,13 @@ const EditableElement = ({
   onDelete,
   onUpdate,
 }) => {
-  const handleContentChange = (newContent) => {
+  const handleContentChange = useCallback((newContent) => {
     onUpdate(element.id, newContent);
-  };
+  }, [element.id, onUpdate]);
 
-  const handleEdit = () => onEdit(element.id);
-  const handleDelete = () => onDelete(element.id);
-  const handleSave = onSave;
+  const handleEdit = useCallback(() => onEdit(element.id), [element.id, onEdit]);
+  const handleDelete = useCallback(() => onDelete(element.id), [element.id, onDelete]);
+  const handleSave = useCallback(() => onSave(), [onSave]);
 
   return (
     <div className="editable-element">
@@ -212,89 +212,7 @@ function PageBuilder() {
     []
   );
 
-  // Verificar que el usuario autenticado es el propietario
-  if (!user || user.username !== username) {
-    return (
-      <div style={{ maxWidth: 600, margin: "40px auto", textAlign: "center" }}>
-        <h2>No autorizado</h2>
-        <p>Solo puedes crear páginas en tu propio perfil.</p>
-      </div>
-    );
-  }
-
-  const handleSave = async () => {
-    // Validación básica
-    if (!title.trim()) {
-      setError("El título de la página es obligatorio");
-      return;
-    }
-
-    if (elements.length === 0) {
-      setError("Debes agregar al menos un elemento a la página");
-      return;
-    }
-
-    setLoading(true);
-    setError("");
-
-    try {
-      // Obtener CSRF token
-      const csrfRes = await fetch("/api/csrf-token", {
-        credentials: "include",
-      });
-      if (!csrfRes.ok) {
-        throw new Error("Error al obtener token de seguridad");
-      }
-      const csrfData = await csrfRes.json();
-      const csrfToken = csrfData.csrfToken;
-
-      // Crear la página
-      const response = await fetch(`/api/paginas/${username}/publicar/1`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": csrfToken,
-        },
-        body: JSON.stringify({
-          titulo: title.trim(),
-          contenido: content,
-          descripcion: "visible",
-        }),
-        credentials: "include",
-      });
-
-      if (response.status === 401) {
-        setShowSessionExpired(true);
-        return;
-      }
-
-      if (!response.ok) {
-        const errorData = await response
-          .json()
-          .catch(() => ({ error: "Error desconocido" }));
-        throw new Error(errorData.error || `Error HTTP ${response.status}`);
-      }
-
-      const result = await response.json().catch(() => ({}));
-      alert("Página guardada exitosamente");
-
-      // Limpiar estado después de guardar exitosamente
-      setTitle("Nueva Página");
-      setElements([]);
-      setContent("");
-      setEditingElement(null);
-    } catch (err) {
-      console.error("Error al guardar página:", err);
-      if (err.message.includes("401") || err.message.includes("Unauthorized")) {
-        setShowSessionExpired(true);
-      } else {
-        setError(err.message || "Error desconocido al guardar la página");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Memoized callbacks - ALL hooks must be called before any early returns
   const updateContentFromElements = useCallback((elementsList) => {
     const html = elementsList.map((el) => el.html).join("\n");
     setContent(html);
@@ -377,6 +295,89 @@ function PageBuilder() {
     },
     [updateContentFromElements]
   );
+
+  // Verificar que el usuario autenticado es el propietario - AFTER all hooks
+  if (!user || user.username !== username) {
+    return (
+      <div style={{ maxWidth: 600, margin: "40px auto", textAlign: "center" }}>
+        <h2>No autorizado</h2>
+        <p>Solo puedes crear páginas en tu propio perfil.</p>
+      </div>
+    );
+  }
+
+  const handleSave = async () => {
+    // Validación básica
+    if (!title.trim()) {
+      setError("El título de la página es obligatorio");
+      return;
+    }
+
+    if (elements.length === 0) {
+      setError("Debes agregar al menos un elemento a la página");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      // Obtener CSRF token
+      const csrfRes = await fetch("/api/csrf-token", {
+        credentials: "include",
+      });
+      if (!csrfRes.ok) {
+        throw new Error("Error al obtener token de seguridad");
+      }
+      const csrfData = await csrfRes.json();
+      const csrfToken = csrfData.csrfToken;
+
+      // Crear la página
+      const response = await fetch(`/api/paginas/${username}/publicar/1`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken,
+        },
+        body: JSON.stringify({
+          titulo: title.trim(),
+          contenido: content,
+          descripcion: "visible",
+        }),
+        credentials: "include",
+      });
+
+      if (response.status === 401) {
+        setShowSessionExpired(true);
+        return;
+      }
+
+      if (!response.ok) {
+        const errorData = await response
+          .json()
+          .catch(() => ({ error: "Error desconocido" }));
+        throw new Error(errorData.error || `Error HTTP ${response.status}`);
+      }
+
+      const result = await response.json().catch(() => ({}));
+      alert("Página guardada exitosamente");
+
+      // Limpiar estado después de guardar exitosamente
+      setTitle("Nueva Página");
+      setElements([]);
+      setContent("");
+      setEditingElement(null);
+    } catch (err) {
+      console.error("Error al guardar página:", err);
+      if (err.message.includes("401") || err.message.includes("Unauthorized")) {
+        setShowSessionExpired(true);
+      } else {
+        setError(err.message || "Error desconocido al guardar la página");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Componente para el editor HTML - movido arriba
   // Componente para elemento editable - movido arriba
