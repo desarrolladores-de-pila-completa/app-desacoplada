@@ -17,6 +17,5 @@ export declare function eliminarUsuarioTotal(req: Request, res: Response): Promi
 export declare function paginasPublicas(req: Request, res: Response): Promise<void>;
 export declare function guardarComentario(req: RequestWithValidatedData, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
 export declare function eliminarComentario(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
-export declare function guardarHtmlVvveb(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
 export {};
 //# sourceMappingURL=paginaController.d.ts.map

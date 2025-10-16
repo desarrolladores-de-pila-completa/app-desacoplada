@@ -189,8 +189,6 @@ router.get("/comment-images/:id", async (req, res) => {
 });
 // Endpoint para eliminar usuario y todo su rastro
 router.delete("/usuario/:id", auth_1.authMiddleware, rateLimit_1.userRateLimit, paginaController_1.eliminarUsuarioTotal);
-// Endpoint para guardar HTML de VvvebJs
-router.post("/guardar-html", auth_1.authMiddleware, rateLimit_1.userRateLimit, paginaController_1.guardarHtmlVvveb);
 // Endpoint para guardar página creada con PageBuilder
 router.post("/guardar-pagina", auth_1.authMiddleware, rateLimit_1.userRateLimit, async (req, res) => {
     const { titulo, contenido, username } = req.body;
@@ -203,7 +201,7 @@ router.post("/guardar-pagina", auth_1.authMiddleware, rateLimit_1.userRateLimit,
         if (!user || user.username !== username) {
             return res.status(403).json({ error: "No autorizado" });
         }
-        // Crear la página con el contenido HTML generado por VvvebJs
+        // Crear la página con el contenido HTML generado por PageBuilder
         const [result] = await db_1.pool.query("INSERT INTO paginas (user_id, titulo, contenido, propietario, usuario, oculto, creado_en) VALUES (?, ?, ?, 1, ?, 0, NOW())", [userId, titulo || "Página creada con PageBuilder", contenido, username]);
         const pageId = result.insertId;
         // Crear entrada en el feed

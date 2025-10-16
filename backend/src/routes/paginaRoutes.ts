@@ -4,7 +4,7 @@ import { pool } from "../middlewares/db";
 import { Router } from "express";
 // import rateLimit from "express-rate-limit";
 
-import { paginasPublicas, guardarComentario, eliminarComentario, obtenerPagina, actualizarUsuarioPagina, eliminarUsuarioTotal, obtenerPaginaPorUsernameYNumero, obtenerPaginasPublicasPorUsuario, guardarHtmlVvveb } from "../controllers/paginaController";
+import { paginasPublicas, guardarComentario, eliminarComentario, obtenerPagina, actualizarUsuarioPagina, eliminarUsuarioTotal, obtenerPaginaPorUsernameYNumero, obtenerPaginasPublicasPorUsuario } from "../controllers/paginaController";
 import { authMiddleware } from "../middlewares/auth";
 import { ValidationService, validateRequest } from '../services/ValidationService';
 import { userRateLimit } from '../middlewares/rateLimit';
@@ -230,8 +230,6 @@ router.get("/comment-images/:id", async (req: any, res: any) => {
 // Endpoint para eliminar usuario y todo su rastro
 router.delete("/usuario/:id", authMiddleware, userRateLimit, eliminarUsuarioTotal);
 
-// Endpoint para guardar HTML de VvvebJs
-router.post("/guardar-html", authMiddleware, userRateLimit, guardarHtmlVvveb);
 
 // Endpoint para guardar página creada con PageBuilder
 router.post("/guardar-pagina", authMiddleware, userRateLimit, async (req: any, res: any) => {
@@ -247,7 +245,7 @@ router.post("/guardar-pagina", authMiddleware, userRateLimit, async (req: any, r
       return res.status(403).json({ error: "No autorizado" });
     }
 
-    // Crear la página con el contenido HTML generado por VvvebJs
+    // Crear la página con el contenido HTML generado por PageBuilder
     const [result] = await pool.query(
       "INSERT INTO paginas (user_id, titulo, contenido, propietario, usuario, oculto, creado_en) VALUES (?, ?, ?, 1, ?, 0, NOW())",
       [userId, titulo || "Página creada con PageBuilder", contenido, username]
