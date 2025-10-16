@@ -11,6 +11,8 @@ import UserPage from "./components/UserPage";
 import AccountPage from "./components/AccountPage";
 import CreatePublication from "./components/CreatePublication";
 import PageBuilder from "./components/PageBuilder";
+import PoliticaDeCookies from "./components/PoliticaDeCookies";
+import Privacidad from "./components/Privacidad";
 import useAuthStore from "./stores/authStore";
 import { useFeed } from "./hooks/useFeed";
 
@@ -110,6 +112,8 @@ export default function App() {
         <Route path="/pagina/:username" element={<UserPage />} />
         <Route path="/:username/publicar/:pagina" element={<UserPage />} />
         <Route path="/:username/nuevapublicacion" element={<UserPage />} />
+        <Route path="/politica-de-cookies.html" element={<PoliticaDeCookies />} />
+        <Route path="/privacidad.html" element={<Privacidad />} />
       </Routes>
       <OutputMenu
         outputMsg={output.message}
