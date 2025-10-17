@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { API_URL } from "../config/api";
+import { API_BASE } from "../config/api";
 
 export default function useAuthUser() {
   const [authUser, setAuthUser] = useState(null);
@@ -7,7 +7,7 @@ export default function useAuthUser() {
   useEffect(() => {
     async function fetchAuthUser() {
       try {
-        const res = await fetch(`${API_URL}/api/auth/me`, { credentials: "include" });
+        const res = await fetch(`${API_BASE}/auth/me`, { credentials: "include" });
         if (res.ok) {
           const data = await res.json();
           setAuthUser(data);
