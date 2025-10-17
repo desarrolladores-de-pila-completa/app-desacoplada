@@ -41,6 +41,8 @@
   };
 
 function GlobalChat() {
+  console.log('GlobalChat: Componente renderizado');
+
   const { isAuthenticated } = useAuthStore();
   const { authUser } = useAuthUser();
   const [message, setMessage] = useState("");
@@ -57,6 +59,14 @@ function GlobalChat() {
   const [localGlobalMessages, setLocalGlobalMessages] = useState([]); // Estado local para mensajes globales
   const chatContainerRef = useRef(null); // Referencia al contenedor del chat
 
+  console.log('GlobalChat: Estado actual', {
+    isAuthenticated,
+    authUser: authUser ? { username: authUser.username, id: authUser.id } : null,
+    guestUser,
+    isPrivateChat,
+    privateUserId
+  });
+
   // Función para hacer scroll al final del chat
   const scrollToBottom = () => {
     if (chatContainerRef.current) {
@@ -64,8 +74,16 @@ function GlobalChat() {
     }
   };
 
+  console.log('GlobalChat: Ejecutando hooks de React Query');
+
   const { data: messages, isLoading, error } = useGlobalChat(50, 0);
   const sendMessageMutation = useSendMessage();
+
+  console.log('GlobalChat: Hooks de React Query ejecutados', {
+    messagesCount: messages?.length || 0,
+    isLoading,
+    error: error?.message
+  });
 
   // Usuarios conectados al feed (filtrados según el tipo de usuario actual)
   const feedOnlineUsers = Array.from(onlineUsers).filter(user => {
@@ -76,6 +94,14 @@ function GlobalChat() {
 
   const { data: privateMessages, isLoading: privateLoading, error: privateError, refetch: refetchPrivateMessages } = usePrivateChat(privateUserId && isPrivateChat ? privateUserId : null, 50, 0, guestUser);
   const sendPrivateMessageMutation = useSendPrivateMessage(privateUserId && isPrivateChat ? privateUserId : null, guestUser, authUser);
+
+  console.log('GlobalChat: Hooks privados ejecutados', {
+    privateMessagesCount: privateMessages?.length || 0,
+    privateLoading,
+    privateError: privateError?.message,
+    privateUserId,
+    isPrivateChat
+  });
 
 
   // Efecto para hacer scroll al final cuando se cargan mensajes

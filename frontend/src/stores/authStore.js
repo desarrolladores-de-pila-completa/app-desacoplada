@@ -128,7 +128,9 @@ const useAuthStore = create((set, get) => ({
 
           // Mostrar mensaje con enlace HTML en el body
           setTimeout(() => {
-            showSessionExpiredMessage();
+            if (typeof window !== 'undefined' && window.showSessionExpiredMessage) {
+              window.showSessionExpiredMessage();
+            }
           }, 100);
         } else {
           set({
@@ -152,61 +154,66 @@ const useAuthStore = create((set, get) => ({
 
 // Función para mostrar mensaje de sesión expirada con enlace HTML
 function showSessionExpiredMessage() {
- // Remover mensaje anterior si existe
- const existingMessage = document.getElementById('session-expired-message');
- if (existingMessage) {
-   existingMessage.remove();
- }
+  // Remover mensaje anterior si existe
+  const existingMessage = document.getElementById('session-expired-message');
+  if (existingMessage) {
+    existingMessage.remove();
+  }
 
- // Crear el mensaje
- const messageDiv = document.createElement('div');
- messageDiv.id = 'session-expired-message';
- messageDiv.style.cssText = `
-   position: fixed;
-   top: 20px;
-   right: 20px;
-   background: #fff3cd;
-   border: 1px solid #ffeaa7;
-   border-radius: 8px;
-   padding: 16px 20px;
-   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-   z-index: 10000;
-   max-width: 400px;
-   font-family: Arial, sans-serif;
- `;
+  // Crear el mensaje
+  const messageDiv = document.createElement('div');
+  messageDiv.id = 'session-expired-message';
+  messageDiv.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 8px;
+    padding: 16px 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 10000;
+    max-width: 400px;
+    font-family: Arial, sans-serif;
+  `;
 
- messageDiv.innerHTML = `
-   <div style="display: flex; align-items: flex-start; gap: 12px;">
-     <div style="flex: 1;">
-       <strong style="color: #856404;">Sesión expirada</strong>
-       <p style="margin: 8px 0 0 0; color: #856404; font-size: 14px;">
-         Tu sesión ha expirado. Por favor,
-         <a href="/login" style="color: #007bff; text-decoration: none; font-weight: bold;">
-           inicia sesión nuevamente
-         </a>.
-       </p>
-     </div>
-     <button onclick="this.parentElement.parentElement.remove()" style="
-       background: none;
-       border: none;
-       color: #856404;
-       cursor: pointer;
-       font-size: 20px;
-       padding: 0;
-       line-height: 1;
-     ">×</button>
-   </div>
- `;
+  messageDiv.innerHTML = `
+    <div style="display: flex; align-items: flex-start; gap: 12px;">
+      <div style="flex: 1;">
+        <strong style="color: #856404;">Sesión expirada</strong>
+        <p style="margin: 8px 0 0 0; color: #856404; font-size: 14px;">
+          Tu sesión ha expirado. Por favor,
+          <a href="/login" style="color: #007bff; text-decoration: none; font-weight: bold;">
+            inicia sesión nuevamente
+          </a>.
+        </p>
+      </div>
+      <button onclick="this.parentElement.parentElement.remove()" style="
+        background: none;
+        border: none;
+        color: #856404;
+        cursor: pointer;
+        font-size: 20px;
+        padding: 0;
+        line-height: 1;
+      ">×</button>
+    </div>
+  `;
 
- // Agregar al body
- document.body.appendChild(messageDiv);
+  // Agregar al body
+  document.body.appendChild(messageDiv);
 
- // Auto-remover después de 10 segundos
- setTimeout(() => {
-   if (messageDiv.parentElement) {
-     messageDiv.remove();
-   }
- }, 10000);
+  // Auto-remover después de 10 segundos
+  setTimeout(() => {
+    if (messageDiv.parentElement) {
+      messageDiv.remove();
+    }
+  }, 10000);
+}
+
+// Hacer la función disponible globalmente
+if (typeof window !== 'undefined') {
+  window.showSessionExpiredMessage = showSessionExpiredMessage;
 }
 
 // Función auxiliar para obtener CSRF token

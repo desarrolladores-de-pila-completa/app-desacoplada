@@ -18,7 +18,18 @@ export default defineConfig({
   publicDir: false, // Disable public folder to avoid dependency on it
   server: {
     proxy: {
-      '/api': 'http://localhost:3000' // Cambia el puerto si tu backend usa otro
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        secure: false,
+        ws: true // Habilitar WebSocket proxy
+      }
+    },
+    hmr: {
+      port: 5173 // Puerto específico para HMR
     }
+  },
+  optimizeDeps: {
+    include: ['@tanstack/react-query', 'react', 'react-dom']
   }
 });
