@@ -36,16 +36,19 @@ export interface UserCreateData {
 export interface Pagina {
   id: number;
   user_id: string;
-  propietario: boolean;
   usuario: string;
-  oculto: boolean;
+  titulo?: string;
+  contenido?: string;
+  propietario: number;
+  oculto: number;
+  descripcion?: string;
   creado_en: Date;
 }
 
 export interface PaginaCreateData {
   user_id: string;
-  titulo: string;
-  contenido: string;
+  titulo?: string;
+  contenido?: string;
   descripcion?: string;
   usuario?: string;
 }

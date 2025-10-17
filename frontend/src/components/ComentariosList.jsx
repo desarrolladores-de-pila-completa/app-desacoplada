@@ -5,6 +5,7 @@ import WinBox from "winbox/src/js/winbox.js";
 import "winbox/dist/css/winbox.min.css";
 import useAuthStore from "../stores/authStore";
 import { useDeleteComment } from "../hooks/useFeed";
+import { CommentContentRenderer } from "./ContentRenderer";
 
 function formatUUID(uuid) {
   if (!uuid || uuid.length !== 32) return uuid;
@@ -31,14 +32,9 @@ function ComentariosList({ comentarios, pageId }) {
   };
 
   const processCommentHTML = (html) => {
-    // Replace img tags with clickable versions
-    return html.replace(/<img([^>]+)>/g, (match, attrs) => {
-      const srcMatch = attrs.match(/src="([^"]+)"/);
-      const altMatch = attrs.match(/alt="([^"]*)"/);
-      const src = srcMatch ? srcMatch[1] : '';
-      const alt = altMatch ? altMatch[1] : '';
-      return `<img${attrs} onclick="window.commentImageClick && window.commentImageClick('${src}', '${alt}')" style="cursor: pointer;" />`;
-    });
+    // El nuevo sistema maneja automáticamente las imágenes clickeables
+    // y mejora el procesamiento de contenido HTML
+    return html;
   };
 
   React.useEffect(() => {
@@ -91,7 +87,16 @@ function ComentariosList({ comentarios, pageId }) {
               </button>
             )}
             <div style={{ background: '#f7f7f7', margin: '8px 0', padding: '12px', borderRadius: 6, wordWrap: 'break-word' }}>
-              <div dangerouslySetInnerHTML={{ __html: processCommentHTML(com.comentario) }}></div>
+              <CommentContentRenderer
+                content={com.comentario}
+                style={{ margin: 0 }}
+                options={{
+                  sanitize: true,
+                  processEntities: true,
+                  enhanceContent: true,
+                  allowHTML: true
+                }}
+              />
               <div style={{ fontSize: '0.9em', color: '#555' }}>
                 Publicado por: {com.user_id ? (
                   <Link to={com.username ? `/pagina/${encodeURIComponent(com.username.replace(/\s+/g, '-'))}` : `/pagina/${encodeURIComponent(com.user_id.replace(/-/g, ""))}`} style={{ color: '#007bff', textDecoration: 'underline' }}>

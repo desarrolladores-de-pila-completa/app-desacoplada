@@ -129,7 +129,22 @@ export const useUserPage = (path) => {
         throw new Error('Error al cargar página de usuario');
       }
 
-      return response.json();
+      const data = await response.json();
+
+      // Logs detallados para debugging del contenido HTML
+      console.log('🔄 [DEBUG] useUserPage - Datos recibidos del backend:', {
+        url,
+        dataType: typeof data,
+        hasContenido: !!data?.contenido,
+        contenidoLength: data?.contenido?.length,
+        contenidoPreview: data?.contenido?.substring(0, 300),
+        hasTitulo: !!data?.titulo,
+        titulo: data?.titulo,
+        hasPublicacion: !!data?.publicacion,
+        publicacionContenido: data?.publicacion?.contenido?.substring(0, 200)
+      });
+
+      return data;
     },
     enabled: !!path,
     staleTime: 5 * 60 * 1000, // 5 minutos

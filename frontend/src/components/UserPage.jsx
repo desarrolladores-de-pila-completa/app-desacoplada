@@ -6,6 +6,7 @@ import FotoPerfil from "./FotoPerfil";
 import UserHeader from "./UserHeader";
 import ComentariosList from "./ComentariosList";
 import AgregarComentario from "./AgregarComentario";
+import ContentRenderer from "./ContentRenderer";
 import useAuthStore from "../stores/authStore";
 import { useUserPage, useComments } from "../hooks/useFeed";
 
@@ -133,34 +134,43 @@ function UserPage() {
     );
   }
 
-  // Renderizar contenido HTML si existe
+  // Renderizar contenido HTML mejorado con el nuevo sistema
   const renderContent = (content) => {
     if (!content) return null;
 
-    // Si el contenido es HTML, renderizarlo directamente
-    if (content.includes('<') && content.includes('>')) {
-      return (
-        <div
-          dangerouslySetInnerHTML={{ __html: content }}
-          style={{
-            lineHeight: '1.6',
-            fontSize: '16px',
-            color: '#333'
-          }}
-        />
-      );
-    }
+    console.log('🔍 [UserPage] Renderizando contenido con nuevo sistema:', {
+      length: content.length,
+      preview: content.substring(0, 200)
+    });
 
-    // Si no es HTML, mostrar como texto plano
     return (
-      <div style={{
-        whiteSpace: 'pre-wrap',
-        lineHeight: '1.6',
-        fontSize: '16px',
-        color: '#333'
-      }}>
-        {content}
-      </div>
+      <ContentRenderer
+        content={content}
+        className="user-page-content"
+        style={{
+          lineHeight: '1.6',
+          fontSize: '16px',
+          color: '#333'
+        }}
+        options={{
+          sanitize: true,
+          processEntities: true,
+          enhanceContent: true,
+          allowHTML: true
+        }}
+        showDebugInfo={process.env.NODE_ENV === 'development'}
+        onContentProcessed={(result) => {
+          console.log('✅ [UserPage] Contenido procesado exitosamente:', {
+            type: result.analysis.type,
+            needsHTML: result.needsHTML,
+            isSafe: result.isSafe,
+            elementsCount: result.analysis.elements.length
+          });
+        }}
+        onError={(error) => {
+          console.error('❌ [UserPage] Error procesando contenido:', error);
+        }}
+      />
     );
   };
   return (
@@ -170,6 +180,52 @@ function UserPage() {
       <div style={{  maxWidth: 900, margin: '0 auto', boxSizing: 'border-box', padding: '0 5vw', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
           <FotoPerfil user={authUser} setUser={() => {}} editable={authUser?.id === paginaUser?.user_id} authUserId={authUser?.id} id={paginaUser?.user_id || username} />
+          {/* Botón de prueba para debugging - SOLO PARA DESARROLLO */}
+          {process.env.NODE_ENV === 'development' && (
+            <button
+              onClick={() => {
+                console.log('🧪 [TEST] Creando página de prueba con contenido HTML...');
+                const testHtml = `
+                  <h2>Título de Prueba</h2>
+                  <p>Este es un párrafo de prueba con <strong>texto en negrita</strong> y <em>cursiva</em>.</p>
+                  <ul>
+                    <li>Elemento de lista 1</li>
+                    <li>Elemento de lista 2</li>
+                    <li>Elemento de lista 3</li>
+                  </ul>
+                  <div style="background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 4px;">
+                    <p>Contenido con estilos CSS inline</p>
+                  </div>
+                  <p>Más contenido después del div.</p>
+                `;
+
+                // Simular datos de prueba
+                const testData = {
+                  titulo: 'Página de Prueba HTML',
+                  contenido: testHtml,
+                  created_at: new Date().toISOString()
+                };
+
+                console.log('📝 [TEST] Datos de prueba:', {
+                  titulo: testData.titulo,
+                  contenidoLength: testData.contenido.length,
+                  hasHtmlTags: /<\/?[a-z][\s\S]*>/i.test(testData.contenido),
+                  preview: testData.contenido.substring(0, 200)
+                });
+              }}
+              style={{
+                background: '#ff9800',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '4px',
+                padding: '8px 16px',
+                cursor: 'pointer',
+                fontSize: '12px'
+              }}
+            >
+              🧪 Test HTML
+            </button>
+          )}
         </div>
         <UserHeader paginaUser={paginaUser} username={params.username} authUserId={authUser?.id} onUsernameChange={() => {}} />
 
@@ -188,7 +244,16 @@ function UserPage() {
               {paginaUser.titulo || 'Página'}
             </h3>
             <div style={{ marginBottom: '20px' }}>
-              {renderContent(paginaUser.contenido)}
+              {(() => {
+                console.log('📦 [DEBUG] Datos recibidos del backend:', {
+                  titulo: paginaUser.titulo,
+                  contenidoLength: paginaUser.contenido?.length,
+                  contenidoPreview: paginaUser.contenido?.substring(0, 300),
+                  contenidoType: typeof paginaUser.contenido,
+                  hasContenido: !!paginaUser.contenido
+                });
+                return renderContent(paginaUser.contenido);
+              })()}
             </div>
             <p style={{
               color: '#888',

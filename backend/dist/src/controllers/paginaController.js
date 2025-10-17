@@ -213,6 +213,16 @@ async function obtenerPagina(req, res) {
         logger_1.default.debug('Resultado de consulta de página', { paginaId, found: rows && rows.length > 0, context: 'pagina' });
         if (!rows || rows.length === 0)
             return sendError(res, 404, "Página no encontrada");
+        // Logs detallados para debugging del contenido HTML
+        console.log('📄 [BACKEND DEBUG] Página recuperada:', {
+            id: rows[0].id,
+            titulo: rows[0].titulo,
+            contenidoLength: rows[0].contenido?.length,
+            contenidoPreview: rows[0].contenido?.substring(0, 300),
+            hasHtmlTags: /<\/?[a-z][\s\S]*>/i.test(rows[0].contenido || ''),
+            hasEntities: /&[a-z]+;/.test(rows[0].contenido || ''),
+            usuario: rows[0].usuario
+        });
         res.json(rows[0]);
     }
     catch (err) {
