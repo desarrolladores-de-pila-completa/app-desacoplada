@@ -165,10 +165,13 @@
 }
 
 .page-builder-content {
-  flex: 1;
-  padding: 30px;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  position: relative;
+   flex: 1;
+   padding: 30px;
+   background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+   position: relative;
+   display: flex;
+   flex-direction: column;
+   min-height: 0;
 }
 
 .page-builder-editor-container {
@@ -259,14 +262,16 @@
 }
 
 .page-builder-preview {
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  height: 400px;
-  padding: 20px;
-  background: white;
-  margin-bottom: 20px;
-  display: flex;
-  flex-direction: column;
+   border: 1px solid #ddd;
+   border-radius: 4px;
+   flex: 1;
+   padding: 20px;
+   background: white;
+   margin-bottom: 20px;
+   display: flex;
+   flex-direction: column;
+   min-height: 0;
+   overflow: hidden;
 }
 
 .page-builder-preview-header {
@@ -278,15 +283,17 @@
 }
 
 .page-builder-droppable {
-  flex: 1;
-  padding: 20px;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  border-radius: 16px;
-  border: 2px solid #e2e8f0;
-  overflow-y: auto;
-  min-height: 300px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
+   flex: 1;
+   padding: 20px;
+   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+   border-radius: 16px;
+   border: 2px solid #e2e8f0;
+   overflow-y: auto;
+   min-height: 0;
+   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+   position: relative;
+   display: flex;
+   flex-direction: column;
 }
 
 .page-builder-droppable--is-dragging-over {
@@ -374,13 +381,19 @@
 }
 
 .page-builder-empty-state {
-  color: #64748b;
-  text-align: center;
-  margin: 60px 0;
-  padding: 60px 40px;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  border-radius: 20px;
-  border: 2px dashed #cbd5e1;
+   color: #64748b;
+   text-align: center;
+   margin: 0 auto;
+   padding: 60px 40px;
+   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+   border-radius: 20px;
+   border: 2px dashed #cbd5e1;
+   max-width: 600px;
+   flex: 1;
+   display: flex;
+   flex-direction: column;
+   justify-content: center;
+   align-items: center;
 }
 
 .page-builder-empty-state h3 {
@@ -1035,6 +1048,11 @@
 
   .page-builder-content {
     flex: 1;
+    padding: 15px;
+  }
+
+  .page-builder-preview {
+    margin-bottom: 10px;
   }
 
   .page-builder-title-input {
@@ -1053,6 +1071,11 @@
     right: 10px;
     width: auto;
     max-height: calc(100vh - 160px);
+    z-index: 1001;
+  }
+
+  .page-builder-droppable {
+    padding: 15px;
   }
 
   .layout-mode-controls {

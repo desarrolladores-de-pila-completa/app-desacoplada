@@ -18,6 +18,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import "./PageBuilder.css";
+import { processContent } from "../utils/htmlProcessor";
 
 // Componente para mensaje de sesión expirada
 const SessionExpiredMessage = ({ onClose }) => {
@@ -267,19 +268,28 @@ function PageBuilder() {
       .map(([key, value]) => `${key.replace(/([A-Z])/g, '-$1').toLowerCase()}: ${value}`)
       .join('; ');
 
+    // Usar el nuevo sistema de procesamiento para mejorar el contenido
+    const processedContent = processContent(baseContent, {
+      sanitize: false, // No sanitizar aquí, ya que es contenido generado internamente
+      processEntities: true,
+      enhanceContent: false // No mejorar aquí, mantener el control del diseño
+    });
+
+    const safeContent = processedContent.processed || baseContent;
+
     switch (element.type) {
       case "heading":
-        return `<h2 style="${styleString}">${baseContent || "Título"}</h2>`;
+        return `<h2 style="${styleString}">${safeContent || "Título"}</h2>`;
       case "subheading":
-        return `<h3 style="${styleString}">${baseContent || "Subtítulo"}</h3>`;
+        return `<h3 style="${styleString}">${safeContent || "Subtítulo"}</h3>`;
       case "paragraph":
-        return `<p style="${styleString}">${baseContent || "Contenido del párrafo"}</p>`;
+        return `<p style="${styleString}">${safeContent || "Contenido del párrafo"}</p>`;
       case "button":
-        return `<div style="text-align: center; margin: 20px 0;"><button style="${styleString}">${baseContent || "Botón"}</button></div>`;
+        return `<div style="text-align: center; margin: 20px 0;"><button style="${styleString}">${safeContent || "Botón"}</button></div>`;
       case "card":
-        return `<div style="${styleString}"><h3 style="margin-top: 0; color: #2d3748;">${baseContent || "Título de tarjeta"}</h3><p style="color: #4a5568; margin-bottom: 0;">Contenido de la tarjeta...</p></div>`;
+        return `<div style="${styleString}"><h3 style="margin-top: 0; color: #2d3748;">${safeContent || "Título de tarjeta"}</h3><p style="color: #4a5568; margin-bottom: 0;">Contenido de la tarjeta...</p></div>`;
       default:
-        return `<div style="${styleString}">${baseContent || "Contenido"}</div>`;
+        return `<div style="${styleString}">${safeContent || "Contenido"}</div>`;
     }
   }, []);
 
@@ -632,30 +642,27 @@ function PageBuilder() {
   }, [elements]);
 
   const updateElementProperties = useCallback((elementId, newProperties) => {
-    setElements(prevElements =>
-      prevElements.map(el =>
-        el.id === elementId
-          ? { ...el, ...newProperties }
-          : el
-      )
-    );
+    setElements(prevElements => {
+      const updatedElements = prevElements.map(el => {
+        if (el.id === elementId) {
+          const updatedElement = { ...el, ...newProperties };
+          // Actualizar el HTML del elemento con las nuevas propiedades
+          updatedElement.html = generateElementHTML(updatedElement);
+          return updatedElement;
+        }
+        return el;
+      });
+
+      // Actualizar el contenido general después de modificar elementos
+      updateContentFromElements(updatedElements);
+
+      return updatedElements;
+    });
 
     if (selectedElement === elementId) {
       setElementProperties(prev => ({ ...prev, ...newProperties }));
     }
-
-    // Actualizar el contenido HTML después de cambiar propiedades
-    setElements(prevElements => {
-      const updatedElements = prevElements.map(el => {
-        if (el.id === elementId) {
-          return generateElementHTML({ ...el, ...newProperties });
-        }
-        return el;
-      });
-      updateContentFromElements(updatedElements);
-      return updatedElements;
-    });
-  }, [selectedElement, updateContentFromElements]);
+  }, [selectedElement, updateContentFromElements, generateElementHTML]);
 
 
   const changeLayoutMode = useCallback((mode) => {

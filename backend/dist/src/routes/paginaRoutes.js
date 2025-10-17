@@ -68,6 +68,15 @@ router.get("/:username/publicar/:publicacionId", async (req, res) => {
         if (rows.length === 0) {
             return res.status(404).json({ error: "Publicación no encontrada" });
         }
+        // Logs detallados para debugging del contenido HTML
+        console.log('🔍 [BACKEND DEBUG] Publicación encontrada:', {
+            id: rows[0].id,
+            titulo: rows[0].titulo,
+            contenidoLength: rows[0].contenido?.length,
+            contenidoPreview: rows[0].contenido?.substring(0, 300),
+            hasHtmlTags: /<\/?[a-z][\s\S]*>/i.test(rows[0].contenido || ''),
+            hasEntities: /&[a-z]+;/.test(rows[0].contenido || '')
+        });
         res.json({ publicacion: rows[0] });
     }
     catch (err) {
@@ -201,6 +210,16 @@ router.post("/guardar-pagina", auth_1.authMiddleware, rateLimit_1.userRateLimit,
         // Crear la página con el contenido HTML generado por PageBuilder
         const [result] = await db_1.pool.query("INSERT INTO paginas (user_id, titulo, contenido, propietario, usuario, oculto, creado_en) VALUES (?, ?, ?, 1, ?, 0, NOW())", [userId, titulo || "Página creada con PageBuilder", contenido, username]);
         const pageId = result.insertId;
+        // Logs detallados para debugging del contenido HTML almacenado
+        console.log('💾 [BACKEND DEBUG] Página creada con PageBuilder:', {
+            id: pageId,
+            titulo: titulo,
+            contenidoLength: contenido?.length,
+            contenidoPreview: contenido?.substring(0, 300),
+            hasHtmlTags: /<\/?[a-z][\s\S]*>/i.test(contenido || ''),
+            hasEntities: /&[a-z]+;/.test(contenido || ''),
+            username: username
+        });
         // Crear entrada en el feed
         const mensaje = `Nueva página creada: <a href="/pagina/${username}">${titulo || "Página creada con PageBuilder"}</a>`;
         await db_1.pool.query("INSERT INTO feed (user_id, mensaje) VALUES (?, ?)", [userId, mensaje]);

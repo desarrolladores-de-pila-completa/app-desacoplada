@@ -194,6 +194,18 @@ export async function obtenerPagina(req: Request, res: Response) {
     const [rows]: any = await pool.query("SELECT p.*, u.display_name FROM paginas p JOIN users u ON p.user_id = u.id WHERE p.id = ?", [paginaId]);
     logger.debug('Resultado de consulta de página', { paginaId, found: rows && rows.length > 0, context: 'pagina' });
     if (!rows || rows.length === 0) return sendError(res, 404, "Página no encontrada");
+
+    // Logs detallados para debugging del contenido HTML
+    console.log('📄 [BACKEND DEBUG] Página recuperada:', {
+       id: rows[0].id,
+       titulo: rows[0].titulo,
+       contenidoLength: rows[0].contenido?.length,
+       contenidoPreview: rows[0].contenido?.substring(0, 300),
+       hasHtmlTags: /<\/?[a-z][\s\S]*>/i.test(rows[0].contenido || ''),
+       hasEntities: /&[a-z]+;/.test(rows[0].contenido || ''),
+       usuario: rows[0].usuario
+    });
+
     res.json(rows[0]);
   } catch (err) {
     logger.error('Error al obtener página', { paginaId, error: (err as Error).message, stack: (err as Error).stack, context: 'pagina' });

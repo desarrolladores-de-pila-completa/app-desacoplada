@@ -218,9 +218,12 @@ if (typeof window !== 'undefined') {
 
 // Función auxiliar para obtener CSRF token
 async function getCsrfToken() {
- const res = await fetch(`${API_BASE}/csrf-token`, { credentials: 'include' });
- const data = await res.json();
- return data.csrfToken;
+  const res = await fetch(`${API_BASE}/csrf-token`, { credentials: 'include' });
+  if (!res.ok) {
+    throw new Error(`Error al obtener token CSRF: ${res.status}`);
+  }
+  const data = await res.json();
+  return data.csrfToken;
 }
 
 export default useAuthStore;
