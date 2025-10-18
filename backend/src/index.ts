@@ -41,6 +41,27 @@ app.use(
 
 // WebSocket server
 const wss = new WebSocket.Server({ port: 3002 });
+
+// Log para debugging de puerto WebSocket
+logger.info("Iniciando servidor WebSocket", { port: 3002, context: 'websocket' });
+
+// Manejar errores de binding del puerto WebSocket
+wss.on('error', (error: Error & { code?: string }) => {
+  if (error.code === 'EADDRINUSE') {
+    logger.error('Puerto WebSocket 3002 ya está en uso', {
+      error: error.message,
+      code: error.code,
+      port: 3002,
+      context: 'websocket'
+    });
+  } else {
+    logger.error('Error en servidor WebSocket', {
+      error: error.message,
+      code: error.code,
+      context: 'websocket'
+    });
+  }
+});
 const clients = new Map<string, WebSocket>();
 const rooms = new Map<string, Set<string>>(); // sala -> Set de userIds
 
@@ -48,7 +69,11 @@ const rooms = new Map<string, Set<string>>(); // sala -> Set de userIds
 rooms.set('global', new Set());
 
 wss.on('connection', (ws: WebSocket, request: IncomingMessage) => {
-  logger.info('Nuevo cliente WebSocket conectado', { context: 'websocket' });
+  logger.info('Nuevo cliente WebSocket conectado', {
+    remoteAddress: request.socket.remoteAddress,
+    remotePort: request.socket.remotePort,
+    context: 'websocket'
+  });
 
   ws.on('message', async (message: Buffer) => {
     try {
