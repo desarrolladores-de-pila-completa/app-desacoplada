@@ -7,8 +7,11 @@
   
   // Función para conectar a WebSocket
   const connectWebSocket = (userId, onMessage) => {
-    console.log('GlobalChat: Intentando conectar WebSocket a ws://localhost:3002 para usuario:', userId);
-    const ws = new WebSocket('ws://localhost:3002');
+    // CORRECCIÓN TEMPORAL: Cambiar puerto de 3001 a 3002 para coincidir con servidor
+    const wsUrl = 'ws://localhost:3002';
+    console.log('GlobalChat: Intentando conectar WebSocket a:', wsUrl, 'con userId:', userId);
+
+    const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
       console.log('GlobalChat: WebSocket conectado exitosamente');
@@ -43,7 +46,9 @@
   };
 
 function GlobalChat() {
-  console.log('GlobalChat: Componente renderizado');
+  const renderCount = useRef(0);
+  renderCount.current += 1;
+  console.log('GlobalChat: Componente renderizado - Count:', renderCount.current);
 
   const { isAuthenticated } = useAuthStore();
   const { authUser } = useAuthUser();
@@ -66,7 +71,21 @@ function GlobalChat() {
     authUser: authUser ? { username: authUser.username, id: authUser.id } : null,
     guestUser,
     isPrivateChat,
-    privateUserId
+    privateUserId,
+    activeRoomsCount: activeRooms.length,
+    onlineUsersCount: onlineUsers.size,
+    localMessagesCount: localGlobalMessages.length + localPrivateMessages.length
+  });
+
+  // Log para rastrear cambios específicos que podrían causar re-renders
+  console.log('GlobalChat: Estado detallado de cambios', {
+    isAuthenticatedChanged: true, // Siempre log para rastreo
+    authUserChanged: !!authUser,
+    guestUserChanged: !!guestUser,
+    isPrivateChatChanged: isPrivateChat,
+    privateUserIdChanged: !!privateUserId,
+    activeRoomsChanged: activeRooms.length > 1,
+    onlineUsersChanged: onlineUsers.size > 0
   });
 
   // Función para hacer scroll al final del chat
@@ -108,6 +127,11 @@ function GlobalChat() {
 
   // Efecto para hacer scroll al final cuando se cargan mensajes
   useEffect(() => {
+    console.log('GlobalChat: useEffect [messages] ejecutado', {
+      messagesCount: messages?.length || 0,
+      hasMessages: !!messages,
+      messagesIds: messages?.map(m => m.id).slice(-3) // últimos 3 IDs
+    });
     if (messages && messages.length > 0) {
       setTimeout(() => {
         if (chatContainerRef.current) {
@@ -119,6 +143,11 @@ function GlobalChat() {
 
   // Efecto para hacer scroll al final cuando se cargan mensajes privados
   useEffect(() => {
+    console.log('GlobalChat: useEffect [privateMessages] ejecutado', {
+      privateMessagesCount: privateMessages?.length || 0,
+      hasPrivateMessages: !!privateMessages,
+      privateMessagesIds: privateMessages?.map(m => m.id).slice(-3) // últimos 3 IDs
+    });
     if (privateMessages && privateMessages.length > 0) {
       setTimeout(() => scrollToBottom(), 100);
     }
@@ -126,6 +155,11 @@ function GlobalChat() {
 
   // Efecto adicional para asegurar scroll al final después de renderizar
   useEffect(() => {
+    console.log('GlobalChat: useEffect [isPrivateChat, messages, privateMessages] ejecutado', {
+      isPrivateChat,
+      messagesCount: messages?.length || 0,
+      privateMessagesCount: privateMessages?.length || 0
+    });
     const timer = setTimeout(() => scrollToBottom(), 200);
     return () => clearTimeout(timer);
   }, [isPrivateChat, messages, privateMessages]);
@@ -241,7 +275,14 @@ function GlobalChat() {
                 <input
                   type="text"
                   value={guestNameInput || ""}
-                  onChange={(e) => setGuestNameInput(e.target.value)}
+                  onChange={(e) => {
+                    console.log('GlobalChat: guestNameInput cambiando', {
+                      oldValue: guestNameInput,
+                      newValue: e.target.value,
+                      isControlled: guestNameInput !== undefined
+                    });
+                    setGuestNameInput(e.target.value);
+                  }}
                   placeholder="Tu nombre..."
                   style={{
                     width: '100%',
