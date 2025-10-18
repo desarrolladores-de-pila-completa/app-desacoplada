@@ -16,7 +16,7 @@ class PageRepository {
     async create(userId, pageData) {
         const { usuario } = pageData;
         try {
-            const [result] = await db_1.pool.query("INSERT INTO paginas (user_id, propietario, usuario) VALUES (?, 1, ?)", [userId, usuario]);
+            const [result] = await db_1.pool.query("INSERT INTO paginas (user_id, usuario) VALUES (?, ?)", [userId, usuario]);
             logger_1.default.info(`Página creada para usuario ${userId}`);
             return result.insertId;
         }
@@ -117,7 +117,7 @@ class PageRepository {
      */
     async findPublic(limit = 20, offset = 0) {
         try {
-            const [rows] = await db_1.pool.query("SELECT * FROM paginas WHERE descripcion = 'visible' ORDER BY creado_en DESC LIMIT ? OFFSET ?", [limit, offset]);
+            const [rows] = await db_1.pool.query("SELECT * FROM paginas ORDER BY creado_en DESC LIMIT ? OFFSET ?", [limit, offset]);
             logger_1.default.info(`findPublic ejecutado con limit ${limit} y offset ${offset}`);
             return rows;
         }
@@ -185,21 +185,20 @@ class PageRepository {
     }
     /**
      * Alterna la visibilidad de una página (visible/oculta).
+     * NOTA: Esta función quedó obsoleta debido a la eliminación del campo descripcion.
      * @param pageId ID de la página
-     * @returns Nuevo estado de visibilidad
+     * @returns Nuevo estado de visibilidad (siempre retorna 'visible' por compatibilidad)
      */
     async toggleVisibility(pageId) {
         try {
-            const [rows] = await db_1.pool.query("SELECT descripcion FROM paginas WHERE id = ?", [pageId]);
-            if (rows.length === 0) {
-                logger_1.default.warn(`toggleVisibility: página ${pageId} no encontrada`);
+            logger_1.default.warn(`toggleVisibility: Campo descripcion eliminado, función obsoleta para página ${pageId}`);
+            // Verificar que la página existe
+            const exists = await this.exists(pageId);
+            if (!exists) {
                 throw new Error("Página no encontrada");
             }
-            const currentVisibility = rows[0]?.descripcion ?? 'visible';
-            const newVisibility = currentVisibility === 'visible' ? 'oculta' : 'visible';
-            await db_1.pool.query("UPDATE paginas SET descripcion = ? WHERE id = ?", [newVisibility, pageId]);
-            logger_1.default.info(`toggleVisibility ejecutado para página ${pageId}: ${newVisibility}`);
-            return newVisibility;
+            // Retornar 'visible' por defecto ya que no hay sistema de visibilidad
+            return 'visible';
         }
         catch (error) {
             logger_1.default.error(`Error en toggleVisibility: ${error}`);

@@ -13,9 +13,7 @@ describe('PageService', () => {
   const mockPage: Pagina = {
     id: 1,
     user_id: 'user-123',
-    propietario: 1, // 1 = true
     usuario: 'testuser',
-    oculto: 0, // 0 = false
     creado_en: new Date()
   };
 
@@ -40,15 +38,8 @@ describe('PageService', () => {
       updateDescription: jest.fn(),
       updateComments: jest.fn(),
       updateUsername: jest.fn(),
-      updatePropietario: jest.fn(),
-      consultarVisibilidad: jest.fn(),
-      consultarPropietario: jest.fn(),
-      consultarDescripcion: jest.fn(),
       consultarUsuario: jest.fn(),
       consultarComentarios: jest.fn(),
-      actualizarVisibilidad: jest.fn(),
-      actualizarPropietario: jest.fn(),
-      actualizarDescripcion: jest.fn(),
       actualizarUsuario: jest.fn(),
       actualizarComentarios: jest.fn(),
       obtenerPagina: jest.fn(),
@@ -56,13 +47,15 @@ describe('PageService', () => {
       guardarComentario: jest.fn(),
       findWithImages: jest.fn(),
       findByUsername: jest.fn(),
+      findByUsernameAndPageNumber: jest.fn(),
       findPublic: jest.fn(),
       addImage: jest.fn(),
       removeImage: jest.fn(),
       exists: jest.fn(),
       getOwner: jest.fn(),
       toggleVisibility: jest.fn(),
-      getStats: jest.fn()
+      getStats: jest.fn(),
+      getPageNumber: jest.fn()
     } as any;
 
     mockFeedRepository = {

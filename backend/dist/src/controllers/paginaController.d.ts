@@ -58,28 +58,12 @@ export declare function obtenerPaginasPublicasPorUsuario(req: Request, res: Resp
 export declare function obtenerPaginaPorUsernameYNumero(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
 /**
  * @swagger
- * /api/pagina/propietario/{id}:
- *   get:
- *     summary: Consultar propietario de página
- *     tags: [Pagina]
- */
-export declare function consultarPropietario(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
-/**
- * @swagger
  * /api/pagina/usuario/{id}:
  *   get:
  *     summary: Consultar usuario de página
  *     tags: [Pagina]
  */
 export declare function consultarUsuarioPagina(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
-/**
- * @swagger
- * /api/pagina/actualizar-propietario/{id}:
- *   put:
- *     summary: Actualizar propietario de página
- *     tags: [Pagina]
- */
-export declare function actualizarPropietario(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
 /**
  * @swagger
  * /api/pagina/actualizar-usuario/{id}:
@@ -91,22 +75,6 @@ export declare function actualizarUsuarioPagina(req: RequestWithValidatedData, r
 interface RequestWithValidatedData extends Request {
     validatedData?: any;
 }
-/**
- * @swagger
- * /api/pagina/actualizar-visibilidad/{id}:
- *   put:
- *     summary: Actualizar visibilidad de página
- *     tags: [Pagina]
- */
-export declare function actualizarVisibilidad(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
-/**
- * @swagger
- * /api/pagina/consultar-visibilidad/{id}:
- *   get:
- *     summary: Consultar visibilidad de página
- *     tags: [Pagina]
- */
-export declare function consultarVisibilidad(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
 export declare function obtenerPagina(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
 /**
  * @swagger

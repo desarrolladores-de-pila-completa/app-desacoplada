@@ -117,7 +117,7 @@ router.post("/:username/publicar/:numeroDePagina", auth_1.authMiddleware, rateLi
 router.get("/pagina/id/:user_id", paginaController_1.obtenerPaginaPorUserId);
 // Endpoint para actualizar el nombre de usuario de la página
 router.post("/:id/usuario", auth_1.authMiddleware, (0, ValidationService_1.validateRequest)(ValidationService_1.ValidationService.validateUpdateUsername), paginaController_1.actualizarUsuarioPagina);
-// Rutas eliminadas: actualizarPropietario, actualizarDescripcion (funciones eliminadas)
+// Rutas eliminadas: actualizarPropietario, actualizarDescripcion, consultarPropietario, actualizarVisibilidad, consultarVisibilidad (campos eliminados)
 // Comentarios
 router.post("/:id/comentarios", auth_1.authMiddleware, rateLimit_1.userRateLimit, (0, ValidationService_1.validateRequest)(ValidationService_1.ValidationService.validateCreateComment), paginaController_1.guardarComentario);
 router.delete("/:id/comentarios/:commentId", auth_1.authMiddleware, rateLimit_1.userRateLimit, paginaController_1.eliminarComentario);
@@ -213,7 +213,7 @@ router.post("/guardar-pagina", auth_1.authMiddleware, rateLimit_1.userRateLimit,
             return res.status(403).json({ error: "No autorizado" });
         }
         // Crear la página con el contenido HTML generado por PageBuilder
-        const [result] = await db_1.pool.query("INSERT INTO paginas (user_id, titulo, contenido, propietario, usuario, oculto, creado_en) VALUES (?, ?, ?, 1, ?, 0, NOW())", [userId, titulo || "Página creada con PageBuilder", contenido, username]);
+        const [result] = await db_1.pool.query("INSERT INTO paginas (user_id, usuario, creado_en) VALUES (?, ?, NOW())", [userId, username]);
         const pageId = result.insertId;
         // Logs detallados para debugging del contenido HTML almacenado
         console.log('💾 [BACKEND DEBUG] Página creada con PageBuilder:', {

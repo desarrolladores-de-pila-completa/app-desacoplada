@@ -61,10 +61,10 @@ function ComentariosList({ comentarios, pageId }) {
         <div style={{ color: '#888' }}>No hay comentarios aún.</div>
       ) : (
         comentarios.map(com => (
-          <div key={com.id} className="comentario" style={{ position: 'relative' }}>
-            {user && user.id === com.user_id && (
+          <div key={com.id || com.comment_id} className="comentario" style={{ position: 'relative' }}>
+            {user && user.id === (com.user_id || com.author_id) && (
               <button
-                onClick={() => handleDelete(com.id)}
+                onClick={() => handleDelete(com.id || com.comment_id)}
                 style={{
                   position: 'absolute',
                   top: 8,
@@ -88,7 +88,7 @@ function ComentariosList({ comentarios, pageId }) {
             )}
             <div style={{ background: '#f7f7f7', margin: '8px 0', padding: '12px', borderRadius: 6, wordWrap: 'break-word' }}>
               <CommentContentRenderer
-                content={com.comentario}
+                content={com.comentario || com.message}
                 style={{ margin: 0 }}
                 options={{
                   sanitize: true,
@@ -98,18 +98,18 @@ function ComentariosList({ comentarios, pageId }) {
                 }}
               />
               <div style={{ fontSize: '0.9em', color: '#555' }}>
-                Publicado por: {com.user_id ? (
+                Publicado por: {(com.user_id || com.author_id) ? (
                   <Link
                     to={`/pagina/${encodeURIComponent(
-                      (typeof com.username === 'string' ? com.username : String(com.username || com.user_id || 'usuario')).replace(/\s+/g, '-')
+                      (typeof com.username === 'string' ? com.username : String(com.username || (com.user_id || com.author_id) || 'usuario')).replace(/\s+/g, '-')
                     )}`}
                     style={{ color: '#007bff', textDecoration: 'underline' }}
                   >
-                    {typeof com.username === 'string' ? com.username : (com.username || com.user_id || 'Usuario')}
+                    {com.username || com.user_id || 'Usuario'}
                   </Link>
                 ) : 'Anónimo'}
                 {' | '}
-                {new Date(com.creado_en).toLocaleString()}
+                {new Date(com.creado_en || com.created_at).toLocaleString()}
               </div>
             </div>
           </div>

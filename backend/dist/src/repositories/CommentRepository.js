@@ -205,7 +205,6 @@ class CommentRepository {
          FROM comentarios c
          LEFT JOIN users u ON c.user_id = u.id
          LEFT JOIN paginas p ON c.pagina_id = p.id
-         WHERE p.descripcion = 'visible'
          ORDER BY c.creado_en DESC
          LIMIT ?`, [limit]);
             logger_1.default.info(`findRecent ejecutado con limit ${limit}`);
@@ -230,7 +229,7 @@ class CommentRepository {
          FROM comentarios c
          LEFT JOIN users u ON c.user_id = u.id
          LEFT JOIN paginas p ON c.pagina_id = p.id
-         WHERE c.comentario LIKE ? AND p.descripcion = 'visible'
+         WHERE c.comentario LIKE ?
          ORDER BY c.creado_en DESC
          LIMIT ? OFFSET ?`, [searchPattern, limit, offset]);
             logger_1.default.info(`search ejecutado con término '${searchTerm}'`);

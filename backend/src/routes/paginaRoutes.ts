@@ -1,7 +1,7 @@
 import { pool } from "../middlewares/db";
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
-import { paginasPublicas, guardarComentario, eliminarComentario, obtenerPagina, actualizarUsuarioPagina, eliminarUsuarioTotal, obtenerPaginaPorUsernameYNumero, obtenerPaginasPublicasPorUsuario, obtenerPaginaPorUserId, obtenerPaginaPorUsername, paginaUnificadaPorUsername } from "../controllers/paginaController";
+import { paginasPublicas, guardarComentario, eliminarComentario, actualizarUsuarioPagina, eliminarUsuarioTotal, obtenerPaginaPorUsernameYNumero, obtenerPaginasPublicasPorUsuario, obtenerPaginaPorUserId, obtenerPaginaPorUsername, paginaUnificadaPorUsername } from "../controllers/paginaController";
 import { authMiddleware } from "../middlewares/auth";
 import { ValidationService, validateRequest } from '../services/ValidationService';
 import { userRateLimit } from '../middlewares/rateLimit';
@@ -151,7 +151,7 @@ router.post("/:username/publicar/:numeroDePagina", authMiddleware, userRateLimit
 router.get("/pagina/id/:user_id", obtenerPaginaPorUserId);
 // Endpoint para actualizar el nombre de usuario de la página
 router.post("/:id/usuario", authMiddleware, validateRequest(ValidationService.validateUpdateUsername), actualizarUsuarioPagina);
-// Rutas eliminadas: actualizarPropietario, actualizarDescripcion (funciones eliminadas)
+// Rutas eliminadas: actualizarPropietario, actualizarDescripcion, consultarPropietario, actualizarVisibilidad, consultarVisibilidad (campos eliminados)
 // Comentarios
 router.post("/:id/comentarios", authMiddleware, userRateLimit, validateRequest(ValidationService.validateCreateComment), guardarComentario);
 router.delete("/:id/comentarios/:commentId", authMiddleware, userRateLimit, eliminarComentario);
@@ -256,8 +256,8 @@ router.post("/guardar-pagina", authMiddleware, userRateLimit, async (req: any, r
 
     // Crear la página con el contenido HTML generado por PageBuilder
     const [result] = await pool.query(
-      "INSERT INTO paginas (user_id, titulo, contenido, propietario, usuario, oculto, creado_en) VALUES (?, ?, ?, 1, ?, 0, NOW())",
-      [userId, titulo || "Página creada con PageBuilder", contenido, username]
+      "INSERT INTO paginas (user_id, usuario, creado_en) VALUES (?, ?, NOW())",
+      [userId, username]
     );
 
     const pageId = (result as any).insertId;

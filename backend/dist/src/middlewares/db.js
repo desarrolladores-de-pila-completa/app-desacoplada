@@ -141,81 +141,10 @@ async function initDatabase() {
       id INT AUTO_INCREMENT PRIMARY KEY,
       user_id VARCHAR(36) NOT NULL,
       usuario VARCHAR(255),
-      titulo TEXT,
-      contenido TEXT,
-      propietario INT DEFAULT 1,
-      oculto BOOLEAN DEFAULT 0,
-      descripcion VARCHAR(50) DEFAULT 'visible',
       creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )`);
         logger_1.default.info('Tabla verificada/creada correctamente', { table: 'paginas', context: 'db' });
-        // Migrar columnas adicionales para paginas si no existen
-        try {
-            await pool.query("ALTER TABLE paginas ADD COLUMN titulo TEXT NULL");
-            logger_1.default.info('Columna titulo añadida a paginas', { context: 'db' });
-        }
-        catch (err) {
-            const error = err;
-            if (error.code === 'ER_DUP_FIELDNAME') {
-                logger_1.default.info('La columna titulo ya existe en paginas', { context: 'db' });
-            }
-            else {
-                logger_1.default.error('Error al crear columna titulo en paginas', { error: error.message, stack: error.stack, context: 'db' });
-            }
-        }
-        try {
-            await pool.query("ALTER TABLE paginas ADD COLUMN contenido TEXT NULL");
-            logger_1.default.info('Columna contenido añadida a paginas', { context: 'db' });
-        }
-        catch (err) {
-            const error = err;
-            if (error.code === 'ER_DUP_FIELDNAME') {
-                logger_1.default.info('La columna contenido ya existe en paginas', { context: 'db' });
-            }
-            else {
-                logger_1.default.error('Error al crear columna contenido en paginas', { error: error.message, stack: error.stack, context: 'db' });
-            }
-        }
-        try {
-            await pool.query("ALTER TABLE paginas ADD COLUMN propietario INT DEFAULT 1");
-            logger_1.default.info('Columna propietario añadida a paginas', { context: 'db' });
-        }
-        catch (err) {
-            const error = err;
-            if (error.code === 'ER_DUP_FIELDNAME') {
-                logger_1.default.info('La columna propietario ya existe en paginas', { context: 'db' });
-            }
-            else {
-                logger_1.default.error('Error al crear columna propietario en paginas', { error: error.message, stack: error.stack, context: 'db' });
-            }
-        }
-        try {
-            await pool.query("ALTER TABLE paginas ADD COLUMN oculto BOOLEAN DEFAULT 0");
-            logger_1.default.info('Columna oculto añadida a paginas', { context: 'db' });
-        }
-        catch (err) {
-            const error = err;
-            if (error.code === 'ER_DUP_FIELDNAME') {
-                logger_1.default.info('La columna oculto ya existe en paginas', { context: 'db' });
-            }
-            else {
-                logger_1.default.error('Error al crear columna oculto en paginas', { error: error.message, stack: error.stack, context: 'db' });
-            }
-        }
-        try {
-            await pool.query("ALTER TABLE paginas ADD COLUMN descripcion VARCHAR(50) DEFAULT 'visible'");
-            logger_1.default.info('Columna descripcion añadida a paginas', { context: 'db' });
-        }
-        catch (err) {
-            const error = err;
-            if (error.code === 'ER_DUP_FIELDNAME') {
-                logger_1.default.info('La columna descripcion ya existe en paginas', { context: 'db' });
-            }
-            else {
-                logger_1.default.error('Error al crear columna descripcion en paginas', { error: error.message, stack: error.stack, context: 'db' });
-            }
-        }
         // Mostrar estructura de la tabla 'paginas' al iniciar
         const [descPaginas] = await pool.query("DESCRIBE paginas");
         logger_1.default.info('Estructura actual de la tabla paginas', { structure: descPaginas, context: 'db' });

@@ -21,7 +21,7 @@ export class PageRepository implements IPageRepository {
     const { usuario } = pageData;
     try {
       const [result] = await pool.query(
-        "INSERT INTO paginas (user_id, propietario, usuario) VALUES (?, 1, ?)",
+        "INSERT INTO paginas (user_id, usuario) VALUES (?, ?)",
         [userId, usuario]
       );
       logger.info(`Página creada para usuario ${userId}`);
@@ -140,7 +140,7 @@ export class PageRepository implements IPageRepository {
   async findPublic(limit: number = 20, offset: number = 0): Promise<Pagina[]> {
     try {
       const [rows]: QueryResult<Pagina> = await pool.query(
-        "SELECT * FROM paginas WHERE descripcion = 'visible' ORDER BY creado_en DESC LIMIT ? OFFSET ?",
+        "SELECT * FROM paginas ORDER BY creado_en DESC LIMIT ? OFFSET ?",
         [limit, offset]
       );
       logger.info(`findPublic ejecutado con limit ${limit} y offset ${offset}`);
@@ -217,27 +217,20 @@ export class PageRepository implements IPageRepository {
 
   /**
    * Alterna la visibilidad de una página (visible/oculta).
+   * NOTA: Esta función quedó obsoleta debido a la eliminación del campo descripcion.
    * @param pageId ID de la página
-   * @returns Nuevo estado de visibilidad
+   * @returns Nuevo estado de visibilidad (siempre retorna 'visible' por compatibilidad)
    */
   async toggleVisibility(pageId: number): Promise<string> {
     try {
-      const [rows]: QueryResult<{ descripcion: string }> = await pool.query(
-        "SELECT descripcion FROM paginas WHERE id = ?",
-        [pageId]
-      );
-      if (rows.length === 0) {
-        logger.warn(`toggleVisibility: página ${pageId} no encontrada`);
+      logger.warn(`toggleVisibility: Campo descripcion eliminado, función obsoleta para página ${pageId}`);
+      // Verificar que la página existe
+      const exists = await this.exists(pageId);
+      if (!exists) {
         throw new Error("Página no encontrada");
       }
-      const currentVisibility = rows[0]?.descripcion ?? 'visible';
-      const newVisibility = currentVisibility === 'visible' ? 'oculta' : 'visible';
-      await pool.query(
-        "UPDATE paginas SET descripcion = ? WHERE id = ?",
-        [newVisibility, pageId]
-      );
-      logger.info(`toggleVisibility ejecutado para página ${pageId}: ${newVisibility}`);
-      return newVisibility;
+      // Retornar 'visible' por defecto ya que no hay sistema de visibilidad
+      return 'visible';
     } catch (error) {
       logger.error(`Error en toggleVisibility: ${error}`);
       throw error;

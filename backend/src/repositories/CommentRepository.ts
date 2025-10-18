@@ -229,7 +229,6 @@ export class CommentRepository implements ICommentRepository {
          FROM comentarios c
          LEFT JOIN users u ON c.user_id = u.id
          LEFT JOIN paginas p ON c.pagina_id = p.id
-         WHERE p.descripcion = 'visible'
          ORDER BY c.creado_en DESC
          LIMIT ?`,
         [limit]
@@ -257,7 +256,7 @@ export class CommentRepository implements ICommentRepository {
          FROM comentarios c
          LEFT JOIN users u ON c.user_id = u.id
          LEFT JOIN paginas p ON c.pagina_id = p.id
-         WHERE c.comentario LIKE ? AND p.descripcion = 'visible'
+         WHERE c.comentario LIKE ?
          ORDER BY c.creado_en DESC
          LIMIT ? OFFSET ?`,
         [searchPattern, limit, offset]
