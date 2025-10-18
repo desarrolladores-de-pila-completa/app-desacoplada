@@ -45,14 +45,19 @@ router.get("/:id/comentarios", async (req, res) => {
     }
 });
 router.get("/", limiter, paginaController_1.paginasPublicas);
-router.get("/:id", paginaController_1.obtenerPagina);
-// Endpoint para obtener la página por username (comentado, usar con número)
-// import { obtenerPaginaPorUsername } from "../controllers/paginaController";
-// router.get("/pagina/:username", obtenerPaginaPorUsername);
-// Endpoint para obtener la página por username y número de página
-router.get("/pagina/:username/:pageNumber", paginaController_1.obtenerPaginaPorUsernameYNumero);
-// Endpoint para obtener lista de páginas públicas de un usuario
-router.get("/paginas/:username", paginaController_1.obtenerPaginasPublicasPorUsuario);
+// Ruta eliminada: GET /:id - obtenerPagina (solicitud del usuario)
+// Endpoint unificado para todas las operaciones de páginas por username
+// Soporta diferentes acciones mediante parámetros de query:
+// - action=info (default): Información completa del usuario y página principal
+// - action=publicaciones: Lista de publicaciones del usuario
+// - action=publicacion&publicacionId=X: Publicación específica
+// - action=galeria: Galería de imágenes del usuario
+// - action=comentarios: Comentarios de la página principal
+// - action=lista&pageNumber=X: Página específica por número
+// - action=lista: Lista de páginas públicas del usuario
+router.get("/pagina/:username", paginaController_1.paginaUnificadaPorUsername);
+// Mantener compatibilidad con ruta antigua
+router.get("/:username", paginaController_1.paginaUnificadaPorUsername);
 // Endpoint para obtener una publicación específica por ID
 router.get("/:username/publicar/:publicacionId", async (req, res) => {
     const { username, publicacionId } = req.params;

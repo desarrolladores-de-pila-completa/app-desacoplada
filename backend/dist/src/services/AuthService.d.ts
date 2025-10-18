@@ -10,11 +10,12 @@ export declare class AuthService {
      * Registrar un nuevo usuario
      */
     /**
-     * Registra un nuevo usuario y retorna el usuario, token y username.
+     * Registra un nuevo usuario y retorna el usuario, tokens y username.
      */
     register(userData: Omit<UserCreateData, 'username'>): Promise<{
         user: User;
-        token: string;
+        accessToken: string;
+        refreshToken: string;
         username: string;
     }>;
     /**
@@ -26,10 +27,15 @@ export declare class AuthService {
      */
     login(email: string, password: string): Promise<{
         user: User;
-        token: string;
+        accessToken: string;
+        refreshToken: string;
     }>;
     /**
-     * Generar token JWT
+     * Generar tokens JWT (access y refresh)
+     */
+    private generateTokens;
+    /**
+     * @deprecated Usar generateTokens en su lugar
      */
     private generateToken;
     /**
@@ -38,5 +44,54 @@ export declare class AuthService {
     verifyToken(token: string): {
         userId: string;
     };
+    /**
+     * Refrescar tokens usando refresh token con rotación automática
+     */
+    refreshTokens(refreshToken: string): Promise<{
+        accessToken: string;
+        refreshToken: string;
+    }>;
+    /**
+     * Generar tokens JWT con rotación de refresh token
+     */
+    private generateTokensWithRotation;
+    /**
+     * Verificar si un token está próximo a expirar (menos de 5 minutos)
+     */
+    isTokenNearExpiry(token: string): boolean;
+    /**
+     * Obtener información del token sin verificar (para debugging)
+     */
+    getTokenInfo(token: string): any;
+    /**
+     * Invalidar sesión de usuario (logout forzado)
+     */
+    invalidateUserSession(userId: string): Promise<void>;
+    /**
+     * Obtener sesiones activas del usuario (para futuras mejoras)
+     */
+    getUserSessions(userId: string): Promise<any[]>;
+    /**
+     * Verificar si el usuario tiene sesiones múltiples sospechosas
+     */
+    checkSuspiciousActivity(userId: string): Promise<boolean>;
+    /**
+     * Extender sesión automáticamente (sliding sessions)
+     * Se llama cuando hay actividad del usuario para extender la sesión
+     */
+    extendSession(userId: string): Promise<{
+        accessToken: string;
+        refreshToken: string;
+        extended: boolean;
+    }>;
+    /**
+     * Verificar si la sesión debe extenderse automáticamente
+     * Se basa en la actividad reciente del usuario
+     */
+    shouldExtendSession(lastActivity: Date): boolean;
+    /**
+     * Actualizar timestamp de última actividad del usuario
+     */
+    updateLastActivity(userId: string): Promise<void>;
 }
 //# sourceMappingURL=AuthService.d.ts.map

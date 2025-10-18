@@ -48,7 +48,36 @@ function Navbar({ onFeedClick }) {
         🏠 Feed
       </Link>
 
-      {isAuthenticated && <span style={{ padding: '8px 16px', background: '#1976d2', color: '#fff', borderRadius: 4, fontWeight: 'bold', opacity: 0.6, cursor: 'not-allowed' }} title="Función aún no disponible">Publicación</span>}
+      {isAuthenticated && (
+        <>
+          <Link
+            to={`/pagina/${user?.username}`}
+            style={{
+              padding: '8px 16px',
+              background: '#28a745',
+              color: '#fff',
+              textDecoration: 'none',
+              borderRadius: 4,
+              fontWeight: 'bold'
+            }}
+          >
+            📋 Mis publicaciones
+          </Link>
+          <Link
+            to={`/${user?.username}/publicar`}
+            style={{
+              padding: '8px 16px',
+              background: '#1976d2',
+              color: '#fff',
+              textDecoration: 'none',
+              borderRadius: 4,
+              fontWeight: 'bold'
+            }}
+          >
+            📝 Publicar
+          </Link>
+        </>
+      )}
       {!isCheckingAuth && (
         <div style={{ position: 'relative' }}>
           {isAuthenticated ? (
@@ -62,8 +91,11 @@ function Navbar({ onFeedClick }) {
           )}
           {dropdownOpen && isAuthenticated && (
             <div style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', background: '#fff', border: '1px solid #ccc', borderRadius: 4, boxShadow: '0 4px 8px rgba(0,0,0,0.1)', zIndex: 1001, minWidth: 120 }}>
-              <div style={{ padding: '8px 16px', borderBottom: '1px solid #eee', color: '#333' }}>Bienvenido, <Link to={`/pagina/${user?.username}`} onClick={() => setDropdownOpen(false)} style={{ color: '#007bff', textDecoration: 'none' }}>{user?.display_name || user?.username}</Link></div>
-              <Link to="/cuenta" onClick={() => setDropdownOpen(false)} style={{ display: 'block', padding: '8px 16px', textDecoration: 'none', color: '#333', borderBottom: '1px solid #eee' }}>Cuenta</Link>
+              <div style={{ padding: '8px 16px', borderBottom: '1px solid #eee', color: '#333' }}>
+                Bienvenido, <Link to={`/pagina/${user?.username}`} onClick={() => setDropdownOpen(false)} style={{ color: '#007bff', textDecoration: 'none' }}>{user?.display_name || user?.username}</Link>
+              </div>
+              <Link to={`/${user?.username}/publicar`} onClick={() => setDropdownOpen(false)} style={{ display: 'block', padding: '8px 16px', textDecoration: 'none', color: '#007bff', borderBottom: '1px solid #eee' }}>📝 Crear publicación</Link>
+              <Link to="/cuenta" onClick={() => setDropdownOpen(false)} style={{ display: 'block', padding: '8px 16px', textDecoration: 'none', color: '#333', borderBottom: '1px solid #eee' }}>⚙️ Cuenta</Link>
               <button onClick={handleLogout} style={{ width: '100%', padding: '8px 16px', background: 'none', border: 'none', textAlign: 'center', cursor: 'pointer', color: '#333' }}>
                 Logout
               </button>
@@ -73,7 +105,6 @@ function Navbar({ onFeedClick }) {
       )}
       {!isAuthenticated && (
         <>
-          <Link to="/login" style={{ color: '#888', textDecoration: 'underline' }}>Inicia sesión para publicar</Link>
           <Link to="/registro">Registro</Link>
           <Link to="/login">Login</Link>
         </>

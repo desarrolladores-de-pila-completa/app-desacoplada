@@ -263,15 +263,14 @@ app.use(["/api/paginas", "/api/auth"], (req, res, next) => {
 
 import feedRoutes from "./routes/feedRoutes";
 import chatRoutes from "./routes/chatRoutes";
-import privateRoutes from "./routes/privateRoutes";
-import guestRoutes from "./routes/guestRoutes";
+// ❌ ELIMINADAS: privateRoutes y guestRoutes por contener rutas duplicadas
 app.use("/api/auth", authRoutes);
 app.use("/api/paginas", paginaRoutes);
 app.use("/api/publicaciones", publicacionRoutes);
 app.use("/api/feed", feedRoutes);
 app.use("/api/chat", chatRoutes);
-app.use("/api/private", privateRoutes);
-app.use("/api/guest", guestRoutes);
+// ❌ ELIMINADAS: app.use("/api/private", privateRoutes);
+// ❌ ELIMINADAS: app.use("/api/guest", guestRoutes);
 
 // Endpoint para verificar esquema de tabla
 app.get('/test-db', async (req, res) => {

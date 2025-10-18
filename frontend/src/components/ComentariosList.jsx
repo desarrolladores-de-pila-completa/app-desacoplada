@@ -99,8 +99,13 @@ function ComentariosList({ comentarios, pageId }) {
               />
               <div style={{ fontSize: '0.9em', color: '#555' }}>
                 Publicado por: {com.user_id ? (
-                  <Link to={com.username ? `/pagina/${encodeURIComponent(com.username.replace(/\s+/g, '-'))}` : `/pagina/${encodeURIComponent(com.user_id.replace(/-/g, ""))}`} style={{ color: '#007bff', textDecoration: 'underline' }}>
-                    {com.username || com.user_id}
+                  <Link
+                    to={`/pagina/${encodeURIComponent(
+                      (typeof com.username === 'string' ? com.username : String(com.username || com.user_id || 'usuario')).replace(/\s+/g, '-')
+                    )}`}
+                    style={{ color: '#007bff', textDecoration: 'underline' }}
+                  >
+                    {typeof com.username === 'string' ? com.username : (com.username || com.user_id || 'Usuario')}
                   </Link>
                 ) : 'Anónimo'}
                 {' | '}

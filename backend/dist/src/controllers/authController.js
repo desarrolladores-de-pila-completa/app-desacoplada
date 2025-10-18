@@ -7,6 +7,9 @@ exports.register = register;
 exports.login = login;
 exports.logout = logout;
 exports.me = me;
+exports.getUserByUsername = getUserByUsername;
+exports.extendSession = extendSession;
+exports.refreshTokens = refreshTokens;
 exports.eliminarUsuario = eliminarUsuario;
 const zod_1 = require("zod");
 const logger_1 = __importDefault(require("../utils/logger"));
@@ -37,7 +40,8 @@ async function register(req, res) {
         const file = req.file;
         const userData = { email, password, file };
         const result = await authService.register(userData);
-        res.cookie("token", result.token, (0, cookieConfig_1.getAuthCookieOptions)());
+        res.cookie("token", result.accessToken, (0, cookieConfig_1.getAuthCookieOptions)());
+        res.cookie("refreshToken", result.refreshToken, (0, cookieConfig_1.getRefreshTokenCookieOptions)());
         const { pool } = require('../middlewares/db');
         const mensaje = `Nuevo usuario registrado: <a href="/pagina/${result.username}">${result.username}</a>`;
         await pool.query("INSERT INTO feed (user_id, mensaje) VALUES (?, ?)", [result.user.id, mensaje]);
@@ -46,6 +50,8 @@ async function register(req, res) {
             id: result.user.id,
             username: result.user.username,
             display_name: result.user.display_name,
+            accessToken: result.accessToken,
+            refreshToken: result.refreshToken,
             paginaPersonal: null
         });
     }
@@ -77,13 +83,15 @@ async function login(req, res) {
         }
         const { email, password } = parsed.data;
         const result = await authService.login(email, password);
-        res.cookie("token", result.token, (0, cookieConfig_1.getAuthCookieOptions)());
+        res.cookie("token", result.accessToken, (0, cookieConfig_1.getAuthCookieOptions)());
+        res.cookie("refreshToken", result.refreshToken, (0, cookieConfig_1.getRefreshTokenCookieOptions)());
         res.json({
             message: "Login exitoso",
             id: result.user.id,
             username: result.user.username,
             display_name: result.user.display_name,
-            token: result.token
+            accessToken: result.accessToken,
+            refreshToken: result.refreshToken
         });
     }
     catch (error) {
@@ -102,16 +110,9 @@ async function login(req, res) {
  *     tags: [Auth]
  */
 async function logout(req, res) {
-    res.clearCookie("token", (0, cookieConfig_1.getAuthCookieOptions)());
-    res.json({ message: "Sesión cerrada y token eliminado" });
+    (0, cookieConfig_1.clearAuthCookies)(res);
+    res.json({ message: "Sesión cerrada y tokens eliminados" });
 }
-/**
- * @swagger
- * /api/auth/me:
- *   get:
- *     summary: Obtener datos del usuario autenticado
- *     tags: [Auth]
- */
 async function me(req, res) {
     const userId = req.userId;
     if (!userId) {
@@ -129,6 +130,133 @@ async function me(req, res) {
         display_name: user.display_name,
         email: user.email
     });
+}
+/**
+ * @swagger
+ * /api/auth/:username:
+ *   get:
+ *     summary: Obtener datos públicos del usuario por username
+ *     tags: [Auth]
+ */
+async function getUserByUsername(req, res) {
+    const { username } = req.params;
+    if (!username) {
+        res.status(400).json({ error: 'Username es requerido' });
+        return;
+    }
+    console.log('🔍 Buscando usuario por username:', username);
+    try {
+        // Buscar directamente en la base de datos usando el pool
+        const { pool } = require('../middlewares/db');
+        const [rows] = await pool.query("SELECT username, display_name, foto_perfil FROM users WHERE username = ?", [username]);
+        console.log('📊 Resultado de búsqueda:', {
+            username,
+            found: rows && rows.length > 0,
+            hasFotoPerfil: rows && rows.length > 0 && !!rows[0].foto_perfil
+        });
+        if (!rows || rows.length === 0) {
+            console.log('❌ Usuario no encontrado en la base de datos');
+            res.status(404).json({ error: 'Usuario no encontrado' });
+            return;
+        }
+        const user = rows[0];
+        console.log('✅ Usuario encontrado:', {
+            username: user.username,
+            display_name: user.display_name,
+            hasFotoPerfil: !!user.foto_perfil
+        });
+        res.json({
+            username: user.username,
+            display_name: user.display_name,
+            foto_perfil: user.foto_perfil || null
+        });
+    }
+    catch (error) {
+        console.error('❌ Error al buscar usuario por username:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+}
+/**
+ * @swagger
+ * /api/auth/extend-session:
+ *   post:
+ *     summary: Extender sesión automáticamente (sliding sessions)
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ */
+async function extendSession(req, res) {
+    const userId = req.userId;
+    if (!userId) {
+        res.status(401).json({ error: "No autenticado" });
+        return;
+    }
+    try {
+        // Actualizar timestamp de actividad
+        await authService.updateLastActivity(userId);
+        // Extender sesión
+        const result = await authService.extendSession(userId);
+        // Establecer nuevas cookies con configuración de sliding session
+        res.cookie("token", result.accessToken, (0, cookieConfig_1.getSlidingSessionCookieOptions)(true));
+        res.cookie("refreshToken", result.refreshToken, (0, cookieConfig_1.getRefreshTokenCookieOptions)());
+        // Marcar extensión en cookie separada para el frontend
+        res.cookie("sessionExtended", "true", {
+            httpOnly: false,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 300000, // 5 minutos
+            path: '/'
+        });
+        res.json({
+            message: "Sesión extendida exitosamente",
+            accessToken: result.accessToken,
+            refreshToken: result.refreshToken,
+            extended: result.extended
+        });
+    }
+    catch (error) {
+        logger_1.default.error('Error al extender sesión', { error, userId });
+        if (error instanceof interfaces_1.AppError) {
+            res.status(401).json({ error: error.message });
+        }
+        else {
+            res.status(500).json({ error: "Error interno del servidor" });
+        }
+    }
+}
+/**
+ * @swagger
+ * /api/auth/refresh:
+ *   post:
+ *     summary: Refrescar tokens de acceso
+ *     tags: [Auth]
+ */
+async function refreshTokens(req, res) {
+    const refreshToken = req.cookies.refreshToken;
+    if (!refreshToken) {
+        res.status(401).json({ error: "Refresh token no proporcionado" });
+        return;
+    }
+    try {
+        const result = await authService.refreshTokens(refreshToken);
+        // Establecer nuevas cookies
+        res.cookie("token", result.accessToken, (0, cookieConfig_1.getAuthCookieOptions)());
+        res.cookie("refreshToken", result.refreshToken, (0, cookieConfig_1.getRefreshTokenCookieOptions)());
+        res.json({
+            message: "Tokens refrescados exitosamente",
+            accessToken: result.accessToken,
+            refreshToken: result.refreshToken
+        });
+    }
+    catch (error) {
+        logger_1.default.error('Error al refrescar tokens', { error });
+        if (error instanceof interfaces_1.AppError) {
+            res.status(401).json({ error: error.message });
+        }
+        else {
+            res.status(500).json({ error: "Error interno del servidor" });
+        }
+    }
 }
 /**
  * @swagger

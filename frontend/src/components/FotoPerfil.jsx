@@ -1,13 +1,20 @@
 import React from "react";
 const API_URL = "http://localhost:3000";
 
-function FotoPerfil({ user, setUser, editable, authUserId, id }) {
+function FotoPerfil({ user, setUser, editable, authUserId, id, fotoPerfil }) {
   const inputRef = React.useRef();
   const [preview, setPreview] = React.useState("");
   const [msg, setMsg] = React.useState("");
   const [error, setError] = React.useState("");
 
   React.useEffect(() => {
+    // Si se proporciona fotoPerfil directamente (base64), usarla
+    if (fotoPerfil) {
+      setPreview(fotoPerfil);
+      return;
+    }
+
+    // Si no, hacer petición al servidor
     async function fetchFoto() {
       if (!id) return;
       try {
@@ -23,7 +30,7 @@ function FotoPerfil({ user, setUser, editable, authUserId, id }) {
       }
     }
     fetchFoto();
-  }, [id]);
+  }, [id, fotoPerfil]);
 
   const handleClick = () => {
     if (editable && inputRef.current) {

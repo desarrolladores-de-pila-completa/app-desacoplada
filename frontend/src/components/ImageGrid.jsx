@@ -8,7 +8,7 @@ const GRID_ROWS = 3;
 const GRID_COLS = 6;
 const TOTAL_CELLS = GRID_ROWS * GRID_COLS;
 
-function ImageGrid({ paginaId, editable }) {
+function ImageGrid({ paginaId, editable, images: externalImages }) {
   const [images, setImages] = useState([]);
   const fileInputs = useRef([]);
 
@@ -28,6 +28,13 @@ function ImageGrid({ paginaId, editable }) {
   };
   // Cargar imágenes guardadas en el backend
   useEffect(() => {
+    // Si se proporcionan imágenes externas (desde nueva estructura), usarlas directamente
+    if (externalImages && externalImages.length > 0) {
+      setImages(externalImages);
+      return;
+    }
+
+    // Si no, hacer petición al servidor (estructura antigua)
     setImages([]); // Limpiar imágenes al cambiar de usuario
     if (!paginaId) return;
     fetch(`/api/paginas/${paginaId}/imagenes`)
@@ -41,7 +48,7 @@ function ImageGrid({ paginaId, editable }) {
         setImages(imgs);
       })
       .catch(() => {});
-  }, [paginaId]);
+  }, [paginaId, externalImages]);
 
   const handleImageChange = async (index, event) => {
     const file = event.target.files[0];
