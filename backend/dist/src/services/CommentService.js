@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CommentService = void 0;
+const logger_1 = __importDefault(require("../utils/logger"));
 const sanitize_html_1 = __importDefault(require("sanitize-html"));
 class CommentService {
     commentRepository;
@@ -24,6 +25,7 @@ class CommentService {
      * Crear un nuevo comentario
      */
     async createComment(userId, pageId, comentario) {
+        logger_1.default.info('CommentService.createComment', { userId, pageId });
         const sanitizedComment = this.sanitizeComment(comentario);
         return await this.commentRepository.create({ pagina_id: pageId, user_id: userId, comentario: sanitizedComment });
     }

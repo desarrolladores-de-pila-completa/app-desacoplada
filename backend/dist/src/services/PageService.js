@@ -1,7 +1,11 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PageService = void 0;
 const CacheService_1 = require("./CacheService");
+const logger_1 = __importDefault(require("../utils/logger"));
 class PageService {
     pageRepository;
     feedRepository;
@@ -14,7 +18,11 @@ class PageService {
     /**
      * Obtener página por ID con imágenes
      */
+    /**
+     * Obtiene una página por ID con imágenes.
+     */
     async getPageWithImages(pageId) {
+        logger_1.default.info('PageService.getPageWithImages', { pageId });
         const cacheKey = `page:withImages:${pageId}`;
         const cached = CacheService_1.cacheService.get(cacheKey);
         if (cached)

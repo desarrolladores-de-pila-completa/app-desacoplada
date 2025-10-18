@@ -22,6 +22,13 @@ const logger_1 = __importDefault(require("../utils/logger"));
 const db_1 = require("../middlewares/db");
 const servicesConfig_1 = require("../utils/servicesConfig");
 // Obtener página por user_id (UUID sin guiones)
+/**
+ * @swagger
+ * /api/pagina/user/{user_id}:
+ *   get:
+ *     summary: Obtener página por user_id
+ *     tags: [Pagina]
+ */
 async function obtenerPaginaPorUserId(req, res) {
     const userId = req.params.user_id;
     try {
@@ -31,11 +38,18 @@ async function obtenerPaginaPorUserId(req, res) {
         res.json(pages[0]);
     }
     catch (err) {
-        console.error(err);
+        logger_1.default.error('Error al obtener página por user_id', { error: err });
         res.status(500).json({ error: "Error al obtener página por user_id" });
     }
 }
 // Obtener página por username
+/**
+ * @swagger
+ * /api/pagina/username/{username}:
+ *   get:
+ *     summary: Obtener página por username
+ *     tags: [Pagina]
+ */
 async function obtenerPaginaPorUsername(req, res) {
     const username = req.params.username;
     try {
@@ -49,12 +63,19 @@ async function obtenerPaginaPorUsername(req, res) {
         res.json(pages[0]);
     }
     catch (err) {
-        console.error(err);
+        logger_1.default.error('Error al obtener página por usuario', { error: err });
         res.status(500).json({ error: "Error al obtener página por usuario" });
     }
 }
 // Obtener página por username y número de página
 // Obtener lista de páginas públicas de un usuario
+/**
+ * @swagger
+ * /api/pagina/publicas/{username}:
+ *   get:
+ *     summary: Obtener páginas públicas de un usuario
+ *     tags: [Pagina]
+ */
 async function obtenerPaginasPublicasPorUsuario(req, res) {
     const username = req.params.username;
     try {
@@ -66,10 +87,17 @@ async function obtenerPaginasPublicasPorUsuario(req, res) {
         res.json(pages);
     }
     catch (err) {
-        console.error(err);
+        logger_1.default.error('Error al obtener páginas públicas del usuario', { error: err });
         res.status(500).json({ error: "Error al obtener páginas públicas del usuario" });
     }
 }
+/**
+ * @swagger
+ * /api/pagina/username/{username}/numero/{pageNumber}:
+ *   get:
+ *     summary: Obtener página por username y número de página
+ *     tags: [Pagina]
+ */
 async function obtenerPaginaPorUsernameYNumero(req, res) {
     const { username, pageNumber } = req.params;
     if (!pageNumber)
@@ -88,12 +116,19 @@ async function obtenerPaginaPorUsernameYNumero(req, res) {
         res.json(pages[0]);
     }
     catch (err) {
-        console.error(err);
+        logger_1.default.error('Error al obtener página por usuario y número', { error: err });
         res.status(500).json({ error: "Error al obtener página por usuario y número" });
     }
 }
 // Funciones eliminadas: consultarVisibilidadCampos, actualizarVisibilidadCampos (campos eliminados)
 // Consultar propietario
+/**
+ * @swagger
+ * /api/pagina/propietario/{id}:
+ *   get:
+ *     summary: Consultar propietario de página
+ *     tags: [Pagina]
+ */
 async function consultarPropietario(req, res) {
     const paginaId = req.params.id;
     try {
@@ -103,12 +138,19 @@ async function consultarPropietario(req, res) {
         res.json({ propietario: rows[0].propietario });
     }
     catch (err) {
-        console.error(err);
+        logger_1.default.error('Error al consultar propietario', { error: err });
         res.status(500).json({ error: "Error al consultar propietario" });
     }
 }
 // Función eliminada: consultarDescripcion (campo eliminado)
 // Consultar usuario
+/**
+ * @swagger
+ * /api/pagina/usuario/{id}:
+ *   get:
+ *     summary: Consultar usuario de página
+ *     tags: [Pagina]
+ */
 async function consultarUsuarioPagina(req, res) {
     const paginaId = req.params.id;
     try {
@@ -118,12 +160,19 @@ async function consultarUsuarioPagina(req, res) {
         res.json({ usuario: rows[0].usuario });
     }
     catch (err) {
-        console.error(err);
+        logger_1.default.error('Error al consultar usuario de página', { error: err });
         res.status(500).json({ error: "Error al consultar usuario de página" });
     }
 }
 // Función eliminada: consultarComentariosPagina (campo eliminado)
 // Actualizar propietario
+/**
+ * @swagger
+ * /api/pagina/actualizar-propietario/{id}:
+ *   put:
+ *     summary: Actualizar propietario de página
+ *     tags: [Pagina]
+ */
 async function actualizarPropietario(req, res) {
     const paginaId = req.params.id;
     const { propietario } = req.body;
@@ -138,12 +187,19 @@ async function actualizarPropietario(req, res) {
         res.json({ message: "Propietario actualizado" });
     }
     catch (err) {
-        console.error(err);
+        logger_1.default.error('Error al actualizar propietario', { error: err });
         res.status(500).json({ error: "Error al actualizar propietario" });
     }
 }
 // Función eliminada: actualizarDescripcion (campo eliminado)
 // Actualizar usuario
+/**
+ * @swagger
+ * /api/pagina/actualizar-usuario/{id}:
+ *   put:
+ *     summary: Actualizar usuario de página
+ *     tags: [Pagina]
+ */
 async function actualizarUsuarioPagina(req, res) {
     const paginaId = req.params.id;
     const { username } = req.validatedData;
@@ -167,10 +223,17 @@ async function actualizarUsuarioPagina(req, res) {
         res.json({ message: "Usuario de página actualizado" });
     }
     catch (err) {
-        console.error(err);
+        logger_1.default.error('Error al actualizar usuario de página', { error: err });
         res.status(500).json({ error: "Error al actualizar usuario de página" });
     }
 }
+/**
+ * @swagger
+ * /api/pagina/actualizar-visibilidad/{id}:
+ *   put:
+ *     summary: Actualizar visibilidad de página
+ *     tags: [Pagina]
+ */
 async function actualizarVisibilidad(req, res) {
     const paginaId = req.params.id;
     const { oculto } = req.body;
@@ -186,11 +249,18 @@ async function actualizarVisibilidad(req, res) {
         res.json({ message: "Visibilidad actualizada" });
     }
     catch (err) {
-        console.error(err);
+        logger_1.default.error('Error al actualizar visibilidad', { error: err });
         res.status(500).json({ error: "Error al actualizar visibilidad" });
     }
 }
 // Consultar visibilidad y oculto de una página
+/**
+ * @swagger
+ * /api/pagina/consultar-visibilidad/{id}:
+ *   get:
+ *     summary: Consultar visibilidad de página
+ *     tags: [Pagina]
+ */
 async function consultarVisibilidad(req, res) {
     const paginaId = req.params.id;
     try {
@@ -200,7 +270,7 @@ async function consultarVisibilidad(req, res) {
         res.json({ oculto: rows[0].oculto });
     }
     catch (err) {
-        console.error(err);
+        logger_1.default.error('Error al consultar visibilidad', { error: err });
         res.status(500).json({ error: "Error al consultar visibilidad" });
     }
 }
@@ -232,6 +302,13 @@ async function obtenerPagina(req, res) {
 }
 const userService = (0, servicesConfig_1.getService)('UserService');
 // Eliminar usuario y todo su rastro (perfil, comentarios, imágenes, feed)
+/**
+ * @swagger
+ * /api/pagina/eliminar-usuario/{id}:
+ *   delete:
+ *     summary: Eliminar usuario y todos sus datos
+ *     tags: [Pagina]
+ */
 async function eliminarUsuarioTotal(req, res) {
     const userId = req.params.id;
     if (!userId)
@@ -246,13 +323,24 @@ async function eliminarUsuarioTotal(req, res) {
         res.json({ message: "Usuario y todos sus datos eliminados" });
     }
     catch (err) {
-        console.error(err);
+        logger_1.default.error('Error al eliminar usuario y sus datos', { error: err });
         res.status(500).json({ error: "Error al eliminar usuario y sus datos" });
     }
 }
+/**
+ * Envía una respuesta de error con código y mensaje, y loguea el error.
+ */
 function sendError(res, code, msg) {
+    logger_1.default.error('API error', { code, msg });
     return res.status(code).json({ error: msg });
 }
+/**
+ * @swagger
+ * /api/pagina/publicas:
+ *   get:
+ *     summary: Obtener páginas públicas
+ *     tags: [Pagina]
+ */
 async function paginasPublicas(req, res) {
     try {
         const userId = req.query.user_id;
@@ -269,12 +357,19 @@ async function paginasPublicas(req, res) {
         res.json(rows);
     }
     catch (err) {
-        console.error(err);
+        logger_1.default.error('Error al obtener páginas públicas', { error: err });
         sendError(res, 500, "Error al obtener páginas");
     }
 }
 // Eliminado: función de edición de página
 // Guardar comentario en la base de datos
+/**
+ * @swagger
+ * /api/pagina/comentario:
+ *   post:
+ *     summary: Guardar comentario en la página
+ *     tags: [Pagina]
+ */
 async function guardarComentario(req, res) {
     const { comentario, pageId } = req.validatedData;
     const userId = req.user?.id;
@@ -293,11 +388,18 @@ async function guardarComentario(req, res) {
         res.json({ message: "Comentario guardado" });
     }
     catch (err) {
-        console.error(err);
+        logger_1.default.error('Error al guardar comentario', { error: err });
         sendError(res, 500, "Error al guardar comentario");
     }
 }
 // Eliminar comentario
+/**
+ * @swagger
+ * /api/pagina/comentario/{id}/{commentId}:
+ *   delete:
+ *     summary: Eliminar comentario de la página
+ *     tags: [Pagina]
+ */
 async function eliminarComentario(req, res) {
     const { id: pageId, commentId } = req.params;
     const userId = req.user?.id;
@@ -317,7 +419,7 @@ async function eliminarComentario(req, res) {
         res.json({ message: "Comentario eliminado" });
     }
     catch (err) {
-        console.error(err);
+        logger_1.default.error('Error al eliminar comentario', { error: err });
         sendError(res, 500, "Error al eliminar comentario");
     }
 }

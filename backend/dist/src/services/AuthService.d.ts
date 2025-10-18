@@ -9,6 +9,9 @@ export declare class AuthService {
     /**
      * Registrar un nuevo usuario
      */
+    /**
+     * Registra un nuevo usuario y retorna el usuario, token y username.
+     */
     register(userData: Omit<UserCreateData, 'username'>): Promise<{
         user: User;
         token: string;

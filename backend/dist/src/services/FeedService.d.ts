@@ -6,6 +6,9 @@ export declare class FeedService {
     /**
      * Obtener feed completo con paginación
      */
+    /**
+     * Obtiene el feed completo con paginación.
+     */
     getFeed(limit?: number, offset?: number): Promise<FeedEntry[]>;
     /**
      * Obtener feed de un usuario específico

@@ -1,13 +1,21 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.cacheService = exports.CacheService = void 0;
+const logger_1 = __importDefault(require("../utils/logger"));
 class CacheService {
     cache = new Map();
     defaultTTL = 300000; // 5 minutos en ms
     /**
      * Obtener un valor del caché
      */
+    /**
+     * Obtener un valor del caché
+     */
     get(key) {
+        logger_1.default.debug('CacheService.get', { key });
         const entry = this.cache.get(key);
         if (!entry)
             return null;
@@ -20,7 +28,11 @@ class CacheService {
     /**
      * Establecer un valor en el caché con TTL opcional
      */
+    /**
+     * Establecer un valor en el caché con TTL opcional
+     */
     set(key, value, ttlMs = this.defaultTTL) {
+        logger_1.default.debug('CacheService.set', { key, ttlMs });
         this.delete(key); // Limpiar entrada existente si hay
         const expiry = Date.now() + ttlMs;
         const timeoutId = setTimeout(() => {

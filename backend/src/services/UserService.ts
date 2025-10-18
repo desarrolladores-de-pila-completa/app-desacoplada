@@ -1,4 +1,5 @@
 import { User, UserCreateData, AppError } from '../types/interfaces';
+import winston from '../utils/logger';
 import { IUserRepository, IPageRepository } from '../repositories';
 import { cacheService } from './CacheService';
 const bcrypt = require("bcryptjs");
@@ -14,29 +15,34 @@ export class UserService {
   /**
    * Crear un nuevo usuario con página personal
    */
+  /**
+   * Crear un nuevo usuario con página personal
+   */
   async createUser(userData: UserCreateData): Promise<User> {
-    console.log('UserService.createUser called');
+    winston.info('UserService.createUser called');
     const { email, password, username, file } = userData;
 
     // Verificar si el usuario ya existe
-    console.log('Checking existing user');
+    winston.debug('Checking existing user', { email });
     const existingUser = await this.userRepository.findByEmail(email);
     if (existingUser) {
+      winston.warn('Email ya registrado', { email });
       throw new AppError(409, "email ya registrado");
     }
 
     // Verificar username único
-    console.log('Checking existing username');
+    winston.debug('Checking existing username', { username });
     const existingUsername = await this.userRepository.findByUsername(username);
     if (existingUsername) {
+      winston.warn('Username ya está en uso', { username });
       throw new AppError(409, "El username ya está en uso");
     }
 
     // Hash de contraseña
-    console.log('Hashing password');
+    winston.debug('Hashing password');
     const hashedPassword = await bcrypt.hash(password, 10);
     const userId = randomUUID();
-    console.log('UserId generated:', userId);
+    winston.debug('UserId generated', { userId });
 
     // Generar avatar
     let avatarBuffer: Buffer;

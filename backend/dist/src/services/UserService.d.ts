@@ -7,6 +7,9 @@ export declare class UserService {
     /**
      * Crear un nuevo usuario con página personal
      */
+    /**
+     * Crear un nuevo usuario con página personal
+     */
     createUser(userData: UserCreateData): Promise<User>;
     /**
      * Obtener usuario por ID

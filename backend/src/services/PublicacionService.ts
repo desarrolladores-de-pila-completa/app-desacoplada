@@ -1,9 +1,14 @@
 import { PublicacionRepository, Publicacion, CreatePublicacionData } from '../repositories/PublicacionRepository';
+import winston from '../utils/logger';
 
 export class PublicacionService {
   constructor(private publicacionRepository: PublicacionRepository) {}
 
+  /**
+   * Crea una nueva publicación para el usuario.
+   */
   async createPublicacion(userId: string, data: CreatePublicacionData): Promise<number> {
+    winston.info('PublicacionService.createPublicacion', { userId, data });
     return await this.publicacionRepository.create(userId, data);
   }
 

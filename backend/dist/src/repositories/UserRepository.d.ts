@@ -1,6 +1,9 @@
 import { User, UserCreateData } from '../types/interfaces';
 import { IUserRepository } from './IUserRepository';
 export declare class UserRepository implements IUserRepository {
+    /**
+     * Crea un nuevo usuario en la base de datos.
+     */
     create(userData: UserCreateData): Promise<User>;
     findById(id: string): Promise<User | null>;
     findByEmail(email: string): Promise<User | null>;

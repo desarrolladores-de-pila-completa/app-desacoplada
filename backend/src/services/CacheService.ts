@@ -1,3 +1,5 @@
+import winston from '../utils/logger';
+
 interface CacheEntry<T> {
   value: T;
   expiry: number;
@@ -11,7 +13,11 @@ export class CacheService {
   /**
    * Obtener un valor del caché
    */
+  /**
+   * Obtener un valor del caché
+   */
   get<T>(key: string): T | null {
+    winston.debug('CacheService.get', { key });
     const entry = this.cache.get(key);
     if (!entry) return null;
 
@@ -26,7 +32,11 @@ export class CacheService {
   /**
    * Establecer un valor en el caché con TTL opcional
    */
+  /**
+   * Establecer un valor en el caché con TTL opcional
+   */
   set<T>(key: string, value: T, ttlMs: number = this.defaultTTL): void {
+    winston.debug('CacheService.set', { key, ttlMs });
     this.delete(key); // Limpiar entrada existente si hay
 
     const expiry = Date.now() + ttlMs;

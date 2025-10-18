@@ -7,6 +7,7 @@ exports.AuthService = void 0;
 const interfaces_1 = require("../types/interfaces");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
+const logger_1 = __importDefault(require("../utils/logger"));
 class AuthService {
     userService;
     feedService;
@@ -19,16 +20,19 @@ class AuthService {
     /**
      * Registrar un nuevo usuario
      */
+    /**
+     * Registra un nuevo usuario y retorna el usuario, token y username.
+     */
     async register(userData) {
-        console.log('AuthService.register called');
+        logger_1.default.info('AuthService.register called');
         // Generar username único
         const username = this.generateUniqueUsername();
-        console.log('Username generated:', username);
+        logger_1.default.debug('Username generated', { username });
         // Crear usuario usando UserService
         const fullUserData = { ...userData, username };
-        console.log('Calling userService.createUser');
+        logger_1.default.debug('Calling userService.createUser');
         const user = await this.userService.createUser(fullUserData);
-        console.log('User created:', user.id);
+        logger_1.default.info('User created', { userId: user.id });
         // Emitir evento de usuario registrado
         try {
             await this.eventBus.emit('user.registered', {
@@ -36,16 +40,16 @@ class AuthService {
                 username: user.username,
                 email: userData.email,
             });
-            console.log('Event emitted');
+            logger_1.default.info('Event emitted user.registered');
         }
         catch (error) {
-            console.error('Error emitiendo evento user.registered:', error);
+            logger_1.default.error('Error emitiendo evento user.registered', { error });
             // No fallar el registro por esto
         }
         // Generar token JWT
-        console.log('Generating token');
+        logger_1.default.debug('Generating token');
         const token = this.generateToken(user.id);
-        console.log('Token generated');
+        logger_1.default.debug('Token generated');
         return {
             user,
             token,

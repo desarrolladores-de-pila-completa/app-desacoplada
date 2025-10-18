@@ -1,7 +1,11 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserService = void 0;
 const interfaces_1 = require("../types/interfaces");
+const logger_1 = __importDefault(require("../utils/logger"));
 const CacheService_1 = require("./CacheService");
 const bcrypt = require("bcryptjs");
 const { randomUUID } = require("crypto");
@@ -17,26 +21,31 @@ class UserService {
     /**
      * Crear un nuevo usuario con página personal
      */
+    /**
+     * Crear un nuevo usuario con página personal
+     */
     async createUser(userData) {
-        console.log('UserService.createUser called');
+        logger_1.default.info('UserService.createUser called');
         const { email, password, username, file } = userData;
         // Verificar si el usuario ya existe
-        console.log('Checking existing user');
+        logger_1.default.debug('Checking existing user', { email });
         const existingUser = await this.userRepository.findByEmail(email);
         if (existingUser) {
+            logger_1.default.warn('Email ya registrado', { email });
             throw new interfaces_1.AppError(409, "email ya registrado");
         }
         // Verificar username único
-        console.log('Checking existing username');
+        logger_1.default.debug('Checking existing username', { username });
         const existingUsername = await this.userRepository.findByUsername(username);
         if (existingUsername) {
+            logger_1.default.warn('Username ya está en uso', { username });
             throw new interfaces_1.AppError(409, "El username ya está en uso");
         }
         // Hash de contraseña
-        console.log('Hashing password');
+        logger_1.default.debug('Hashing password');
         const hashedPassword = await bcrypt.hash(password, 10);
         const userId = randomUUID();
-        console.log('UserId generated:', userId);
+        logger_1.default.debug('UserId generated', { userId });
         // Generar avatar
         let avatarBuffer;
         if (file && file.buffer) {

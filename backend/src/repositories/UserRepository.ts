@@ -1,4 +1,5 @@
 import { QueryResult, User, UserCreateData } from '../types/interfaces';
+import winston from '../utils/logger';
 import { pool } from "../middlewares/db";
 import { IUserRepository } from './IUserRepository';
 const bcrypt = require("bcryptjs");
@@ -6,7 +7,11 @@ const { randomUUID } = require("crypto");
 const { generarAvatarBuffer } = require("../utils/generarAvatarBuffer");
 
 export class UserRepository implements IUserRepository {
+  /**
+   * Crea un nuevo usuario en la base de datos.
+   */
   async create(userData: UserCreateData): Promise<User> {
+    winston.info('UserRepository.create', { email: userData.email, username: userData.username });
     const { email, password, username, file } = userData;
 
     // Hash de contraseña
@@ -30,6 +35,7 @@ export class UserRepository implements IUserRepository {
     // Retornar usuario creado (sin contraseña)
     const user = await this.findById(userId);
     if (!user) {
+      winston.error('Error al crear usuario', { userId });
       throw new Error("Error al crear usuario");
     }
     return user;
