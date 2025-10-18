@@ -249,7 +249,7 @@ class FeedRepository {
         let created = 0;
         let updated = 0;
         try {
-            const [pages] = await db_1.pool.query("SELECT * FROM paginas WHERE descripcion = 'visible'");
+            const [pages] = await db_1.pool.query("SELECT * FROM paginas");
             for (const page of pages) {
                 const [existing] = await db_1.pool.query("SELECT id FROM feed WHERE pagina_id = ?", [page.id]);
                 if (existing.length > 0) {

@@ -7,7 +7,7 @@ import ComentariosList from "./ComentariosList";
 import AgregarComentario from "./AgregarComentario";
 import ContentRenderer from "./ContentRenderer";
 import useAuthStore from "../stores/authStore";
-import { useUserPage, useComments } from "../hooks/useFeed";
+import { useUserPage } from "../hooks/useFeed";
 import { API_BASE } from "../config/api";
 
 function UserPage() {
@@ -35,7 +35,6 @@ function UserPage() {
 
   // Usar React Query para obtener datos
   const { data: paginaUser, isLoading: isLoadingPage, error: pageError } = useUserPage(path);
-  const { data: comentarios = [], isLoading: isLoadingComments } = useComments(paginaUser?.pagina?.id);
 
   // Usar datos del hook principal para evitar duplicación
   useEffect(() => {
@@ -46,6 +45,9 @@ function UserPage() {
       setUserData(null);
     }
   }, [paginaUser?.usuario]);
+
+  // Los comentarios ahora vienen incluidos en paginaUser del endpoint unificado
+  const comentarios = paginaUser?.comentarios || [];
 
   // Sincronizar el nombre de usuario cuando cambian las props
   useEffect(() => {
@@ -680,7 +682,7 @@ function UserPage() {
             <div style={{
               marginTop: '8px'
             }}>
-              <ComentariosList comentarios={paginaUser?.comentarios || comentarios} pageId={paginaUser?.pagina?.id} />
+              <ComentariosList comentarios={comentarios} pageId={paginaUser?.pagina?.id} />
             </div>
           </div>
         </div>

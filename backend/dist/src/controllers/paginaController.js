@@ -8,12 +8,8 @@ exports.paginaUnificadaPorUsername = paginaUnificadaPorUsername;
 exports.obtenerPaginaPorUsername = obtenerPaginaPorUsername;
 exports.obtenerPaginasPublicasPorUsuario = obtenerPaginasPublicasPorUsuario;
 exports.obtenerPaginaPorUsernameYNumero = obtenerPaginaPorUsernameYNumero;
-exports.consultarPropietario = consultarPropietario;
 exports.consultarUsuarioPagina = consultarUsuarioPagina;
-exports.actualizarPropietario = actualizarPropietario;
 exports.actualizarUsuarioPagina = actualizarUsuarioPagina;
-exports.actualizarVisibilidad = actualizarVisibilidad;
-exports.consultarVisibilidad = consultarVisibilidad;
 exports.obtenerPagina = obtenerPagina;
 exports.eliminarUsuarioTotal = eliminarUsuarioTotal;
 exports.paginasPublicas = paginasPublicas;
@@ -269,28 +265,7 @@ async function obtenerPaginaPorUsernameYNumero(req, res) {
         res.status(500).json({ error: "Error al obtener página por usuario y número" });
     }
 }
-// Funciones eliminadas: consultarVisibilidadCampos, actualizarVisibilidadCampos (campos eliminados)
-// Consultar propietario
-/**
- * @swagger
- * /api/pagina/propietario/{id}:
- *   get:
- *     summary: Consultar propietario de página
- *     tags: [Pagina]
- */
-async function consultarPropietario(req, res) {
-    const paginaId = req.params.id;
-    try {
-        const [rows] = await db_1.pool.query("SELECT propietario FROM paginas WHERE id = ?", [paginaId]);
-        if (!rows || rows.length === 0)
-            return res.status(404).json({ error: "Página no encontrada" });
-        res.json({ propietario: rows[0].propietario });
-    }
-    catch (err) {
-        logger_1.default.error('Error al consultar propietario', { error: err });
-        res.status(500).json({ error: "Error al consultar propietario" });
-    }
-}
+// Función eliminada: consultarPropietario (campo propietario eliminado)
 // Función eliminada: consultarDescripcion (campo eliminado)
 // Consultar usuario
 /**
@@ -313,33 +288,7 @@ async function consultarUsuarioPagina(req, res) {
         res.status(500).json({ error: "Error al consultar usuario de página" });
     }
 }
-// Función eliminada: consultarComentariosPagina (campo eliminado)
-// Actualizar propietario
-/**
- * @swagger
- * /api/pagina/actualizar-propietario/{id}:
- *   put:
- *     summary: Actualizar propietario de página
- *     tags: [Pagina]
- */
-async function actualizarPropietario(req, res) {
-    const paginaId = req.params.id;
-    const { propietario } = req.body;
-    const userId = req.userId;
-    try {
-        const [rows] = await db_1.pool.query("SELECT user_id FROM paginas WHERE id = ?", [paginaId]);
-        if (!rows || rows.length === 0)
-            return res.status(404).json({ error: "Página no encontrada" });
-        if (String(rows[0].user_id) !== String(userId))
-            return res.status(403).json({ error: "No autorizado" });
-        await db_1.pool.query("UPDATE paginas SET propietario = ? WHERE id = ?", [propietario ? 1 : 0, paginaId]);
-        res.json({ message: "Propietario actualizado" });
-    }
-    catch (err) {
-        logger_1.default.error('Error al actualizar propietario', { error: err });
-        res.status(500).json({ error: "Error al actualizar propietario" });
-    }
-}
+// Función eliminada: actualizarPropietario (campo propietario eliminado)
 // Función eliminada: actualizarDescripcion (campo eliminado)
 // Actualizar usuario
 /**
@@ -376,53 +325,6 @@ async function actualizarUsuarioPagina(req, res) {
         res.status(500).json({ error: "Error al actualizar usuario de página" });
     }
 }
-/**
- * @swagger
- * /api/pagina/actualizar-visibilidad/{id}:
- *   put:
- *     summary: Actualizar visibilidad de página
- *     tags: [Pagina]
- */
-async function actualizarVisibilidad(req, res) {
-    const paginaId = req.params.id;
-    const { oculto } = req.body;
-    const userId = req.userId;
-    try {
-        // Solo el propietario puede modificar
-        const [rows] = await db_1.pool.query("SELECT user_id FROM paginas WHERE id = ?", [paginaId]);
-        if (!rows || rows.length === 0)
-            return res.status(404).json({ error: "Página no encontrada" });
-        if (String(rows[0].user_id) !== String(userId))
-            return res.status(403).json({ error: "No autorizado" });
-        await db_1.pool.query("UPDATE paginas SET oculto = ? WHERE id = ?", [oculto ? 1 : 0, paginaId]);
-        res.json({ message: "Visibilidad actualizada" });
-    }
-    catch (err) {
-        logger_1.default.error('Error al actualizar visibilidad', { error: err });
-        res.status(500).json({ error: "Error al actualizar visibilidad" });
-    }
-}
-// Consultar visibilidad y oculto de una página
-/**
- * @swagger
- * /api/pagina/consultar-visibilidad/{id}:
- *   get:
- *     summary: Consultar visibilidad de página
- *     tags: [Pagina]
- */
-async function consultarVisibilidad(req, res) {
-    const paginaId = req.params.id;
-    try {
-        const [rows] = await db_1.pool.query("SELECT oculto FROM paginas WHERE id = ?", [paginaId]);
-        if (!rows || rows.length === 0)
-            return res.status(404).json({ error: "Página no encontrada" });
-        res.json({ oculto: rows[0].oculto });
-    }
-    catch (err) {
-        logger_1.default.error('Error al consultar visibilidad', { error: err });
-        res.status(500).json({ error: "Error al consultar visibilidad" });
-    }
-}
 // Obtener una página por su id
 async function obtenerPagina(req, res) {
     const paginaId = req.params.id;
@@ -432,15 +334,12 @@ async function obtenerPagina(req, res) {
         logger_1.default.debug('Resultado de consulta de página', { paginaId, found: rows && rows.length > 0, context: 'pagina' });
         if (!rows || rows.length === 0)
             return sendError(res, 404, "Página no encontrada");
-        // Logs detallados para debugging del contenido HTML
+        // Logs detallados para debugging
         console.log('📄 [BACKEND DEBUG] Página recuperada:', {
             id: rows[0].id,
-            titulo: rows[0].titulo,
-            contenidoLength: rows[0].contenido?.length,
-            contenidoPreview: rows[0].contenido?.substring(0, 300),
-            hasHtmlTags: /<\/?[a-z][\s\S]*>/i.test(rows[0].contenido || ''),
-            hasEntities: /&[a-z]+;/.test(rows[0].contenido || ''),
-            usuario: rows[0].usuario
+            usuario: rows[0].usuario,
+            user_id: rows[0].user_id,
+            creado_en: rows[0].creado_en
         });
         res.json(rows[0]);
     }

@@ -37,19 +37,11 @@ export interface Pagina {
   id: number;
   user_id: string;
   usuario: string;
-  titulo?: string;
-  contenido?: string;
-  propietario: number;
-  oculto: number;
-  descripcion?: string;
   creado_en: Date;
 }
 
 export interface PaginaCreateData {
   user_id: string;
-  titulo?: string;
-  contenido?: string;
-  descripcion?: string;
   usuario?: string;
 }
 

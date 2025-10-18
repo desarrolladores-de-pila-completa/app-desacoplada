@@ -65,8 +65,9 @@ export declare class PageRepository implements IPageRepository {
     getOwner(pageId: number): Promise<string | null>;
     /**
      * Alterna la visibilidad de una página (visible/oculta).
+     * NOTA: Esta función quedó obsoleta debido a la eliminación del campo descripcion.
      * @param pageId ID de la página
-     * @returns Nuevo estado de visibilidad
+     * @returns Nuevo estado de visibilidad (siempre retorna 'visible' por compatibilidad)
      */
     toggleVisibility(pageId: number): Promise<string>;
     /**

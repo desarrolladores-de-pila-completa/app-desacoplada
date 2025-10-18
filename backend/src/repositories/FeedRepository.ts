@@ -247,7 +247,7 @@ export class FeedRepository implements IFeedRepository {
     let updated = 0;
     try {
       const [pages] = await pool.query(
-        "SELECT * FROM paginas WHERE descripcion = 'visible'"
+        "SELECT * FROM paginas"
       );
       for (const page of pages as any[]) {
         const [existing] = await pool.query(

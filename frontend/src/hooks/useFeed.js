@@ -51,25 +51,6 @@ export const useCreateComment = () => {
   });
 };
 
-// Hook para obtener comentarios de una página
-export const useComments = (pageId) => {
-  return useQuery({
-    queryKey: ['comments', pageId],
-    queryFn: async () => {
-      const response = await fetch(`${API_BASE}/paginas/${pageId}/comentarios`, {
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al cargar comentarios');
-      }
-
-      return response.json();
-    },
-    enabled: !!pageId,
-    staleTime: 1 * 60 * 1000, // 1 minuto
-  });
-};
 
 // Hook para eliminar comentario
 export const useDeleteComment = () => {
