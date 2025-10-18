@@ -1,7 +1,11 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FeedService = void 0;
 const CacheService_1 = require("./CacheService");
+const logger_1 = __importDefault(require("../utils/logger"));
 class FeedService {
     feedRepository;
     constructor(feedRepository) {
@@ -10,7 +14,11 @@ class FeedService {
     /**
      * Obtener feed completo con paginación
      */
+    /**
+     * Obtiene el feed completo con paginación.
+     */
     async getFeed(limit = 20, offset = 0) {
+        logger_1.default.info('FeedService.getFeed', { limit, offset });
         const cacheKey = `feed:all:${limit}:${offset}`;
         const cached = CacheService_1.cacheService.get(cacheKey);
         if (cached)

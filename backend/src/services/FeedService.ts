@@ -1,13 +1,18 @@
 import { FeedEntry } from '../types/interfaces';
 import { IFeedRepository } from '../repositories';
 import { cacheService } from './CacheService';
+import winston from '../utils/logger';
 
 export class FeedService {
   constructor(private feedRepository: IFeedRepository) {}
   /**
    * Obtener feed completo con paginación
    */
+  /**
+   * Obtiene el feed completo con paginación.
+   */
   async getFeed(limit: number = 20, offset: number = 0): Promise<FeedEntry[]> {
+    winston.info('FeedService.getFeed', { limit, offset });
     const cacheKey = `feed:all:${limit}:${offset}`;
     const cached = cacheService.get<FeedEntry[]>(cacheKey);
     if (cached) return cached;

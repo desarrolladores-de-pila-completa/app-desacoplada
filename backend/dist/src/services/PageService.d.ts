@@ -8,6 +8,9 @@ export declare class PageService {
     /**
      * Obtener página por ID con imágenes
      */
+    /**
+     * Obtiene una página por ID con imágenes.
+     */
     getPageWithImages(pageId: number): Promise<PaginaWithImages | null>;
     /**
       * Obtener página por usuario (username)

@@ -1,8 +1,5 @@
-import {
-  Comentario,
-  CreateCommentRequest,
-  AuthenticatedRequest
-} from '../types/interfaces';
+import { Comentario, CreateCommentRequest, AuthenticatedRequest } from '../types/interfaces';
+import winston from '../utils/logger';
 import { ICommentRepository } from '../repositories';
 import sanitizeHtml from 'sanitize-html';
 
@@ -24,6 +21,7 @@ export class CommentService {
    * Crear un nuevo comentario
    */
   async createComment(userId: string, pageId: number, comentario: string): Promise<number> {
+    winston.info('CommentService.createComment', { userId, pageId });
     const sanitizedComment = this.sanitizeComment(comentario);
     return await this.commentRepository.create({ pagina_id: pageId, user_id: userId, comentario: sanitizedComment });
   }

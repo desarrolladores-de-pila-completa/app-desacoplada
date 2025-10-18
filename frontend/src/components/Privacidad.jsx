@@ -1,53 +1,33 @@
-import React, { useEffect, useState } from 'react';
+
+import React from 'react';
 
 /**
- * Component that displays the Privacidad (Privacy Policy) page
- * Loads the static HTML content from the pages directory
+ * Página de Política de Privacidad
  */
 function Privacidad() {
-  const [htmlContent, setHtmlContent] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    // Import the HTML file as raw text
-    import('../pages/privacidad.html?raw')
-      .then((module) => {
-        setHtmlContent(module.default);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error('Error loading privacidad:', err);
-        setError('Error al cargar la política de privacidad');
-        setLoading(false);
-      });
-  }, []);
-
-  if (loading) {
-    return (
-      <div style={{ padding: '40px', textAlign: 'center' }}>
-        <p>Cargando...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div style={{ padding: '40px', textAlign: 'center' }}>
-        <p style={{ color: 'red' }}>{error}</p>
-      </div>
-    );
-  }
-
   return (
-    <div 
-      style={{ 
-        maxWidth: '900px', 
-        margin: '0 auto', 
-        padding: '20px' 
-      }}
-      dangerouslySetInnerHTML={{ __html: htmlContent }}
-    />
+    <div style={{ maxWidth: '900px', margin: '0 auto', padding: '20px' }}>
+      <h1>Política de Privacidad</h1>
+      <p>Esta Política de Privacidad describe cómo recopilamos, utilizamos y protegemos tu información personal cuando utilizas nuestra aplicación.</p>
+      <h2>Información que recopilamos</h2>
+      <ul>
+        <li>Datos de registro y perfil</li>
+        <li>Contenido que publicas (posts, comentarios, fotos)</li>
+        <li>Datos de uso y navegación</li>
+      </ul>
+      <h2>Uso de la información</h2>
+      <ul>
+        <li>Mejorar la experiencia de usuario</li>
+        <li>Personalizar el contenido</li>
+        <li>Garantizar la seguridad de la plataforma</li>
+      </ul>
+      <h2>Cookies y tecnologías similares</h2>
+      <p>Utilizamos cookies para analizar el tráfico y personalizar la experiencia. Consulta la <a href="/politica-de-cookies.html">Política de Cookies</a> para más detalles.</p>
+      <h2>Actualizaciones</h2>
+      <p>Podemos actualizar esta política ocasionalmente. Te notificaremos sobre cambios significativos publicando la nueva política en esta página.</p>
+      <h2>Contacto</h2>
+      <p>Si tienes preguntas sobre esta política o deseas ejercer tus derechos, contáctanos a través del formulario de soporte.</p>
+    </div>
   );
 }
 

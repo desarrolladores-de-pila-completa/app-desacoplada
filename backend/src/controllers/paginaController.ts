@@ -1,10 +1,17 @@
-import logger from "../utils/logger";
+import winston from "../utils/logger";
 import { pool } from "../middlewares/db";
 import { Request, Response } from "express";
 import { UserService } from "../services/UserService";
 import { getService } from '../utils/servicesConfig';
 
 // Obtener página por user_id (UUID sin guiones)
+/**
+ * @swagger
+ * /api/pagina/user/{user_id}:
+ *   get:
+ *     summary: Obtener página por user_id
+ *     tags: [Pagina]
+ */
 export async function obtenerPaginaPorUserId(req: Request, res: Response) {
   const userId = req.params.user_id;
   try {
@@ -12,12 +19,19 @@ export async function obtenerPaginaPorUserId(req: Request, res: Response) {
     if (!pages || pages.length === 0) return res.status(404).json({ error: "Página no encontrada" });
     res.json(pages[0]);
   } catch (err) {
-    console.error(err);
+    winston.error('Error al obtener página por user_id', { error: err });
     res.status(500).json({ error: "Error al obtener página por user_id" });
   }
 }
 // Obtener página por username
 
+/**
+ * @swagger
+ * /api/pagina/username/{username}:
+ *   get:
+ *     summary: Obtener página por username
+ *     tags: [Pagina]
+ */
 export async function obtenerPaginaPorUsername(req: Request, res: Response) {
   const username = req.params.username;
   try {
@@ -28,13 +42,20 @@ export async function obtenerPaginaPorUsername(req: Request, res: Response) {
     if (!pages || pages.length === 0) return res.status(404).json({ error: "Página no encontrada" });
     res.json(pages[0]);
   } catch (err) {
-    console.error(err);
+    winston.error('Error al obtener página por usuario', { error: err });
     res.status(500).json({ error: "Error al obtener página por usuario" });
   }
 }
 
 // Obtener página por username y número de página
 // Obtener lista de páginas públicas de un usuario
+/**
+ * @swagger
+ * /api/pagina/publicas/{username}:
+ *   get:
+ *     summary: Obtener páginas públicas de un usuario
+ *     tags: [Pagina]
+ */
 export async function obtenerPaginasPublicasPorUsuario(req: Request, res: Response) {
   const username = req.params.username;
   try {
@@ -47,11 +68,18 @@ export async function obtenerPaginasPublicasPorUsuario(req: Request, res: Respon
     );
     res.json(pages);
   } catch (err) {
-    console.error(err);
+    winston.error('Error al obtener páginas públicas del usuario', { error: err });
     res.status(500).json({ error: "Error al obtener páginas públicas del usuario" });
   }
 }
 
+/**
+ * @swagger
+ * /api/pagina/username/{username}/numero/{pageNumber}:
+ *   get:
+ *     summary: Obtener página por username y número de página
+ *     tags: [Pagina]
+ */
 export async function obtenerPaginaPorUsernameYNumero(req: Request, res: Response) {
   const { username, pageNumber } = req.params;
   if (!pageNumber) return res.status(400).json({ error: "Número de página requerido" });
@@ -69,12 +97,19 @@ export async function obtenerPaginaPorUsernameYNumero(req: Request, res: Respons
     if (!pages || pages.length === 0) return res.status(404).json({ error: "Página no encontrada" });
     res.json(pages[0]);
   } catch (err) {
-    console.error(err);
+    winston.error('Error al obtener página por usuario y número', { error: err });
     res.status(500).json({ error: "Error al obtener página por usuario y número" });
   }
 }
 // Funciones eliminadas: consultarVisibilidadCampos, actualizarVisibilidadCampos (campos eliminados)
 // Consultar propietario
+/**
+ * @swagger
+ * /api/pagina/propietario/{id}:
+ *   get:
+ *     summary: Consultar propietario de página
+ *     tags: [Pagina]
+ */
 export async function consultarPropietario(req: Request, res: Response) {
   const paginaId = req.params.id;
   try {
@@ -82,7 +117,7 @@ export async function consultarPropietario(req: Request, res: Response) {
     if (!rows || rows.length === 0) return res.status(404).json({ error: "Página no encontrada" });
     res.json({ propietario: rows[0].propietario });
   } catch (err) {
-    console.error(err);
+    winston.error('Error al consultar propietario', { error: err });
     res.status(500).json({ error: "Error al consultar propietario" });
   }
 }
@@ -90,6 +125,13 @@ export async function consultarPropietario(req: Request, res: Response) {
 // Función eliminada: consultarDescripcion (campo eliminado)
 
 // Consultar usuario
+/**
+ * @swagger
+ * /api/pagina/usuario/{id}:
+ *   get:
+ *     summary: Consultar usuario de página
+ *     tags: [Pagina]
+ */
 export async function consultarUsuarioPagina(req: Request, res: Response) {
   const paginaId = req.params.id;
   try {
@@ -97,13 +139,20 @@ export async function consultarUsuarioPagina(req: Request, res: Response) {
     if (!rows || rows.length === 0) return res.status(404).json({ error: "Página no encontrada" });
     res.json({ usuario: rows[0].usuario });
   } catch (err) {
-    console.error(err);
+    winston.error('Error al consultar usuario de página', { error: err });
     res.status(500).json({ error: "Error al consultar usuario de página" });
   }
 }
 
 // Función eliminada: consultarComentariosPagina (campo eliminado)
 // Actualizar propietario
+/**
+ * @swagger
+ * /api/pagina/actualizar-propietario/{id}:
+ *   put:
+ *     summary: Actualizar propietario de página
+ *     tags: [Pagina]
+ */
 export async function actualizarPropietario(req: Request, res: Response) {
   const paginaId = req.params.id;
   const { propietario } = req.body;
@@ -115,7 +164,7 @@ export async function actualizarPropietario(req: Request, res: Response) {
     await pool.query("UPDATE paginas SET propietario = ? WHERE id = ?", [propietario ? 1 : 0, paginaId]);
     res.json({ message: "Propietario actualizado" });
   } catch (err) {
-    console.error(err);
+    winston.error('Error al actualizar propietario', { error: err });
     res.status(500).json({ error: "Error al actualizar propietario" });
   }
 }
@@ -123,6 +172,13 @@ export async function actualizarPropietario(req: Request, res: Response) {
 // Función eliminada: actualizarDescripcion (campo eliminado)
 
 // Actualizar usuario
+/**
+ * @swagger
+ * /api/pagina/actualizar-usuario/{id}:
+ *   put:
+ *     summary: Actualizar usuario de página
+ *     tags: [Pagina]
+ */
 export async function actualizarUsuarioPagina(req: RequestWithValidatedData, res: Response) {
   const paginaId = req.params.id;
   const { username } = req.validatedData as any;
@@ -146,7 +202,7 @@ export async function actualizarUsuarioPagina(req: RequestWithValidatedData, res
     }
     res.json({ message: "Usuario de página actualizado" });
   } catch (err) {
-    console.error(err);
+    winston.error('Error al actualizar usuario de página', { error: err });
     res.status(500).json({ error: "Error al actualizar usuario de página" });
   }
 }
@@ -158,6 +214,13 @@ interface RequestWithValidatedData extends Request {
   validatedData?: any;
 }
 
+/**
+ * @swagger
+ * /api/pagina/actualizar-visibilidad/{id}:
+ *   put:
+ *     summary: Actualizar visibilidad de página
+ *     tags: [Pagina]
+ */
 export async function actualizarVisibilidad(req: Request, res: Response) {
   const paginaId = req.params.id;
   const { oculto } = req.body;
@@ -170,11 +233,18 @@ export async function actualizarVisibilidad(req: Request, res: Response) {
     await pool.query("UPDATE paginas SET oculto = ? WHERE id = ?", [oculto ? 1 : 0, paginaId]);
     res.json({ message: "Visibilidad actualizada" });
   } catch (err) {
-    console.error(err);
+    winston.error('Error al actualizar visibilidad', { error: err });
     res.status(500).json({ error: "Error al actualizar visibilidad" });
   }
 }
 // Consultar visibilidad y oculto de una página
+/**
+ * @swagger
+ * /api/pagina/consultar-visibilidad/{id}:
+ *   get:
+ *     summary: Consultar visibilidad de página
+ *     tags: [Pagina]
+ */
 export async function consultarVisibilidad(req: Request, res: Response) {
   const paginaId = req.params.id;
   try {
@@ -182,7 +252,7 @@ export async function consultarVisibilidad(req: Request, res: Response) {
     if (!rows || rows.length === 0) return res.status(404).json({ error: "Página no encontrada" });
     res.json({ oculto: rows[0].oculto });
   } catch (err) {
-    console.error(err);
+    winston.error('Error al consultar visibilidad', { error: err });
     res.status(500).json({ error: "Error al consultar visibilidad" });
   }
 }
@@ -190,9 +260,9 @@ export async function consultarVisibilidad(req: Request, res: Response) {
 export async function obtenerPagina(req: Request, res: Response) {
   const paginaId = req.params.id;
   try {
-    logger.debug('Buscando página por ID', { paginaId, context: 'pagina' });
+  winston.debug('Buscando página por ID', { paginaId, context: 'pagina' });
     const [rows]: any = await pool.query("SELECT p.*, u.display_name FROM paginas p JOIN users u ON p.user_id = u.id WHERE p.id = ?", [paginaId]);
-    logger.debug('Resultado de consulta de página', { paginaId, found: rows && rows.length > 0, context: 'pagina' });
+  winston.debug('Resultado de consulta de página', { paginaId, found: rows && rows.length > 0, context: 'pagina' });
     if (!rows || rows.length === 0) return sendError(res, 404, "Página no encontrada");
 
     // Logs detallados para debugging del contenido HTML
@@ -208,7 +278,7 @@ export async function obtenerPagina(req: Request, res: Response) {
 
     res.json(rows[0]);
   } catch (err) {
-    logger.error('Error al obtener página', { paginaId, error: (err as Error).message, stack: (err as Error).stack, context: 'pagina' });
+  winston.error('Error al obtener página', { paginaId, error: (err as Error).message, stack: (err as Error).stack, context: 'pagina' });
     sendError(res, 500, "Error al obtener página");
   }
 }
@@ -216,6 +286,13 @@ export async function obtenerPagina(req: Request, res: Response) {
 const userService = getService<UserService>('UserService');
 
 // Eliminar usuario y todo su rastro (perfil, comentarios, imágenes, feed)
+/**
+ * @swagger
+ * /api/pagina/eliminar-usuario/{id}:
+ *   delete:
+ *     summary: Eliminar usuario y todos sus datos
+ *     tags: [Pagina]
+ */
 export async function eliminarUsuarioTotal(req: Request, res: Response) {
   const userId = req.params.id;
   if (!userId) return res.status(400).json({ error: "Falta el id de usuario" });
@@ -228,16 +305,27 @@ export async function eliminarUsuarioTotal(req: Request, res: Response) {
     await userService.deleteUserCompletely(userId);
     res.json({ message: "Usuario y todos sus datos eliminados" });
   } catch (err) {
-    console.error(err);
+    winston.error('Error al eliminar usuario y sus datos', { error: err });
     res.status(500).json({ error: "Error al eliminar usuario y sus datos" });
   }
 }
 
+/**
+ * Envía una respuesta de error con código y mensaje, y loguea el error.
+ */
 function sendError(res: Response, code: number, msg: string) {
+  winston.error('API error', { code, msg });
   return res.status(code).json({ error: msg });
 }
 
 
+/**
+ * @swagger
+ * /api/pagina/publicas:
+ *   get:
+ *     summary: Obtener páginas públicas
+ *     tags: [Pagina]
+ */
 export async function paginasPublicas(req: Request, res: Response) {
   try {
     const userId = req.query.user_id;
@@ -252,7 +340,7 @@ export async function paginasPublicas(req: Request, res: Response) {
     const [rows] = await pool.execute(query, params);
     res.json(rows);
   } catch (err) {
-    console.error(err);
+    winston.error('Error al obtener páginas públicas', { error: err });
     sendError(res, 500, "Error al obtener páginas");
   }
 }
@@ -261,6 +349,13 @@ export async function paginasPublicas(req: Request, res: Response) {
 // Eliminado: función de edición de página
 
 // Guardar comentario en la base de datos
+/**
+ * @swagger
+ * /api/pagina/comentario:
+ *   post:
+ *     summary: Guardar comentario en la página
+ *     tags: [Pagina]
+ */
 export async function guardarComentario(req: RequestWithValidatedData, res: Response) {
   const { comentario, pageId } = req.validatedData as any;
   const userId = (req as any).user?.id;
@@ -283,12 +378,19 @@ export async function guardarComentario(req: RequestWithValidatedData, res: Resp
 
     res.json({ message: "Comentario guardado" });
   } catch (err) {
-    console.error(err);
+    winston.error('Error al guardar comentario', { error: err });
     sendError(res, 500, "Error al guardar comentario");
   }
 }
 
 // Eliminar comentario
+/**
+ * @swagger
+ * /api/pagina/comentario/{id}/{commentId}:
+ *   delete:
+ *     summary: Eliminar comentario de la página
+ *     tags: [Pagina]
+ */
 export async function eliminarComentario(req: Request, res: Response) {
   const { id: pageId, commentId } = req.params;
   const userId = (req as any).user?.id;
@@ -311,7 +413,7 @@ export async function eliminarComentario(req: Request, res: Response) {
 
     res.json({ message: "Comentario eliminado" });
   } catch (err) {
-    console.error(err);
+    winston.error('Error al eliminar comentario', { error: err });
     sendError(res, 500, "Error al eliminar comentario");
   }
 }

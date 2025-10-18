@@ -4,7 +4,13 @@ export declare class CacheService {
     /**
      * Obtener un valor del caché
      */
+    /**
+     * Obtener un valor del caché
+     */
     get<T>(key: string): T | null;
+    /**
+     * Establecer un valor en el caché con TTL opcional
+     */
     /**
      * Establecer un valor en el caché con TTL opcional
      */

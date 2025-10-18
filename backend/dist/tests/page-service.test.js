@@ -9,9 +9,9 @@ describe('PageService', () => {
     const mockPage = {
         id: 1,
         user_id: 'user-123',
-        propietario: true,
+        propietario: 1, // 1 = true
         usuario: 'testuser',
-        oculto: false,
+        oculto: 0, // 0 = false
         creado_en: new Date()
     };
     const mockPageWithImages = {

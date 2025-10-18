@@ -1,12 +1,20 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserRepository = void 0;
+const logger_1 = __importDefault(require("../utils/logger"));
 const db_1 = require("../middlewares/db");
 const bcrypt = require("bcryptjs");
 const { randomUUID } = require("crypto");
 const { generarAvatarBuffer } = require("../utils/generarAvatarBuffer");
 class UserRepository {
+    /**
+     * Crea un nuevo usuario en la base de datos.
+     */
     async create(userData) {
+        logger_1.default.info('UserRepository.create', { email: userData.email, username: userData.username });
         const { email, password, username, file } = userData;
         // Hash de contraseña
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -24,6 +32,7 @@ class UserRepository {
         // Retornar usuario creado (sin contraseña)
         const user = await this.findById(userId);
         if (!user) {
+            logger_1.default.error('Error al crear usuario', { userId });
             throw new Error("Error al crear usuario");
         }
         return user;

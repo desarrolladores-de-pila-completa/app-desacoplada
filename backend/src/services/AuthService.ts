@@ -3,6 +3,7 @@ import { FeedService } from './FeedService';
 import { User, UserCreateData, AppError, IEventBus } from '../types/interfaces';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import winston from '../utils/logger';
 
 export class AuthService {
   private userService: UserService;
@@ -18,21 +19,24 @@ export class AuthService {
   /**
    * Registrar un nuevo usuario
    */
+  /**
+   * Registra un nuevo usuario y retorna el usuario, token y username.
+   */
   async register(userData: Omit<UserCreateData, 'username'>): Promise<{
     user: User;
     token: string;
     username: string;
   }> {
-    console.log('AuthService.register called');
+    winston.info('AuthService.register called');
     // Generar username único
     const username = this.generateUniqueUsername();
-    console.log('Username generated:', username);
+    winston.debug('Username generated', { username });
 
     // Crear usuario usando UserService
     const fullUserData: UserCreateData = { ...userData, username };
-    console.log('Calling userService.createUser');
+    winston.debug('Calling userService.createUser');
     const user = await this.userService.createUser(fullUserData);
-    console.log('User created:', user.id);
+    winston.info('User created', { userId: user.id });
 
     // Emitir evento de usuario registrado
     try {
@@ -41,16 +45,16 @@ export class AuthService {
         username: user.username,
         email: userData.email,
       });
-      console.log('Event emitted');
+      winston.info('Event emitted user.registered');
     } catch (error) {
-      console.error('Error emitiendo evento user.registered:', error);
+      winston.error('Error emitiendo evento user.registered', { error });
       // No fallar el registro por esto
     }
 
     // Generar token JWT
-    console.log('Generating token');
+    winston.debug('Generating token');
     const token = this.generateToken(user.id);
-    console.log('Token generated');
+    winston.debug('Token generated');
 
     return {
       user,

@@ -1,14 +1,7 @@
-import {
-  Pagina,
-  CreatePaginaData,
-  UpdatePaginaData,
-  PaginaWithImages,
-  ImagenData,
-  FeedEntry,
-  IEventBus
-} from '../types/interfaces';
+import { Pagina, CreatePaginaData, UpdatePaginaData, PaginaWithImages, ImagenData, FeedEntry, IEventBus } from '../types/interfaces';
 import { IPageRepository, IFeedRepository } from '../repositories';
 import { cacheService } from './CacheService';
+import winston from '../utils/logger';
 
 export class PageService {
   constructor(
@@ -19,7 +12,11 @@ export class PageService {
   /**
    * Obtener página por ID con imágenes
    */
+  /**
+   * Obtiene una página por ID con imágenes.
+   */
   async getPageWithImages(pageId: number): Promise<PaginaWithImages | null> {
+    winston.info('PageService.getPageWithImages', { pageId });
     const cacheKey = `page:withImages:${pageId}`;
     const cached = cacheService.get<PaginaWithImages>(cacheKey);
     if (cached) return cached;

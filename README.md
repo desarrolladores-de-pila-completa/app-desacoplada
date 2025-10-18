@@ -86,6 +86,15 @@ Proyecto desacoplado con backend Node.js/TypeScript, frontend web (React + Vite)
 - `frontend/`: Web moderna con React + Vite.
 - `react-native/mobile/`: App móvil multiplataforma.
 
+
+## Variables de entorno
+
+### Backend
+Revisa y copia el archivo `backend/.env.example` como `.env` en la carpeta `backend` y completa los valores requeridos (puerto, JWT, base de datos, etc).
+
+### Frontend
+Revisa y copia el archivo `frontend/.env.example` como `.env` en la carpeta `frontend` y ajusta las URLs según el entorno.
+
 ## Instalación
 
 ### Backend
@@ -126,11 +135,14 @@ Proyecto desacoplado con backend Node.js/TypeScript, frontend web (React + Vite)
    npm run android # o npm run ios
    ```
 
-## Pruebas
+
+## Pruebas y cobertura
+
 En el backend:
 ```sh
-npm test
+npm test -- --coverage
 ```
+El reporte de cobertura se genera en la carpeta `backend/coverage` y se sube como artefacto en CI.
 
 ## Autor
 zarkius
