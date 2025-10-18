@@ -28,14 +28,33 @@ export declare function login(req: RequestWithFile, res: Response): Promise<void
  *     tags: [Auth]
  */
 export declare function logout(req: Request, res: Response): Promise<void>;
+export declare function me(req: Request, res: Response): Promise<void>;
 /**
  * @swagger
- * /api/auth/me:
+ * /api/auth/:username:
  *   get:
- *     summary: Obtener datos del usuario autenticado
+ *     summary: Obtener datos públicos del usuario por username
  *     tags: [Auth]
  */
-export declare function me(req: Request, res: Response): Promise<void>;
+export declare function getUserByUsername(req: Request, res: Response): Promise<void>;
+/**
+ * @swagger
+ * /api/auth/extend-session:
+ *   post:
+ *     summary: Extender sesión automáticamente (sliding sessions)
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ */
+export declare function extendSession(req: Request, res: Response): Promise<void>;
+/**
+ * @swagger
+ * /api/auth/refresh:
+ *   post:
+ *     summary: Refrescar tokens de acceso
+ *     tags: [Auth]
+ */
+export declare function refreshTokens(req: Request, res: Response): Promise<void>;
 /**
  * @swagger
  * /api/auth/eliminar:

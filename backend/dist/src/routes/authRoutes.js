@@ -2,54 +2,17 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.router = void 0;
 const express_1 = require("express");
-const security_1 = require("../middlewares/security");
 const ValidationService_1 = require("../services/ValidationService");
 const rateLimit_1 = require("../middlewares/rateLimit");
 const authController_1 = require("../controllers/authController");
 const auth_1 = require("../middlewares/auth");
 const db_1 = require("../middlewares/db");
-const multer = require("multer");
-const bcrypt = require("bcryptjs");
-const upload = multer();
 const router = (0, express_1.Router)();
 exports.router = router;
-// Ruta para obtener el usuario autenticado
-router.get("/me", auth_1.authMiddleware, authController_1.me);
-// Endpoint para actualizar foto de perfil
-router.post("/me/foto", auth_1.authMiddleware, upload.single("foto"), security_1.validateFileUpload, async (req, res) => {
-    const user = req.user;
-    if (!user || !user.id)
-        return res.status(401).json({ error: "No autenticado" });
-    const file = req.file;
-    if (!file)
-        return res.status(400).json({ error: "No se recibió imagen" });
-    try {
-        await db_1.pool.query("UPDATE users SET foto_perfil = ? WHERE id = ?", [file.buffer, user.id]);
-        res.json({ message: "Foto de perfil actualizada" });
-    }
-    catch (err) {
-        console.error("Error al guardar foto de perfil:", err);
-        res.status(500).json({ error: "Error al guardar foto de perfil" });
-    }
-});
-// Endpoint para obtener foto de perfil
-router.get("/me/foto", auth_1.authMiddleware, async (req, res) => {
-    const user = req.user;
-    if (!user || !user.id)
-        return res.status(401).json({ error: "No autenticado" });
-    try {
-        const [rows] = await db_1.pool.query("SELECT foto_perfil FROM users WHERE id = ?", [user.id]);
-        if (!rows || rows.length === 0 || !rows[0].foto_perfil) {
-            return res.status(404).json({ error: "Sin foto de perfil" });
-        }
-        res.setHeader("Content-Type", "image/jpeg");
-        res.send(rows[0].foto_perfil);
-    }
-    catch (err) {
-        console.error("Error al obtener foto de perfil:", err);
-        res.status(500).json({ error: "Error al obtener foto de perfil" });
-    }
-});
+// ❌ ELIMINADA: Ruta /me eliminada según solicitud del usuario
+// ❌ ELIMINADA: Ruta /:username con función me eliminada según solicitud del usuario
+// ❌ ELIMINADO: Endpoint /me/foto eliminado según solicitud del usuario
+// ❌ ELIMINADO: Endpoint /me/foto eliminado según solicitud del usuario
 // Endpoint público para obtener foto de perfil por id de usuario
 router.get("/user/:id/foto", async (req, res) => {
     const userId = req.params.id;
@@ -68,6 +31,8 @@ router.get("/user/:id/foto", async (req, res) => {
 });
 router.post("/register", rateLimit_1.authRateLimit, (0, ValidationService_1.validateRequest)(ValidationService_1.ValidationService.validateRegister), authController_1.register);
 router.post("/login", rateLimit_1.authRateLimit, (0, ValidationService_1.validateRequest)(ValidationService_1.ValidationService.validateLogin), authController_1.login);
+router.post("/refresh", authController_1.refreshTokens); // No requiere autenticación previa
+router.post("/extend-session", auth_1.authMiddleware, authController_1.extendSession); // Extender sesión automáticamente
 // router.post("/username", authMiddleware, cambiarUsername); // Función no implementada
 router.post("/logout", authController_1.logout);
 router.delete("/user/:id", authController_1.eliminarUsuario);

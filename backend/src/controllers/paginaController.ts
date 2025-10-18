@@ -12,6 +12,14 @@ import { getService } from '../utils/servicesConfig';
  *     summary: Obtener página por user_id
  *     tags: [Pagina]
  */
+// Obtener página por user_id (UUID sin guiones)
+/**
+ * @swagger
+ * /api/pagina/user/{user_id}:
+ *   get:
+ *     summary: Obtener página por user_id
+ *     tags: [Pagina]
+ */
 export async function obtenerPaginaPorUserId(req: Request, res: Response) {
   const userId = req.params.user_id;
   try {
@@ -23,28 +31,240 @@ export async function obtenerPaginaPorUserId(req: Request, res: Response) {
     res.status(500).json({ error: "Error al obtener página por user_id" });
   }
 }
-// Obtener página por username
 
+// Función unificada para manejar todas las operaciones de páginas por username
 /**
  * @swagger
- * /api/pagina/username/{username}:
+ * /api/pagina/{username}:
  *   get:
- *     summary: Obtener página por username
+ *     summary: Obtener información de página por username con soporte para diferentes acciones
  *     tags: [Pagina]
+ *     parameters:
+ *       - in: query
+ *         name: action
+ *         schema:
+ *           type: string
+ *           enum: [info, publicaciones, galeria, comentarios, lista]
+ *         description: Tipo de acción a realizar
+ *       - in: query
+ *         name: publicacionId
+ *         schema:
+ *           type: integer
+ *         description: ID específico de publicación (para action=publicacion)
+ *       - in: query
+ *         name: pageNumber
+ *         schema:
+ *           type: integer
+ *         description: Número de página específico (para action=lista)
  */
-export async function obtenerPaginaPorUsername(req: Request, res: Response) {
+export async function paginaUnificadaPorUsername(req: Request, res: Response) {
   const username = req.params.username;
+  const { action = 'info', publicacionId, pageNumber } = req.query;
+
   try {
-    const [users]: any = await pool.query("SELECT id FROM users WHERE username = ?", [username]);
-    if (!users || users.length === 0) return res.status(404).json({ error: "Usuario no encontrado" });
-    const userId = users[0].id;
-    const [pages]: any = await pool.query("SELECT * FROM paginas WHERE user_id = ? ORDER BY id ASC LIMIT 1", [userId]);
-    if (!pages || pages.length === 0) return res.status(404).json({ error: "Página no encontrada" });
-    res.json(pages[0]);
+    // Obtener información del usuario primero
+    const [users]: any = await pool.query(
+      "SELECT id, username, display_name, foto_perfil FROM users WHERE username = ?",
+      [username]
+    );
+
+    if (!users || users.length === 0) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    const user = users[0];
+    const userId = user.id;
+
+    switch (action) {
+      case 'info':
+        // Información completa del usuario y página principal
+        return await obtenerInformacionCompletaUsuario(user, res);
+
+      case 'publicaciones':
+        // Lista de publicaciones del usuario
+        return await obtenerPublicacionesUsuario(userId, res);
+
+      case 'publicacion':
+        // Publicación específica
+        if (!publicacionId) {
+          return res.status(400).json({ error: "Se requiere publicacionId para obtener publicación específica" });
+        }
+        return await obtenerPublicacionEspecifica(userId, publicacionId as string, res);
+
+      case 'galeria':
+        // Galería de imágenes del usuario
+        return await obtenerGaleriaUsuario(userId, res);
+
+      case 'comentarios':
+        // Comentarios de la página principal del usuario
+        return await obtenerComentariosUsuario(userId, res);
+
+      case 'lista':
+        // Lista de páginas públicas del usuario (compatible con estructura antigua)
+        if (pageNumber) {
+          return await obtenerPaginaPorNumero(userId, parseInt(pageNumber as string), res);
+        }
+        return await obtenerListaPaginasUsuario(userId, res);
+
+      default:
+        return res.status(400).json({ error: `Acción no válida: ${action}` });
+    }
   } catch (err) {
-    winston.error('Error al obtener página por usuario', { error: err });
-    res.status(500).json({ error: "Error al obtener página por usuario" });
+    winston.error('Error en operación unificada de página', { error: err, username, action });
+    res.status(500).json({ error: "Error interno del servidor" });
   }
+}
+
+// Función auxiliar para obtener información completa del usuario
+async function obtenerInformacionCompletaUsuario(user: any, res: Response) {
+  // Obtener la primera página del usuario (página principal)
+  const [pages]: any = await pool.query(
+    "SELECT * FROM paginas WHERE user_id = ? ORDER BY id ASC LIMIT 1",
+    [user.id]
+  );
+
+  let pagina = null;
+  if (pages && pages.length > 0) {
+    pagina = pages[0];
+  }
+
+  // Obtener imágenes de la galería si existe la página
+  let imagenes = [];
+  if (pagina) {
+    const [imagenesRows]: any = await pool.query(
+      "SELECT idx, imagen FROM imagenes WHERE pagina_id = ? ORDER BY idx ASC",
+      [pagina.id]
+    );
+    imagenes = imagenesRows.map((row: any) => ({
+      idx: row.idx,
+      src: `data:image/jpeg;base64,${Buffer.from(row.imagen).toString('base64')}`
+    }));
+  }
+
+  // Obtener comentarios de la página si existe
+  let comentarios = [];
+  if (pagina) {
+    const [comentariosRows]: any = await pool.query(
+      `SELECT c.*, u.username FROM comentarios c
+       LEFT JOIN users u ON c.user_id = u.id
+       WHERE c.pagina_id = ? ORDER BY c.creado_en DESC`,
+      [pagina.id]
+    );
+    comentarios = comentariosRows;
+  }
+
+  // Construir respuesta completa
+  const respuesta = {
+    usuario: {
+      id: user.id,
+      username: user.username,
+      display_name: user.display_name,
+      foto_perfil: user.foto_perfil ? `data:image/jpeg;base64,${Buffer.from(user.foto_perfil).toString('base64')}` : null
+    },
+    pagina: pagina,
+    galeria: imagenes,
+    comentarios: comentarios
+  };
+
+  res.json(respuesta);
+}
+
+// Función auxiliar para obtener publicaciones del usuario
+async function obtenerPublicacionesUsuario(userId: string, res: Response) {
+  const [rows]: any = await pool.query(
+    "SELECT id, titulo, contenido, created_at FROM publicaciones WHERE user_id = ? ORDER BY created_at DESC",
+    [userId]
+  );
+  res.json({ publicaciones: rows });
+}
+
+// Función auxiliar para obtener publicación específica
+async function obtenerPublicacionEspecifica(userId: string, publicacionId: string, res: Response) {
+  const [rows]: any = await pool.query(
+    "SELECT id, titulo, contenido, created_at FROM publicaciones WHERE id = ? AND user_id = ?",
+    [publicacionId, userId]
+  );
+
+  if (rows.length === 0) {
+    return res.status(404).json({ error: "Publicación no encontrada" });
+  }
+
+  res.json({ publicacion: rows[0] });
+}
+
+// Función auxiliar para obtener galería del usuario
+async function obtenerGaleriaUsuario(userId: string, res: Response) {
+  // Obtener primera página para obtener galería
+  const [pages]: any = await pool.query(
+    "SELECT id FROM paginas WHERE user_id = ? ORDER BY id ASC LIMIT 1",
+    [userId]
+  );
+
+  if (!pages || pages.length === 0) {
+    return res.json({ galeria: [] });
+  }
+
+  const [imagenesRows]: any = await pool.query(
+    "SELECT idx, imagen FROM imagenes WHERE pagina_id = ? ORDER BY idx ASC",
+    [pages[0].id]
+  );
+
+  const imagenes = imagenesRows.map((row: any) => ({
+    idx: row.idx,
+    src: `data:image/jpeg;base64,${Buffer.from(row.imagen).toString('base64')}`
+  }));
+
+  res.json({ galeria: imagenes });
+}
+
+// Función auxiliar para obtener comentarios del usuario
+async function obtenerComentariosUsuario(userId: string, res: Response) {
+  // Obtener primera página para obtener comentarios
+  const [pages]: any = await pool.query(
+    "SELECT id FROM paginas WHERE user_id = ? ORDER BY id ASC LIMIT 1",
+    [userId]
+  );
+
+  if (!pages || pages.length === 0) {
+    return res.json({ comentarios: [] });
+  }
+
+  const [comentariosRows]: any = await pool.query(
+    `SELECT c.*, u.username FROM comentarios c
+     LEFT JOIN users u ON c.user_id = u.id
+     WHERE c.pagina_id = ? ORDER BY c.creado_en DESC`,
+    [pages[0].id]
+  );
+
+  res.json({ comentarios: comentariosRows });
+}
+
+// Función auxiliar para obtener página por número
+async function obtenerPaginaPorNumero(userId: string, pageNumber: number, res: Response) {
+  const [pages]: any = await pool.query(
+    "SELECT p.*, u.display_name FROM paginas p JOIN users u ON p.user_id = u.id WHERE p.user_id = ? ORDER BY p.id ASC LIMIT 1 OFFSET ?",
+    [userId, pageNumber - 1]
+  );
+
+  if (!pages || pages.length === 0) {
+    return res.status(404).json({ error: "Página no encontrada" });
+  }
+
+  res.json(pages[0]);
+}
+
+// Función auxiliar para obtener lista de páginas del usuario
+async function obtenerListaPaginasUsuario(userId: string, res: Response) {
+  const [pages]: any = await pool.query(
+    "SELECT p.*, u.display_name FROM paginas p JOIN users u ON p.user_id = u.id WHERE p.user_id = ? ORDER BY p.id ASC",
+    [userId]
+  );
+  res.json(pages);
+}
+
+// Función legacy mantenida para compatibilidad
+export async function obtenerPaginaPorUsername(req: Request, res: Response) {
+  return paginaUnificadaPorUsername(req, res);
 }
 
 // Obtener página por username y número de página

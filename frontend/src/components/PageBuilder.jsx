@@ -705,8 +705,8 @@ function PageBuilder() {
       const csrfData = await csrfRes.json();
       const csrfToken = csrfData.csrfToken;
 
-      // Crear la página
-      const response = await fetch(`/api/paginas/${username}/publicar/1`, {
+      // Crear la publicación usando la ruta correcta
+      const response = await fetch(`/api/publicaciones/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -715,7 +715,6 @@ function PageBuilder() {
         body: JSON.stringify({
           titulo: title.trim(),
           contenido: content,
-          descripcion: "visible",
         }),
         credentials: "include",
       });

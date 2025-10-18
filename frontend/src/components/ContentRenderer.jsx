@@ -1,5 +1,6 @@
 import React from 'react';
-import { processContent, useHTMLProcessor } from '../utils/htmlProcessor';
+import { useHTMLProcessor } from '../utils/htmlProcessor';
+import { useContentRenderer } from '../hooks/useContentRenderer';
 
 /**
  * Componente avanzado para renderizar contenido HTML de manera segura
@@ -286,37 +287,5 @@ export const CommentContentRenderer = ({
   );
 };
 
-/**
- * Hook para usar ContentRenderer en componentes funcionales
- */
-export const useContentRenderer = (content, options = {}) => {
-  const [state, setState] = React.useState({
-    processed: null,
-    analysis: null,
-    needsHTML: false,
-    isSafe: true,
-    error: null
-  });
-
-  React.useEffect(() => {
-    try {
-      const result = processContent(content, options);
-      setState({
-        processed: result.processed,
-        analysis: result.analysis,
-        needsHTML: result.needsHTML,
-        isSafe: result.isSafe,
-        error: null
-      });
-    } catch (err) {
-      setState(prev => ({
-        ...prev,
-        error: err.message
-      }));
-    }
-  }, [content, options]);
-
-  return state;
-};
 
 export default ContentRenderer;

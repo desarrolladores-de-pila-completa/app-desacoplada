@@ -23,7 +23,7 @@ const UserPage = () => {
     const fetchUser = async () => {
       try {
         // Consultar el usuario por username (ruta corregida)
-        const response = await api.get(`/paginas/pagina/${username}`);
+        const response = await api.get(`/paginas/${username}`);
         setUser(response.data);
         setError('');
         // Ya no se cargan comentarios aquí, ComentariosList lo hace por sí mismo

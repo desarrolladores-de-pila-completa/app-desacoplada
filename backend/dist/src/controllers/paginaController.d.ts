@@ -6,15 +6,40 @@ import { Request, Response } from "express";
  *     summary: Obtener página por user_id
  *     tags: [Pagina]
  */
+/**
+ * @swagger
+ * /api/pagina/user/{user_id}:
+ *   get:
+ *     summary: Obtener página por user_id
+ *     tags: [Pagina]
+ */
 export declare function obtenerPaginaPorUserId(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
 /**
  * @swagger
- * /api/pagina/username/{username}:
+ * /api/pagina/{username}:
  *   get:
- *     summary: Obtener página por username
+ *     summary: Obtener información de página por username con soporte para diferentes acciones
  *     tags: [Pagina]
+ *     parameters:
+ *       - in: query
+ *         name: action
+ *         schema:
+ *           type: string
+ *           enum: [info, publicaciones, galeria, comentarios, lista]
+ *         description: Tipo de acción a realizar
+ *       - in: query
+ *         name: publicacionId
+ *         schema:
+ *           type: integer
+ *         description: ID específico de publicación (para action=publicacion)
+ *       - in: query
+ *         name: pageNumber
+ *         schema:
+ *           type: integer
+ *         description: Número de página específico (para action=lista)
  */
-export declare function obtenerPaginaPorUsername(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
+export declare function paginaUnificadaPorUsername(req: Request, res: Response): Promise<void | Response<any, Record<string, any>>>;
+export declare function obtenerPaginaPorUsername(req: Request, res: Response): Promise<void | Response<any, Record<string, any>>>;
 /**
  * @swagger
  * /api/pagina/publicas/{username}:

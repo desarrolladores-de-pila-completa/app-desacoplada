@@ -99,7 +99,8 @@ describe('AuthService', () => {
       });
       expect(result).toEqual({
         user: expectedUser,
-        token: expect.any(String),
+        accessToken: expect.any(String),
+        refreshToken: expect.any(String),
         username: expectedUser.username
       });
 
@@ -122,7 +123,8 @@ describe('AuthService', () => {
 
       // Assert
       expect(result.user).toEqual(expectedUser);
-      expect(result.token).toBeDefined();
+      expect(result.accessToken).toBeDefined();
+      expect(result.refreshToken).toBeDefined();
 
       mockRandomUUID.mockRestore();
     });
@@ -143,7 +145,8 @@ describe('AuthService', () => {
 
       // Assert
       expect(result.user).toEqual(expectedUser);
-      expect(result.token).toBeDefined();
+      expect(result.accessToken).toBeDefined();
+      expect(result.refreshToken).toBeDefined();
 
       mockRandomUUID.mockRestore();
     });
@@ -182,7 +185,8 @@ describe('AuthService', () => {
           foto_perfil: mockUser.foto_perfil,
           creado_en: mockUser.creado_en
         },
-        token: expect.any(String)
+        accessToken: expect.any(String),
+        refreshToken: expect.any(String)
       });
 
       bcryptCompare.mockRestore();

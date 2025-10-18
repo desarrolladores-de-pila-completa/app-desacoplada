@@ -1,3 +1,5 @@
+import React from 'react';
+
 /**
  * Utilidad avanzada para procesamiento de contenido HTML
  * Detecta, valida y procesa contenido HTML de manera segura

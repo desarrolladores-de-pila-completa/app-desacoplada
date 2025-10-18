@@ -245,15 +245,14 @@ app.use(["/api/paginas", "/api/auth"], (req, res, next) => {
 });
 const feedRoutes_1 = __importDefault(require("./routes/feedRoutes"));
 const chatRoutes_1 = __importDefault(require("./routes/chatRoutes"));
-const privateRoutes_1 = __importDefault(require("./routes/privateRoutes"));
-const guestRoutes_1 = __importDefault(require("./routes/guestRoutes"));
+// ❌ ELIMINADAS: privateRoutes y guestRoutes por contener rutas duplicadas
 app.use("/api/auth", authRoutes_1.router);
 app.use("/api/paginas", paginaRoutes_1.default);
 app.use("/api/publicaciones", publicacionRoutes_1.default);
 app.use("/api/feed", feedRoutes_1.default);
 app.use("/api/chat", chatRoutes_1.default);
-app.use("/api/private", privateRoutes_1.default);
-app.use("/api/guest", guestRoutes_1.default);
+// ❌ ELIMINADAS: app.use("/api/private", privateRoutes);
+// ❌ ELIMINADAS: app.use("/api/guest", guestRoutes);
 // Endpoint para verificar esquema de tabla
 app.get('/test-db', async (req, res) => {
     try {

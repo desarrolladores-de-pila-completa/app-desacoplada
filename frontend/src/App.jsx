@@ -108,10 +108,14 @@ export default function App() {
           }
         />
         <Route path="/cuenta" element={<AccountPage />} />
+        {/* Ruta para crear publicaciones - DEBE ir ANTES que las rutas con parámetros */}
         <Route path="/:username/publicar" element={<PageBuilder />} />
+        {/* Ruta para listas de páginas públicas */}
         <Route path="/pagina/:username" element={<UserPage />} />
-        <Route path="/:username/publicar/:pagina" element={<UserPage />} />
-        <Route path="/:username/nuevapublicacion" element={<UserPage />} />
+        {/* Ruta para ver publicación específica por ID numérico */}
+        <Route path="/:username/publicacion/:publicacionId" element={<UserPage />} />
+        {/* Ruta alternativa para nueva publicación */}
+        <Route path="/:username/nuevapublicacion" element={<PageBuilder />} />
         <Route path="/politica-de-cookies.html" element={<PoliticaDeCookies />} />
         <Route path="/privacidad.html" element={<Privacidad />} />
       </Routes>

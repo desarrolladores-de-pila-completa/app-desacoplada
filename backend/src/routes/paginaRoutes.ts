@@ -1,7 +1,7 @@
 import { pool } from "../middlewares/db";
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
-import { paginasPublicas, guardarComentario, eliminarComentario, obtenerPagina, actualizarUsuarioPagina, eliminarUsuarioTotal, obtenerPaginaPorUsernameYNumero, obtenerPaginasPublicasPorUsuario, obtenerPaginaPorUserId } from "../controllers/paginaController";
+import { paginasPublicas, guardarComentario, eliminarComentario, obtenerPagina, actualizarUsuarioPagina, eliminarUsuarioTotal, obtenerPaginaPorUsernameYNumero, obtenerPaginasPublicasPorUsuario, obtenerPaginaPorUserId, obtenerPaginaPorUsername, paginaUnificadaPorUsername } from "../controllers/paginaController";
 import { authMiddleware } from "../middlewares/auth";
 import { ValidationService, validateRequest } from '../services/ValidationService';
 import { userRateLimit } from '../middlewares/rateLimit';
@@ -60,17 +60,21 @@ router.get("/:id/comentarios", async (req: any, res: any) => {
 });
 
 router.get("/", limiter, paginasPublicas);
-router.get("/:id", obtenerPagina);
+// Ruta eliminada: GET /:id - obtenerPagina (solicitud del usuario)
 
-// Endpoint para obtener la página por username (comentado, usar con número)
-// import { obtenerPaginaPorUsername } from "../controllers/paginaController";
-// router.get("/pagina/:username", obtenerPaginaPorUsername);
+// Endpoint unificado para todas las operaciones de páginas por username
+// Soporta diferentes acciones mediante parámetros de query:
+// - action=info (default): Información completa del usuario y página principal
+// - action=publicaciones: Lista de publicaciones del usuario
+// - action=publicacion&publicacionId=X: Publicación específica
+// - action=galeria: Galería de imágenes del usuario
+// - action=comentarios: Comentarios de la página principal
+// - action=lista&pageNumber=X: Página específica por número
+// - action=lista: Lista de páginas públicas del usuario
+router.get("/pagina/:username", paginaUnificadaPorUsername);
 
-// Endpoint para obtener la página por username y número de página
-router.get("/pagina/:username/:pageNumber", obtenerPaginaPorUsernameYNumero);
-
-// Endpoint para obtener lista de páginas públicas de un usuario
-router.get("/paginas/:username", obtenerPaginasPublicasPorUsuario);
+// Mantener compatibilidad con ruta antigua
+router.get("/:username", paginaUnificadaPorUsername);
 
 // Endpoint para obtener una publicación específica por ID
 router.get("/:username/publicar/:publicacionId", async (req: any, res: any) => {

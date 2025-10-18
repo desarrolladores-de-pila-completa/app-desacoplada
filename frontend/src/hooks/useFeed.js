@@ -106,27 +106,57 @@ export const useUserPage = (path) => {
     queryKey: ['userPage', path],
     queryFn: async () => {
       let url;
-      if (path.includes('/list')) {
-        // Para lista de publicaciones
-        const username = path.split('/')[0];
-        url = `${API_BASE}/publicaciones/usuario/${username}`;
-      } else if (path.includes('/publicar/')) {
+      let params = new URLSearchParams();
+
+      if (path.includes('/publicacion/')) {
         // Para publicación específica
         const parts = path.split('/');
         const username = parts[0];
         const publicacionId = parts[2];
-        url = `${API_BASE}/paginas/${username}/publicar/${publicacionId}`;
+        url = `${API_BASE}/paginas/${username}`;
+        params.append('action', 'publicacion');
+        params.append('publicacionId', publicacionId);
+        console.log('📄 [useUserPage] Solicitando publicación específica:', { username, publicacionId });
+      } else if (path.endsWith('/list')) {
+        // Para lista de publicaciones/páginas públicas del usuario
+        const username = path.replace('/list', '');
+        url = `${API_BASE}/paginas/${username}`;
+        params.append('action', 'lista');
+        console.log('📋 [useUserPage] Solicitando lista de páginas públicas para:', username);
       } else {
-        // Para página específica (mantener compatibilidad)
-        url = `${API_BASE}/paginas/pagina/${path}`;
+        // Para página de usuario con información completa (nueva estructura)
+        const username = path;
+        url = `${API_BASE}/paginas/${username}`;
+        params.append('action', 'info');
+        console.log('👤 [useUserPage] Solicitando página completa del usuario:', username);
       }
 
+      // Añadir parámetros de query si existen
+      const queryString = params.toString();
+      if (queryString) {
+        url += `?${queryString}`;
+      }
+
+      console.log('🚀 [useUserPage] Haciendo petición a:', url);
       const response = await fetch(url, {
         credentials: 'include',
       });
 
       if (!response.ok) {
-        throw new Error('Error al cargar página de usuario');
+        console.error('❌ [useUserPage] Error en respuesta:', {
+          status: response.status,
+          statusText: response.statusText,
+          url: response.url
+        });
+
+        // Manejo específico de errores
+        if (response.status === 404) {
+          throw new Error('Usuario no encontrado');
+        } else if (response.status === 500) {
+          throw new Error('Error interno del servidor');
+        } else {
+          throw new Error(`Error al cargar página de usuario (${response.status})`);
+        }
       }
 
       const data = await response.json();
@@ -135,13 +165,24 @@ export const useUserPage = (path) => {
       console.log('🔄 [DEBUG] useUserPage - Datos recibidos del backend:', {
         url,
         dataType: typeof data,
-        hasContenido: !!data?.contenido,
-        contenidoLength: data?.contenido?.length,
-        contenidoPreview: data?.contenido?.substring(0, 300),
-        hasTitulo: !!data?.titulo,
-        titulo: data?.titulo,
-        hasPublicacion: !!data?.publicacion,
-        publicacionContenido: data?.publicacion?.contenido?.substring(0, 200)
+        hasUsuario: !!data?.usuario,
+        hasPagina: !!data?.pagina,
+        hasGaleria: !!data?.galeria,
+        hasComentarios: !!data?.comentarios,
+        usuario: data?.usuario ? {
+          id: data.usuario.id,
+          username: data.usuario.username,
+          display_name: data.usuario.display_name,
+          hasFotoPerfil: !!data.usuario.foto_perfil
+        } : null,
+        pagina: data?.pagina ? {
+          id: data.pagina.id,
+          titulo: data.pagina.titulo,
+          contenidoLength: data.pagina.contenido?.length,
+          contenidoPreview: data.pagina.contenido?.substring(0, 300)
+        } : null,
+        galeriaCount: data?.galeria?.length || 0,
+        comentariosCount: data?.comentarios?.length || 0
       });
 
       return data;

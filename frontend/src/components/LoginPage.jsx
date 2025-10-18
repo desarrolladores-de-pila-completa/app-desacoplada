@@ -19,7 +19,8 @@ function LoginPage({ showOutput }) {
       showOutput("Login exitoso", "success");
       // Redirige a la página del usuario
       if (result.user?.username) {
-        navigate(`/pagina/${result.user.username}`);
+        const username = String(result.user.username).replace(/\s+/g, '-');
+        navigate(`/pagina/${username}`);
       }
     } else {
       showOutput(result.error, "error");

@@ -34,7 +34,8 @@ function RegisterPage({ showOutput }) {
       showOutput("Registro exitoso", "success");
       // Redirigir automáticamente a la página personal del usuario
       if (result.data?.username) {
-        navigate(`/pagina/${result.data.username}`);
+        const username = String(result.data.username).replace(/\s+/g, '-');
+        navigate(`/pagina/${username}`);
       }
     } else {
       showOutput(result.error, "error");
