@@ -47,8 +47,14 @@ const rooms = new Map<string, Set<string>>(); // sala -> Set de userIds
 // Crear sala global por defecto
 rooms.set('global', new Set());
 
+logger.info('Servidor WebSocket inicializado en puerto 3002', { context: 'websocket' });
+
 wss.on('connection', (ws: WebSocket, request: IncomingMessage) => {
-  logger.info('Nuevo cliente WebSocket conectado', { context: 'websocket' });
+   logger.info('Nuevo cliente WebSocket conectado', {
+     context: 'websocket',
+     remoteAddress: request.socket.remoteAddress,
+     remotePort: request.socket.remotePort
+   });
 
   ws.on('message', async (message: Buffer) => {
     try {

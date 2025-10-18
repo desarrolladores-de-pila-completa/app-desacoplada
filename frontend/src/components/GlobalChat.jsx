@@ -7,15 +7,17 @@
   
   // Función para conectar a WebSocket
   const connectWebSocket = (userId, onMessage) => {
-    const ws = new WebSocket('ws://localhost:3001');
+    console.log('GlobalChat: Intentando conectar WebSocket a ws://localhost:3002 para usuario:', userId);
+    const ws = new WebSocket('ws://localhost:3002');
 
     ws.onopen = () => {
-      console.log('WebSocket conectado');
+      console.log('GlobalChat: WebSocket conectado exitosamente');
       // Registrar usuario en el servidor WebSocket
       ws.send(JSON.stringify({
         type: 'register',
         userId: userId
       }));
+      console.log('GlobalChat: Usuario registrado en WebSocket:', userId);
     };
 
     ws.onmessage = (event) => {
