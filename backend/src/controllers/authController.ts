@@ -4,6 +4,7 @@ import winston from '../utils/logger';
 import { MulterFile, AppError } from '../types/interfaces';
 import { AuthService } from '../services/AuthService';
 import { UserService } from '../services/UserService';
+import { UsernameUpdateService, usernameUpdateService } from '../services/UsernameUpdateService';
 import { getService } from '../utils/servicesConfig';
 import { getAuthCookieOptions, getRefreshTokenCookieOptions, getSlidingSessionCookieOptions, clearAuthCookies } from '../utils/cookieConfig';
 
@@ -277,6 +278,377 @@ export async function refreshTokens(req: Request, res: Response): Promise<void> 
     } else {
       res.status(500).json({ error: "Error interno del servidor" });
     }
+  }
+}
+
+/**
+ * @swagger
+ * /api/auth/profile-photo:
+ *   post:
+ *     summary: Actualizar foto de perfil del usuario autenticado
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               photo:
+ *                 type: string
+ *                 format: binary
+ *                 description: Archivo de imagen para foto de perfil
+ */
+export async function updateProfilePhoto(req: RequestWithFile, res: Response): Promise<void> {
+  const userId = (req as any).userId;
+
+  if (!userId) {
+    throw new AppError(401, "No autenticado");
+  }
+
+  try {
+    const file = req.file;
+
+    if (!file) {
+      throw new AppError(400, "No se proporcionó ningún archivo");
+    }
+
+    if (!file.buffer) {
+      throw new AppError(400, "Archivo inválido");
+    }
+
+    // Validar tipo de archivo (solo imágenes)
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.mimetype)) {
+      throw new AppError(400, "Tipo de archivo no permitido. Solo se permiten imágenes JPEG, PNG, GIF y WebP");
+    }
+
+    // Validar tamaño del archivo (máximo 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      throw new AppError(400, "El archivo es demasiado grande. Máximo 5MB permitido");
+    }
+
+    winston.info('Actualizando foto de perfil', { userId, fileSize: file.size, mimeType: file.mimetype });
+
+    // Usar el servicio de usuario para actualizar la foto
+    await userServiceAuth.updateProfilePhoto(userId, file.buffer);
+
+    res.json({
+      message: "Foto de perfil actualizada exitosamente",
+      fileSize: file.size,
+      mimeType: file.mimetype
+    });
+
+  } catch (error) {
+    winston.error('Error al actualizar foto de perfil', { error, userId });
+    if (error instanceof AppError) {
+      throw error;
+    }
+    throw new AppError(500, "Error al actualizar foto de perfil");
+  }
+}
+
+/**
+ * @swagger
+ * /api/auth/user/:id/foto:
+ *   get:
+ *     summary: Obtener foto de perfil de usuario específico
+ *     tags: [Auth]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del usuario
+ *     responses:
+ *       200:
+ *         description: Foto de perfil del usuario
+ *         content:
+ *           image/*:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       404:
+ *         description: Usuario no encontrado o sin foto de perfil
+ *       500:
+ *         description: Error interno del servidor
+ */
+export async function getUserProfilePhoto(req: Request, res: Response): Promise<void> {
+  const { id } = req.params;
+
+  if (!id) {
+    res.status(400).json({ error: 'ID de usuario es requerido' });
+    return;
+  }
+
+  try {
+    // Buscar usuario por ID directamente en la base de datos
+    const { pool } = require('../middlewares/db');
+    const [rows]: any = await pool.query(
+      "SELECT foto_perfil FROM users WHERE id = ?",
+      [id]
+    );
+
+    if (!rows || rows.length === 0) {
+      winston.warn('Usuario no encontrado al obtener foto de perfil', { userId: id });
+      res.status(404).json({ error: 'Usuario no encontrado' });
+      return;
+    }
+
+    const user = rows[0];
+
+    if (!user.foto_perfil) {
+      winston.info('Usuario sin foto de perfil', { userId: id });
+      res.status(404).json({ error: 'Usuario no tiene foto de perfil' });
+      return;
+    }
+
+    // Determinar el tipo de imagen basado en los primeros bytes del buffer
+    const buffer = user.foto_perfil;
+    let contentType = 'image/jpeg'; // default
+
+    if (buffer && buffer.length > 0) {
+      // Detectar tipo de imagen por magic numbers
+      if (buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF) {
+        contentType = 'image/jpeg';
+      } else if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47) {
+        contentType = 'image/png';
+      } else if (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46) {
+        contentType = 'image/gif';
+      } else if (buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46) {
+        contentType = 'image/webp';
+      }
+    }
+
+    // Configurar headers para la imagen
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Cache-Control', 'public, max-age=300'); // Cache por 5 minutos para permitir actualizaciones más frecuentes
+    res.setHeader('Content-Length', buffer.length);
+
+    // Enviar el buffer de la imagen
+    res.send(buffer);
+
+    winston.info('Foto de perfil servida exitosamente', {
+      userId: id,
+      contentType,
+      size: buffer.length
+    });
+
+  } catch (error) {
+    winston.error('Error al obtener foto de perfil', { error, userId: id });
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+}
+
+/**
+ * @swagger
+ * /api/auth/users/{userId}/username:
+ *   put:
+ *     summary: Actualizar nombre de usuario
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del usuario cuyo username se va a actualizar
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - username
+ *             properties:
+ *               - username:
+ *                   type: string
+ *                   minLength: 3
+ *                   maxLength: 20
+ *                   pattern: '^[a-zA-Z0-9_\\sáéíóúÁÉÍÓÚñÑ-]+$'
+ *                   description: Nuevo nombre de usuario
+ *               - dryRun:
+ *                   type: boolean
+ *                   default: false
+ *                   description: Si es true, solo previsualiza los cambios sin aplicarlos
+ *     responses:
+ *       200:
+ *         description: Username actualizado exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 oldUsername:
+ *                   type: string
+ *                 newUsername:
+ *                   type: string
+ *                 contentUpdate:
+ *                   type: object
+ *                   properties:
+ *                     totalReferences:
+ *                       type: number
+ *                     updatedReferences:
+ *                       type: number
+ *                 cacheInvalidation:
+ *                   type: object
+ *                   properties:
+ *                     invalidatedKeys:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                 redirectsCreated:
+ *                   type: number
+ *                 executionTimeMs:
+ *                   type: number
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ *       400:
+ *         description: Datos inválidos o username ya en uso
+ *       401:
+ *         description: No autenticado
+ *       403:
+ *         description: No autorizado para actualizar este usuario
+ *       404:
+ *         description: Usuario no encontrado
+ *       429:
+ *         description: Demasiadas solicitudes de cambio de username
+ *       500:
+ *         description: Error interno del servidor
+ */
+export async function updateUsername(req: Request, res: Response): Promise<void> {
+  const userId = req.params.userId;
+  const authenticatedUserId = (req as any).userId;
+
+  if (!userId) {
+    throw new AppError(400, "ID de usuario es requerido");
+  }
+
+  if (!authenticatedUserId) {
+    throw new AppError(401, "No autenticado");
+  }
+
+  // Verificar que el usuario autenticado solo pueda actualizar su propio username
+  if (authenticatedUserId !== userId) {
+    throw new AppError(403, "No autorizado para actualizar este usuario");
+  }
+
+  try {
+    const { username, dryRun = false } = req.body;
+
+    if (!username) {
+      throw new AppError(400, "Nuevo username es requerido");
+    }
+
+    winston.info('Iniciando actualización de username', {
+      userId,
+      oldUsername: (req as any).user?.username,
+      newUsername: username,
+      dryRun,
+      context: 'username-update-request'
+    });
+
+    // Usar el servicio de actualización de username
+    const updateResult = await usernameUpdateService.updateUsername({
+      userId,
+      newUsername: username,
+      dryRun: Boolean(dryRun)
+    });
+
+    // Log detallado de la operación para auditoría
+    winston.info('Username actualizado exitosamente', {
+      userId,
+      oldUsername: updateResult.oldUsername,
+      newUsername: updateResult.newUsername,
+      redirectsCreated: updateResult.redirectsCreated,
+      executionTimeMs: updateResult.executionTimeMs,
+      contentReferencesUpdated: updateResult.contentUpdate?.updatedReferences || 0,
+      cacheKeysInvalidated: updateResult.cacheInvalidation?.invalidatedKeys.length || 0,
+      context: 'username-update-success'
+    });
+
+    // Si hubo errores, loggearlos pero no fallar completamente
+    if (updateResult.errors.length > 0) {
+      winston.warn('Username actualizado con errores menores', {
+        userId,
+        errors: updateResult.errors,
+        warnings: updateResult.warnings,
+        context: 'username-update-with-warnings'
+      });
+    }
+
+    // Preparar respuesta informativa
+    const response: any = {
+      message: dryRun
+        ? "Previsualización completada exitosamente"
+        : "Username actualizado exitosamente",
+      oldUsername: updateResult.oldUsername,
+      newUsername: updateResult.newUsername,
+      redirectsCreated: updateResult.redirectsCreated,
+      executionTimeMs: updateResult.executionTimeMs,
+      timestamp: updateResult.timestamp
+    };
+
+    // Incluir estadísticas detalladas si están disponibles
+    if (updateResult.contentUpdate) {
+      response.contentUpdate = {
+        totalReferences: updateResult.contentUpdate.totalReferences,
+        updatedReferences: updateResult.contentUpdate.updatedReferences,
+        commentsFound: updateResult.contentUpdate.details.comments.found,
+        commentsUpdated: updateResult.contentUpdate.details.comments.updated,
+        feedFound: updateResult.contentUpdate.details.feed.found,
+        feedUpdated: updateResult.contentUpdate.details.feed.updated,
+        privateMessagesFound: updateResult.contentUpdate.details.privateMessages.found,
+        privateMessagesUpdated: updateResult.contentUpdate.details.privateMessages.updated,
+        publicationsFound: updateResult.contentUpdate.details.publications.found,
+        publicationsUpdated: updateResult.contentUpdate.details.publications.updated
+      };
+    }
+
+    if (updateResult.cacheInvalidation) {
+      response.cacheInvalidation = {
+        invalidatedKeys: updateResult.cacheInvalidation.invalidatedKeys,
+        success: updateResult.cacheInvalidation.success,
+        errors: updateResult.cacheInvalidation.errors
+      };
+    }
+
+    // Incluir warnings si los hay
+    if (updateResult.warnings.length > 0) {
+      response.warnings = updateResult.warnings;
+    }
+
+    // Incluir errores menores si los hay (pero la operación fue exitosa)
+    if (updateResult.errors.length > 0 && updateResult.success) {
+      response.errors = updateResult.errors;
+      response.message += " (con errores menores)";
+    }
+
+    res.json(response);
+
+  } catch (error) {
+    winston.error('Error al actualizar username', {
+      userId,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      context: 'username-update-error'
+    });
+
+    if (error instanceof AppError) {
+      throw error;
+    }
+
+    throw new AppError(500, "Error interno al actualizar username");
   }
 }
 

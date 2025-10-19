@@ -187,19 +187,66 @@ router.post("/:id/imagenes", authMiddleware, userRateLimit, upload.single("image
 // Endpoint para obtener todas las imágenes de una página
 router.get("/:id/imagenes", async (req: any, res: any) => {
   const paginaId = req.params.id;
+
+  console.log('=== IMAGES REQUEST DEBUG ===', {
+    paginaId,
+    method: req.method,
+    url: req.originalUrl,
+    headers: req.headers,
+    ip: req.ip,
+    userAgent: req.get('User-Agent'),
+    context: 'images-debug',
+    timestamp: new Date().toISOString()
+  });
+
+  // Log específico para debugging del error 426 en imágenes
+  console.log('🚨 IMAGES DEBUG 426 CANDIDATE 🚨', {
+    paginaId,
+    url: req.originalUrl,
+    method: req.method,
+    protocol: req.protocol,
+    httpVersion: req.httpVersion,
+    origin: req.get('Origin'),
+    referer: req.get('Referer'),
+    accept: req.get('Accept'),
+    acceptEncoding: req.get('Accept-Encoding'),
+    context: 'images-426-debug',
+    timestamp: new Date().toISOString()
+  });
+
   try {
     const [rows]: any = await pool.query(
       "SELECT idx, imagen FROM imagenes WHERE pagina_id = ? ORDER BY idx ASC",
       [paginaId]
     );
+
+    console.log('=== IMAGES DB RESULT ===', {
+      paginaId,
+      imagesFound: rows.length,
+      context: 'images-debug'
+    });
+
     // Convertir BLOB a base64 para frontend
     const images = rows.map((row: any) => ({
       idx: row.idx,
       src: `data:image/jpeg;base64,${Buffer.from(row.imagen).toString('base64')}`
     }));
+
+    console.log('=== IMAGES RESPONSE ===', {
+      paginaId,
+      imagesCount: images.length,
+      statusCode: 200,
+      context: 'images-debug'
+    });
+
     res.json(images);
   } catch (err) {
-    console.error("Error al obtener imágenes:", err);
+    console.error("=== IMAGES ERROR ===:", {
+      paginaId,
+      error: (err as Error).message,
+      stack: (err as Error).stack,
+      context: 'images-debug'
+    });
     res.status(500).json({ error: "Error al obtener imágenes" });
   }
 });

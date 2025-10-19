@@ -2,25 +2,46 @@
   import { Link } from "react-router-dom";
   import useAuthStore from "../stores/authStore";
   import { useGlobalChat, useSendMessage, usePrivateChat, useSendPrivateMessage } from "../hooks/useChat";
-  import useAuthUser from "../hooks/useAuthUser";
   import { API_BASE } from "../config/api";
   
   // Función para conectar a WebSocket
   const connectWebSocket = (userId, onMessage) => {
-    // CORRECCIÓN TEMPORAL: Cambiar puerto de 3001 a 3002 para coincidir con servidor
-    const wsUrl = 'ws://localhost:3002';
-    console.log('GlobalChat: Intentando conectar WebSocket a:', wsUrl, 'con userId:', userId);
-
+    // Conectar al servidor WebSocket en puerto 3001 (diferente al proxy)
+    const wsUrl = 'ws://localhost:3001';
+    console.log('🔌 GlobalChat: Intentando conectar WebSocket a:', wsUrl, 'con userId:', userId);
+    console.log('=== WEBSOCKET CLIENT DEBUG ===', {
+      timestamp: new Date().toISOString(),
+      wsUrl,
+      userId,
+      userAgent: navigator.userAgent,
+      context: 'websocket-client-debug'
+    });
+  
+    console.log('📡 Configuración WebSocket:', {
+      wsUrl,
+      targetPort: 3001,
+      note: 'Conectando directamente al servidor WebSocket (puerto diferente al proxy API)',
+      context: 'websocket-config-debug'
+    });
+  
     const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
-      console.log('GlobalChat: WebSocket conectado exitosamente');
+      console.log('✅ GlobalChat: WebSocket conectado exitosamente');
+      console.log('=== WEBSOCKET OPEN DEBUG ===', {
+        timestamp: new Date().toISOString(),
+        wsUrl,
+        userId,
+        readyState: ws.readyState,
+        context: 'websocket-open-debug'
+      });
+
       // Registrar usuario en el servidor WebSocket
       ws.send(JSON.stringify({
         type: 'register',
         userId: userId
       }));
-      console.log('GlobalChat: Usuario registrado en WebSocket:', userId);
+      console.log('📝 GlobalChat: Usuario registrado en WebSocket:', userId);
     };
 
     ws.onmessage = (event) => {
@@ -32,14 +53,31 @@
       }
     };
 
-    ws.onclose = () => {
-      console.log('WebSocket desconectado');
+    ws.onclose = (event) => {
+      console.log('🔌 WebSocket desconectado', {
+        code: event.code,
+        reason: event.reason,
+        wasClean: event.wasClean
+      });
+      console.log('=== WEBSOCKET CLOSE DEBUG ===', {
+        timestamp: new Date().toISOString(),
+        code: event.code,
+        reason: event.reason,
+        wasClean: event.wasClean,
+        context: 'websocket-close-debug'
+      });
+
       // Reconectar después de 5 segundos
       setTimeout(() => connectWebSocket(userId, onMessage), 5000);
     };
 
     ws.onerror = (error) => {
-      console.error('Error WebSocket:', error);
+      console.error('🚨 Error WebSocket:', error);
+      console.error('=== WEBSOCKET ERROR DEBUG ===', {
+        timestamp: new Date().toISOString(),
+        error: error.message || error,
+        context: 'websocket-error-debug'
+      });
     };
 
     return ws;
@@ -50,8 +88,7 @@ function GlobalChat() {
   renderCount.current += 1;
   console.log('GlobalChat: Componente renderizado - Count:', renderCount.current);
 
-  const { isAuthenticated } = useAuthStore();
-  const { authUser } = useAuthUser();
+  const { isAuthenticated, user: authUser } = useAuthStore();
   const [message, setMessage] = useState("");
   const [privateUserId, setPrivateUserId] = useState(null);
   const [privateMessage, setPrivateMessage] = useState("");

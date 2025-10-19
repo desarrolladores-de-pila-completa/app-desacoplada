@@ -148,13 +148,22 @@ export class UserService {
   }
 
   /**
-   * Actualizar foto de perfil
-   */
-  async updateProfilePhoto(userId: string, photoBuffer: Buffer): Promise<void> {
-    await this.userRepository.updateProfilePhoto(userId, photoBuffer);
-    // Invalidar caché del usuario
-    cacheService.invalidatePattern(`user:id:${userId}`);
-  }
+    * Actualizar foto de perfil
+    */
+   async updateProfilePhoto(userId: string, photoBuffer: Buffer): Promise<void> {
+     // Obtener información del usuario antes de actualizar para conocer username y email
+     const user = await this.userRepository.findById(userId);
+     if (!user) {
+       throw new AppError(404, "Usuario no encontrado");
+     }
+
+     await this.userRepository.updateProfilePhoto(userId, photoBuffer);
+
+     // Invalidar todos los patrones de caché relacionados con este usuario
+     cacheService.invalidatePattern(`user:id:${userId}`);
+     cacheService.invalidatePattern(`user:username:${user.username}`);
+     cacheService.invalidatePattern(`user:email:${user.email}`);
+   }
 
   /**
    * Actualizar username

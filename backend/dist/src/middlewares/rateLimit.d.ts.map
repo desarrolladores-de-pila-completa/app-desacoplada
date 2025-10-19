@@ -1,1 +1,1 @@
-{"version":3,"file":"rateLimit.d.ts","sourceRoot":"","sources":["../../../src/middlewares/rateLimit.ts"],"names":[],"mappings":"AAIA,eAAO,MAAM,aAAa,sDAUxB,CAAC;AAGH,eAAO,MAAM,aAAa,sDAexB,CAAC;AAGH,eAAO,MAAM,gBAAgB,sDAM3B,CAAC"}
+{"version":3,"file":"rateLimit.d.ts","sourceRoot":"","sources":["../../../src/middlewares/rateLimit.ts"],"names":[],"mappings":"AAIA,eAAO,MAAM,aAAa,sDAUxB,CAAC;AAGH,eAAO,MAAM,aAAa,sDAexB,CAAC;AAGH,eAAO,MAAM,uBAAuB,sDA8BlC,CAAC;AAGH,eAAO,MAAM,gBAAgB,sDAiC3B,CAAC"}

@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Manual - Sistema de Actualización de Username</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 25px;
+            background: #fafafa;
+        }
+
+        .section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        .btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #27ae60, #229954);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+
+        .response-area {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .log-entry {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 4px solid #3498db;
+        }
+
+        .log-success {
+            border-left-color: #27ae60;
+            background: rgba(39, 174, 96, 0.1);
+        }
+
+        .log-error {
+            border-left-color: #e74c3c;
+            background: rgba(231, 76, 60, 0.1);
+        }
+
+        .log-warning {
+            border-left-color: #f39c12;
+            background: rgba(243, 156, 18, 0.1);
+        }
+
+        .log-info {
+            border-left-color: #3498db;
+            background: rgba(52, 152, 219, 0.1);
+        }
+
+        .example-box {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .example-box h4 {
+            color: #495057;
+            margin-bottom: 15px;
+        }
+
+        .code {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-connected {
+            background: #27ae60;
+        }
+
+        .status-disconnected {
+            background: #e74c3c;
+        }
+
+        .test-scenarios {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .scenario-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .scenario-card:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
+        .scenario-card h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .scenario-card p {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #dee2e6;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 15px 25px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #7f8c8d;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            color: #3498db;
+            border-bottom-color: #3498db;
+            background: #f8f9fa;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .test-scenarios {
+                grid-template-columns: 1fr;
+            }
+
+            .checkbox-group {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 Test Manual - Username Update System</h1>
+            <p>Sistema de pruebas para el servicio de actualización de nombres de usuario</p>
+            <div style="margin-top: 15px;">
+                <span class="status-indicator status-connected"></span>
+                <small>Servidor conectado</small>
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- Navegación por pestañas -->
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('test-panel')">Panel de Pruebas</button>
+                <button class="tab" onclick="showTab('examples')">Ejemplos de Uso</button>
+                <button class="tab" onclick="showTab('documentation')">Documentación</button>
+                <button class="tab" onclick="showTab('scenarios')">Escenarios de Prueba</button>
+            </div>
+
+            <!-- Panel de Pruebas -->
+            <div id="test-panel" class="tab-content active">
+                <div class="section">
+                    <h2>Configuración de Prueba</h2>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="userId">ID de Usuario:</label>
+                            <input type="text" id="userId" placeholder="1411cebf-62c0-46bc-8e73-e5b121604aa2" value="1411cebf-62c0-46bc-8e73-e5b121604aa2">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="newUsername">Nuevo Username:</label>
+                            <input type="text" id="newUsername" placeholder="nuevo-usuario-123" value="test-user-2024">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="timeout">Timeout (ms):</label>
+                            <input type="number" id="timeout" value="30000" min="5000" max="60000">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="retries">Número de Reintentos:</label>
+                            <input type="number" id="retries" value="3" min="1" max="10">
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h3>Opciones Avanzadas</h3>
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="dryRun" checked>
+                                <label for="dryRun">Dry Run (Solo vista previa)</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="skipCacheInvalidation">
+                                <label for="skipCacheInvalidation">Omitir invalidación de caché</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="skipContentUpdate">
+                                <label for="skipContentUpdate">Omitir actualización de contenido</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="skipRedirects">
+                                <label for="skipRedirects">Omitir creación de redirecciones</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="text-align: center; margin-top: 30px;">
+                        <button class="btn btn-secondary" onclick="clearLog()">Limpiar Log</button>
+                        <button class="btn" onclick="runPreview()">Vista Previa</button>
+                        <button class="btn btn-success" onclick="runUpdate()">Aplicar Cambios</button>
+                        <button class="btn btn-danger" onclick="runLoadTest()">Prueba de Carga</button>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Log de Respuestas del Servidor</h2>
+                    <div id="logContainer" class="response-area">
+                        <div class="log-entry log-info">
+                            <strong>[Sistema]</strong> Esperando pruebas... Haz clic en "Vista Previa" o "Aplicar Cambios" para comenzar.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ejemplos de Uso -->
+            <div id="examples" class="tab-content">
+                <div class="section">
+                    <h2>Ejemplos de Uso del Servicio</h2>
+
+                    <div class="example-box">
+                        <h4>1. Actualización Básica con Preview</h4>
+                        <div class="code">
+// Frontend - JavaScript
+const result = await usernameUpdateService.previewUsernameUpdate(
+  '1411cebf-62c0-46bc-8e73-e5b121604aa2',
+  'nuevo-username'
+);
+
+console.log('Referencias encontradas:', result.data.contentReferences.total);
+console.log('Puede proceder:', result.data.canProceed);
+                        </div>
+                    </div>
+
+                    <div class="example-box">
+                        <h4>2. Actualización Completa con Todas las Opciones</h4>
+                        <div class="code">
+// Frontend - JavaScript
+const result = await usernameUpdateService.updateUsername(
+  '1411cebf-62c0-46bc-8e73-e5b121604aa2',
+  'nuevo-username',
+  {
+    timeout: 30000,
+    retries: 3,
+    skipCacheInvalidation: false,
+    skipContentUpdate: false,
+    skipRedirects: false
+  }
+);
+
+if (result.success) {
+  console.log('Username actualizado exitosamente');
+  console.log('Tiempo de ejecución:', result.data.executionTimeMs + 'ms');
+}
+                        </div>
+                    </div>
+
+                    <div class="example-box">
+                        <h4>3. Validación de Username</h4>
+                        <div class="code">
+// Frontend - JavaScript
+const validation = usernameUpdateService.validateUsername('nuevo-username');
+
+if (!validation.isValid) {
+  console.log('Errores:', validation.errors);
+} else {
+  console.log('Username válido');
+  if (validation.warnings.length > 0) {
+    console.log('Advertencias:', validation.warnings);
+  }
+}
+                        </div>
+                    </div>
+
+                    <div class="example-box">
+                        <h4>4. Obtener Estadísticas</h4>
+                        <div class="code">
+// Frontend - JavaScript
+const stats = await usernameUpdateService.getUpdateStatistics(
+  '1411cebf-62c0-46bc-8e73-e5b121604aa2',
+  { useCache: true }
+);
+
+console.log('Total de actualizaciones:', stats.data.totalUpdates);
+console.log('Redirecciones activas:', stats.data.redirectsActive);
+                        </div>
+                    </div>
+
+                    <div class="example-box">
+                        <h4>5. Suscripción a Eventos Globales</h4>
+                        <div class="code">
+// Frontend - JavaScript
+const unsubscribe = usernameUpdateService.subscribeToUpdates((event) => {
+  console.log('Username actualizado:', event);
+  if (event.action === 'usernameUpdated') {
+    // Actualizar UI globalmente
+    updateUserInterface(event.oldUsername, event.newUsername);
+  }
+});
+
+// Para dejar de escuchar eventos
+// unsubscribe();
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Documentación -->
+            <div id="documentation" class="tab-content">
+                <div class="section">
+                    <h2>Documentación del Sistema</h2>
+
+                    <div class="example-box">
+                        <h4>Arquitectura del Sistema</h4>
+                        <p>El sistema de actualización de nombres de usuario está compuesto por:</p>
+                        <ul style="margin: 15px 0; padding-left: 30px;">
+                            <li><strong>UsernameUpdateService (Backend):</strong> Servicio principal que coordina todas las operaciones</li>
+                            <li><strong>ContentUpdateService:</strong> Actualiza referencias en comentarios, publicaciones, mensajes privados</li>
+                            <li><strong>CacheInvalidationService:</strong> Gestiona la invalidación de caché distribuida</li>
+                            <li><strong>ValidationService:</strong> Valida reglas de negocio y formato</li>
+                        </ul>
+                    </div>
+
+                    <div class="example-box">
+                        <h4>Flujo de Actualización</h4>
+                        <ol style="margin: 15px 0; padding-left: 30px;">
+                            <li><strong>Validación:</strong> Se valida el formato y disponibilidad del nuevo username</li>
+                            <li><strong>Preview (opcional):</strong> Se obtiene información de referencias sin modificar datos</li>
+                            <li><strong>Transacción:</strong> Se inicia una transacción de base de datos</li>
+                            <li><strong>Actualización de contenido:</strong> Se actualizan todas las referencias en el sistema</li>
+                            <li><strong>Actualización de usuario:</strong> Se cambia el username en la tabla de usuarios</li>
+                            <li><strong>Redirecciones:</strong> Se crean redirecciones 301 para URLs antiguas</li>
+                            <li><strong>Invalidación de caché:</strong> Se limpia caché relacionada con el usuario</li>
+                            <li><strong>Commit:</strong> Se confirman todos los cambios</li>
+                        </ol>
+                    </div>
+
+                    <div class="example-box">
+                        <h4>Características de Seguridad</h4>
+                        <ul style="margin: 15px 0; padding-left: 30px;">
+                            <li><strong>Transacciones atómicas:</strong> Todas las operaciones se realizan en una sola transacción</li>
+                            <li><strong>Rollback automático:</strong> Si ocurre un error, se revierten todos los cambios</li>
+                            <li><strong>Validación estricta:</strong> Se valida el formato y disponibilidad del username</li>
+                            <li><strong>CSRF Protection:</strong> Todas las peticiones requieren token CSRF válido</li>
+                            <li><strong>Timeouts configurables:</strong> Se puede configurar timeouts por operación</li>
+                            <li><strong>Reintentos automáticos:</strong> Sistema de reintentos para fallos temporales</li>
+                        </ul>
+                    </div>
+
+                    <div class="example-box">
+                        <h4>Tipos de Referencias que se Actualizan</h4>
+                        <ul style="margin: 15px 0; padding-left: 30px;">
+                            <li><strong>Comentarios:</strong> Referencias @username en comentarios</li>
+                            <li><strong>Publicaciones:</strong> Menciones en publicaciones y páginas</li>
+                            <li><strong>Mensajes privados:</strong> Referencias en mensajes directos</li>
+                            <li><strong>Feed:</strong> Menciones en el feed de actividad</li>
+                            <li><strong>URLs:</strong> Creación de redirecciones 301 automáticas</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Escenarios de Prueba -->
+            <div id="scenarios" class="tab-content">
+                <div class="section">
+                    <h2>Escenarios de Prueba Predefinidos</h2>
+                    <p>Haz clic en cualquier escenario para cargarlo automáticamente en el formulario:</p>
+
+                    <div class="test-scenarios">
+                        <div class="scenario-card" onclick="loadScenario('basic-update')">
+                            <h4>✅ Actualización Básica</h4>
+                            <p>Prueba de actualización estándar con todas las opciones habilitadas</p>
+                        </div>
+
+                        <div class="scenario-card" onclick="loadScenario('dry-run-only')">
+                            <h4>🔍 Solo Dry Run</h4>
+                            <p>Vista previa sin realizar cambios reales en el sistema</p>
+                        </div>
+
+                        <div class="scenario-card" onclick="loadScenario('no-cache-update')">
+                            <h4>⚡ Sin Invalidación de Caché</h4>
+                            <p>Actualización omitiendo la limpieza de caché</p>
+                        </div>
+
+                        <div class="scenario-card" onclick="loadScenario('no-content-update')">
+                            <h4>📝 Sin Actualización de Contenido</h4>
+                            <p>Actualización básica sin modificar referencias existentes</p>
+                        </div>
+
+                        <div class="scenario-card" onclick="loadScenario('no-redirects')">
+                            <h4>🔗 Sin Redirecciones</h4>
+                            <p>Actualización sin crear redirecciones 301</p>
+                        </div>
+
+                        <div class="scenario-card" onclick="loadScenario('load-test')">
+                            <h4>🚀 Prueba de Carga</h4>
+                            <p>Ejecutar múltiples actualizaciones para probar rendimiento</p>
+                        </div>
+
+                        <div class="scenario-card" onclick="loadScenario('error-handling')">
+                            <h4>⚠️ Manejo de Errores</h4>
+                            <p>Probar diferentes escenarios de error y recuperación</p>
+                        </div>
+
+                        <div class="scenario-card" onclick="loadScenario('validation-test')">
+                            <h4>🔒 Pruebas de Validación</h4>
+                            <p>Probar diferentes casos de validación de username</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Estado de la aplicación
+        let currentTab = 'test-panel';
+        let isLoading = false;
+
+        // Configuración del servidor
+        const API_BASE = 'http://localhost:3000/api';
+        const FRONTEND_BASE = 'http://localhost:5173';
+
+        // Funciones de utilidad
+        function showTab(tabName) {
+            // Ocultar todas las pestañas
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Mostrar la pestaña seleccionada
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+
+            currentTab = tabName;
+        }
+
+        function addLog(message, type = 'info') {
+            const logContainer = document.getElementById('logContainer');
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${type}`;
+
+            const timestamp = new Date().toLocaleTimeString();
+            logEntry.innerHTML = `<strong>[${timestamp}]</strong> ${message}`;
+
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('logContainer').innerHTML = '';
+            addLog('Log limpiado', 'info');
+        }
+
+        async function makeRequest(url, options = {}) {
+            const startTime = Date.now();
+
+            try {
+                addLog(`🚀 Enviando ${options.method || 'GET'} a ${url}`, 'info');
+
+                const response = await fetch(url, {
+                    method: options.method || 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    credentials: 'include',
+                    body: options.body ? JSON.stringify(options.body) : undefined,
+                    signal: options.signal
+                });
+
+                const endTime = Date.now();
+                const duration = endTime - startTime;
+
+                if (response.ok) {
+                    const data = await response.json();
+                    addLog(`✅ Respuesta exitosa (${response.status}) - ${duration}ms`, 'success');
+                    addLog(`📦 Datos recibidos: ${JSON.stringify(data, null, 2)}`, 'info');
+                    return { success: true, data, status: response.status, duration };
+                } else {
+                    const errorText = await response.text();
+                    addLog(`❌ Error del servidor (${response.status}) - ${duration}ms`, 'error');
+                    addLog(`📝 Respuesta de error: ${errorText}`, 'error');
+                    return { success: false, error: errorText, status: response.status, duration };
+                }
+            } catch (error) {
+                const endTime = Date.now();
+                const duration = endTime - startTime;
+
+                if (error.name === 'AbortError') {
+                    addLog(`⏰ Timeout después de ${duration}ms`, 'warning');
+                } else {
+                    addLog(`💥 Error de conexión: ${error.message} - ${duration}ms`, 'error');
+                }
+
+                return { success: false, error: error.message, duration };
+            }
+        }
+
+        async function getCSRFToken() {
+            try {
+                const response = await fetch(`${FRONTEND_BASE}/api/csrf-token`, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    return data.csrfToken;
+                }
+            } catch (error) {
+                addLog(`Error obteniendo token CSRF: ${error.message}`, 'error');
+            }
+            return null;
+        }
+
+        async function runPreview() {
+            if (isLoading) return;
+
+            const userId = document.getElementById('userId').value.trim();
+            const newUsername = document.getElementById('newUsername').value.trim();
+
+            if (!userId || !newUsername) {
+                addLog('❌ User ID y nuevo username son requeridos', 'error');
+                return;
+            }
+
+            isLoading = true;
+            addLog(`🔍 Iniciando vista previa para usuario: ${userId}`, 'info');
+
+            try {
+                const csrfToken = await getCSRFToken();
+                if (!csrfToken) {
+                    addLog('❌ No se pudo obtener token CSRF', 'error');
+                    return;
+                }
+
+                const dryRun = document.getElementById('dryRun').checked;
+
+                const result = await makeRequest(`${API_BASE}/users/${userId}/username`, {
+                    method: 'PUT',
+                    headers: {
+                        'X-CSRF-Token': csrfToken
+                    },
+                    body: {
+                        username: newUsername,
+                        dryRun: dryRun
+                    }
+                });
+
+                if (result.success) {
+                    addLog(`✅ Vista previa completada exitosamente`, 'success');
+                    addLog(`📊 Referencias encontradas: ${result.data.contentReferences?.total || 0}`, 'info');
+                    addLog(`⚠️ Advertencias: ${result.data.warnings?.length || 0}`, 'warning');
+                }
+
+            } catch (error) {
+                addLog(`💥 Error durante vista previa: ${error.message}`, 'error');
+            } finally {
+                isLoading = false;
+            }
+        }
+
+        async function runUpdate() {
+            if (isLoading) return;
+
+            const userId = document.getElementById('userId').value.trim();
+            const newUsername = document.getElementById('newUsername').value.trim();
+
+            if (!userId || !newUsername) {
+                addLog('❌ User ID y nuevo username son requeridos', 'error');
+                return;
+            }
+
+            isLoading = true;
+            addLog(`🔄 Iniciando actualización para usuario: ${userId}`, 'info');
+
+            try {
+                const csrfToken = await getCSRFToken();
+                if (!csrfToken) {
+                    addLog('❌ No se pudo obtener token CSRF', 'error');
+                    return;
+                }
+
+                const options = {
+                    username: newUsername,
+                    dryRun: document.getElementById('dryRun').checked,
+                    skipCacheInvalidation: document.getElementById('skipCacheInvalidation').checked,
+                    skipContentUpdate: document.getElementById('skipContentUpdate').checked,
+                    skipRedirects: document.getElementById('skipRedirects').checked
+                };
+
+                const result = await makeRequest(`${API_BASE}/users/${userId}/username`, {
+                    method: 'PUT',
+                    headers: {
+                        'X-CSRF-Token': csrfToken
+                    },
+                    body: options
+                });
+
+                if (result.success) {
+                    addLog(`✅ Actualización completada exitosamente`, 'success');
+                    addLog(`⏱️ Tiempo de ejecución: ${result.data.executionTimeMs}ms`, 'info');
+                    addLog(`🔄 Redirecciones creadas: ${result.data.redirectsCreated}`, 'info');
+                }
+
+            } catch (error) {
+                addLog(`💥 Error durante actualización: ${error.message}`, 'error');
+            } finally {
+                isLoading = false;
+            }
+        }
+
+        async function runLoadTest() {
+            if (isLoading) return;
+
+            const userId = document.getElementById('userId').value.trim();
+            const baseUsername = document.getElementById('newUsername').value.trim();
+
+            if (!userId || !baseUsername) {
+                addLog('❌ User ID y username base son requeridos para prueba de carga', 'error');
+                return;
+            }
+
+            isLoading = true;
+            addLog(`🚀 Iniciando prueba de carga con 5 actualizaciones`, 'info');
+
+            for (let i = 1; i <= 5; i++) {
+                const testUsername = `${baseUsername}-${i}`;
+
+                addLog(`📋 Ejecutando iteración ${i}/5: ${testUsername}`, 'info');
+
+                try {
+                    const csrfToken = await getCSRFToken();
+                    if (!csrfToken) continue;
+
+                    const result = await makeRequest(`${API_BASE}/users/${userId}/username`, {
+                        method: 'PUT',
+                        headers: {
+                            'X-CSRF-Token': csrfToken
+                        },
+                        body: {
+                            username: testUsername,
+                            dryRun: true // Usar dry run para evitar conflictos
+                        }
+                    });
+
+                    if (result.success) {
+                        addLog(`✅ Iteración ${i} completada (${result.duration}ms)`, 'success');
+                    }
+
+                    // Pequeña pausa entre iteraciones
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+
+                } catch (error) {
+                    addLog(`❌ Error en iteración ${i}: ${error.message}`, 'error');
+                }
+            }
+
+            addLog(`🏁 Prueba de carga completada`, 'success');
+            isLoading = false;
+        }
+
+        function loadScenario(scenario) {
+            const scenarios = {
+                'basic-update': {
+                    newUsername: 'test-user-' + Date.now(),
+                    dryRun: false,
+                    skipCacheInvalidation: false,
+                    skipContentUpdate: false,
+                    skipRedirects: false
+                },
+                'dry-run-only': {
+                    newUsername: 'preview-user-' + Date.now(),
+                    dryRun: true,
+                    skipCacheInvalidation: false,
+                    skipContentUpdate: false,
+                    skipRedirects: false
+                },
+                'no-cache-update': {
+                    newUsername: 'no-cache-' + Date.now(),
+                    dryRun: false,
+                    skipCacheInvalidation: true,
+                    skipContentUpdate: false,
+                    skipRedirects: false
+                },
+                'no-content-update': {
+                    newUsername: 'no-content-' + Date.now(),
+                    dryRun: false,
+                    skipCacheInvalidation: false,
+                    skipContentUpdate: true,
+                    skipRedirects: false
+                },
+                'no-redirects': {
+                    newUsername: 'no-redirect-' + Date.now(),
+                    dryRun: false,
+                    skipCacheInvalidation: false,
+                    skipContentUpdate: false,
+                    skipRedirects: true
+                },
+                'load-test': {
+                    newUsername: 'load-test-' + Date.now(),
+                    dryRun: true,
+                    skipCacheInvalidation: false,
+                    skipContentUpdate: false,
+                    skipRedirects: false
+                },
+                'error-handling': {
+                    newUsername: '', // Username vacío para probar validación
+                    dryRun: false,
+                    skipCacheInvalidation: false,
+                    skipContentUpdate: false,
+                    skipRedirects: false
+                },
+                'validation-test': {
+                    newUsername: 'ab', // Username muy corto para probar validación
+                    dryRun: false,
+                    skipCacheInvalidation: false,
+                    skipContentUpdate: false,
+                    skipRedirects: false
+                }
+            };
+
+            const config = scenarios[scenario];
+            if (config) {
+                document.getElementById('newUsername').value = config.newUsername;
+                document.getElementById('dryRun').checked = config.dryRun;
+                document.getElementById('skipCacheInvalidation').checked = config.skipCacheInvalidation;
+                document.getElementById('skipContentUpdate').checked = config.skipContentUpdate;
+                document.getElementById('skipRedirects').checked = config.skipRedirects;
+
+                addLog(`📋 Escenario "${scenario}" cargado`, 'info');
+                showTab('test-panel');
+            }
+        }
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            addLog('Sistema de pruebas inicializado', 'info');
+            addLog('Configuración del servidor:', 'info');
+            addLog(`  Backend: ${API_BASE}`, 'info');
+            addLog(`  Frontend: ${FRONTEND_BASE}`, 'info');
+        });
+
+        // Deshabilitar botones durante carga
+        document.addEventListener('beforeunload', function() {
+            if (isLoading) {
+                return 'Hay una operación en progreso. ¿Estás seguro de que quieres salir?';
+            }
+        });
+    </script>
+</body>
+</html>

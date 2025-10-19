@@ -14,6 +14,7 @@ const csrf_1 = __importDefault(require("csrf"));
 const servicesConfig_1 = require("./utils/servicesConfig");
 const cookieConfig_1 = require("./utils/cookieConfig");
 const rateLimit_1 = require("./middlewares/rateLimit");
+const security_1 = require("./middlewares/security");
 const logger_1 = __importDefault(require("./utils/logger"));
 const ws_1 = __importDefault(require("ws"));
 // Inicializar el container de DI antes de importar rutas
@@ -25,34 +26,60 @@ const paginaRoutes_1 = __importDefault(require("./routes/paginaRoutes"));
 const publicacionRoutes_1 = __importDefault(require("./routes/publicacionRoutes"));
 const rootPath = path_1.default.resolve(__dirname, '../../../');
 const app = (0, express_1.default)();
-app.use((0, cors_1.default)({
-    origin: [
-        "http://127.0.0.1:5500",
-        "http://localhost:5500",
-        "http://localhost:5173", // Vite dev server
-        "http://127.0.0.1:5173", // Vite dev server (127.0.0.1)
-        "http://localhost:5174", // Vite dev server (actual port)
-        "http://127.0.0.1:5174", // Vite dev server (127.0.0.1, actual port)
-        "http://10.0.2.2:3000" // Emulador Android
-    ],
-    credentials: true,
-}));
+// Middleware para logging detallado de headers CORS
+// app.use(corsHeaderLogger);
+// Middleware para diagnóstico específico de problemas CORS
+// app.use(corsDiagnosticLogger);
+app.use((0, cors_1.default)(security_1.corsOptions));
+// Middleware para logging de CORS
+app.use((req, res, next) => {
+    console.log('=== CORS DEBUG ===', {
+        origin: req.get('Origin'),
+        method: req.method,
+        url: req.originalUrl,
+        context: 'cors-debug',
+        timestamp: new Date().toISOString()
+    });
+    // Log detallado para debugging del error 426 relacionado con CORS
+    if (req.originalUrl.includes('/api/csrf-token') || req.originalUrl.includes('/imagenes')) {
+        console.log('🚨 CORS DEBUG 426 CANDIDATE 🚨', {
+            url: req.originalUrl,
+            method: req.method,
+            origin: req.get('Origin'),
+            referer: req.get('Referer'),
+            userAgent: req.get('User-Agent'),
+            headers: req.headers,
+            context: 'cors-426-debug',
+            timestamp: new Date().toISOString()
+        });
+    }
+    next();
+});
 // WebSocket server
-const wss = new ws_1.default.Server({ port: 3002 });
+const wss = new ws_1.default.Server({ port: 3001 });
 // Log para debugging de puerto WebSocket
-logger_1.default.info("Iniciando servidor WebSocket", { port: 3002, context: 'websocket' });
+logger_1.default.info("Iniciando servidor WebSocket", { port: 3001, context: 'websocket' });
+// Log detallado del estado del servidor WebSocket
+wss.on('listening', () => {
+    logger_1.default.info('✅ Servidor WebSocket escuchando correctamente', {
+        port: 3001,
+        address: wss.address(),
+        context: 'websocket'
+    });
+});
 // Manejar errores de binding del puerto WebSocket
 wss.on('error', (error) => {
     if (error.code === 'EADDRINUSE') {
-        logger_1.default.error('Puerto WebSocket 3002 ya está en uso', {
+        logger_1.default.error('🚨 Puerto WebSocket 3001 ya está en uso', {
             error: error.message,
             code: error.code,
-            port: 3002,
-            context: 'websocket'
+            port: 3001,
+            context: 'websocket',
+            suggestion: 'Detener otros servidores que puedan estar usando el puerto 3001'
         });
     }
     else {
-        logger_1.default.error('Error en servidor WebSocket', {
+        logger_1.default.error('🚨 Error en servidor WebSocket', {
             error: error.message,
             code: error.code,
             context: 'websocket'
@@ -63,28 +90,84 @@ const clients = new Map();
 const rooms = new Map(); // sala -> Set de userIds
 // Crear sala global por defecto
 rooms.set('global', new Set());
-logger_1.default.info('Servidor WebSocket inicializado en puerto 3002', { context: 'websocket' });
+console.log('=== WEBSOCKET SERVER INIT DEBUG ===', {
+    timestamp: new Date().toISOString(),
+    clientsSize: clients.size,
+    roomsSize: rooms.size,
+    globalRoomExists: rooms.has('global'),
+    globalRoomSize: rooms.get('global')?.size || 0,
+    context: 'websocket-server-init-debug'
+});
+logger_1.default.info('Servidor WebSocket inicializado en puerto 3001', { context: 'websocket' });
 wss.on('connection', (ws, request) => {
-    logger_1.default.info('Nuevo cliente WebSocket conectado', {
+    logger_1.default.info('🔗 Nueva conexión WebSocket establecida', {
         remoteAddress: request.socket.remoteAddress,
         remotePort: request.socket.remotePort,
+        url: request.url,
+        headers: request.headers,
         context: 'websocket'
+    });
+    // Log adicional para debugging de conexiones
+    console.log('=== WEBSOCKET CONNECTION DEBUG ===', {
+        timestamp: new Date().toISOString(),
+        remoteAddress: request.socket.remoteAddress,
+        remotePort: request.socket.remotePort,
+        url: request.url,
+        userAgent: request.headers['user-agent'],
+        origin: request.headers['origin'],
+        context: 'websocket-debug'
     });
     ws.on('message', async (message) => {
         try {
-            const data = JSON.parse(message.toString());
+            const messageStr = message.toString();
+            console.log('=== WEBSOCKET MESSAGE DEBUG ===', {
+                timestamp: new Date().toISOString(),
+                messageLength: messageStr.length,
+                messagePreview: messageStr.substring(0, 200),
+                context: 'websocket-message-debug'
+            });
+            const data = JSON.parse(messageStr);
             if (data.type === 'register' && data.userId) {
+                console.log('=== WEBSOCKET REGISTER DEBUG ===', {
+                    timestamp: new Date().toISOString(),
+                    userId: data.userId,
+                    clientsBefore: clients.size,
+                    context: 'websocket-register-debug'
+                });
                 clients.set(data.userId, ws);
                 // Agregar usuario a la sala global
-                rooms.get('global').add(data.userId);
+                const globalRoomRegister = rooms.get('global');
+                if (globalRoomRegister) {
+                    globalRoomRegister.add(data.userId);
+                    console.log('=== WEBSOCKET ROOM ADD DEBUG ===', {
+                        timestamp: new Date().toISOString(),
+                        userId: data.userId,
+                        globalRoomSize: globalRoomRegister.size,
+                        context: 'websocket-room-add-debug'
+                    });
+                }
+                else {
+                    console.error('=== WEBSOCKET ROOM ERROR ===', {
+                        timestamp: new Date().toISOString(),
+                        error: 'Sala global no encontrada',
+                        roomsSize: rooms.size,
+                        context: 'websocket-room-error'
+                    });
+                }
                 logger_1.default.info(`Usuario registrado en WebSocket y unido a sala global: ${data.userId}`, { context: 'websocket' });
+                console.log('=== WEBSOCKET REGISTER SUCCESS ===', {
+                    timestamp: new Date().toISOString(),
+                    userId: data.userId,
+                    clientsAfter: clients.size,
+                    context: 'websocket-register-success'
+                });
                 // Notificar a otros usuarios que este usuario está en línea
                 // Para usuarios registrados, obtener su display_name
                 // Para usuarios invitados, usar el nombre directamente
                 let displayName = data.userId;
                 // Notificar solo a usuarios en la sala global
-                const globalRoom = rooms.get('global');
-                globalRoom.forEach((userId) => {
+                const globalRoomDisconnect = rooms.get('global');
+                globalRoomDisconnect.forEach((userId) => {
                     if (userId !== data.userId) {
                         const client = clients.get(userId);
                         if (client && client.readyState === ws_1.default.OPEN) {
@@ -118,8 +201,8 @@ wss.on('connection', (ws, request) => {
             }
             else if (data.type === 'global_message' && data.message) {
                 // Manejar mensaje global
-                const globalRoom = rooms.get('global');
-                globalRoom.forEach((userId) => {
+                const globalRoomMessage = rooms.get('global');
+                globalRoomMessage.forEach((userId) => {
                     if (userId !== data.from) {
                         const client = clients.get(userId);
                         if (client && client.readyState === ws_1.default.OPEN) {
@@ -159,10 +242,39 @@ wss.on('connection', (ws, request) => {
             }
         }
         catch (error) {
-            logger_1.default.error('Error procesando mensaje WebSocket:', { error: error.message, context: 'websocket' });
+            logger_1.default.error('🚨 Error procesando mensaje WebSocket:', {
+                error: error.message,
+                stack: error.stack,
+                context: 'websocket'
+            });
+            console.error('=== WEBSOCKET MESSAGE ERROR DEBUG ===', {
+                timestamp: new Date().toISOString(),
+                error: error.message,
+                stack: error.stack,
+                messagePreview: message.toString().substring(0, 100),
+                context: 'websocket-message-error-debug'
+            });
+            // Enviar error al cliente para debugging
+            ws.send(JSON.stringify({
+                type: 'error',
+                message: 'Error procesando mensaje en servidor',
+                error: error.message
+            }));
         }
     });
-    ws.on('close', async () => {
+    ws.on('close', async (code, reason) => {
+        logger_1.default.warn('🔌 Conexión WebSocket cerrada', {
+            code,
+            reason: reason.toString(),
+            context: 'websocket'
+        });
+        // Log detallado para debugging
+        console.log('=== WEBSOCKET CLOSE DEBUG ===', {
+            timestamp: new Date().toISOString(),
+            closeCode: code,
+            reason: reason.toString(),
+            context: 'websocket-close-debug'
+        });
         // Encontrar y remover el usuario desconectado
         let disconnectedUser;
         for (const [userId, client] of clients.entries()) {
@@ -182,8 +294,8 @@ wss.on('connection', (ws, request) => {
             // Usar el nombre directamente
             let displayName = disconnectedUser;
             // Notificar solo a usuarios en la sala global
-            const globalRoom = rooms.get('global');
-            globalRoom.forEach((userId) => {
+            const globalRoomNotify = rooms.get('global');
+            globalRoomNotify.forEach((userId) => {
                 const client = clients.get(userId);
                 if (client && client.readyState === ws_1.default.OPEN) {
                     client.send(JSON.stringify({
@@ -195,7 +307,18 @@ wss.on('connection', (ws, request) => {
         }
     });
     ws.on('error', (error) => {
-        logger_1.default.error('Error en conexión WebSocket:', { error: error.message, context: 'websocket' });
+        logger_1.default.error('🚨 Error en conexión WebSocket:', {
+            error: error.message,
+            stack: error.stack,
+            context: 'websocket'
+        });
+        // Log detallado para debugging
+        console.error('=== WEBSOCKET ERROR DEBUG ===', {
+            timestamp: new Date().toISOString(),
+            error: error.message,
+            stack: error.stack,
+            context: 'websocket-error-debug'
+        });
     });
 });
 app.use(express_1.default.json());
@@ -203,36 +326,138 @@ app.use((0, cookie_parser_1.default)());
 app.use(express_1.default.static(path_1.default.join(rootPath, 'frontend')));
 // Aplicar rate limiting general a todas las rutas API
 app.use("/api", rateLimit_1.generalRateLimit);
+// Middleware de logging detallado para debugging del error 426
+app.use("/api", (req, res, next) => {
+    logger_1.default.info('=== REQUEST DEBUG ===', {
+        method: req.method,
+        url: req.originalUrl,
+        protocol: req.protocol,
+        httpVersion: req.httpVersion,
+        headers: req.headers,
+        ip: req.ip,
+        userAgent: req.get('User-Agent'),
+        context: 'debug-426'
+    });
+    // Log de respuesta para detectar error 426
+    const originalSend = res.send;
+    res.send = function (data) {
+        logger_1.default.info('=== RESPONSE DEBUG ===', {
+            statusCode: res.statusCode,
+            url: req.originalUrl,
+            method: req.method,
+            context: 'debug-426'
+        });
+        // Si detectamos error 426, log detallado
+        if (res.statusCode === 426) {
+            logger_1.default.error('🚨 ERROR 426 DETECTADO 🚨', {
+                url: req.originalUrl,
+                method: req.method,
+                headers: req.headers,
+                body: req.body,
+                query: req.query,
+                ip: req.ip,
+                userAgent: req.get('User-Agent'),
+                context: 'error-426'
+            });
+        }
+        return originalSend.call(this, data);
+    };
+    next();
+});
 // Configurar CSRF con el nuevo paquete
 const tokens = new csrf_1.default();
 const secret = tokens.secretSync();
 // Ruta para obtener el token CSRF
 app.get("/api/csrf-token", (req, res) => {
-    const token = tokens.create(secret);
-    res.cookie('_csrf', token, (0, cookieConfig_1.getCsrfCookieOptions)());
-    res.json({ csrfToken: token });
+    logger_1.default.info('=== CSRF TOKEN REQUEST ===', {
+        method: req.method,
+        url: req.originalUrl,
+        headers: req.headers,
+        cookies: req.cookies,
+        ip: req.ip,
+        context: 'csrf-debug',
+        timestamp: new Date().toISOString()
+    });
+    // Log específico para debugging del error 426 en CSRF
+    logger_1.default.error('🚨 CSRF DEBUG 426 CANDIDATE 🚨', {
+        url: req.originalUrl,
+        method: req.method,
+        protocol: req.protocol,
+        httpVersion: req.httpVersion,
+        origin: req.get('Origin'),
+        referer: req.get('Referer'),
+        userAgent: req.get('User-Agent'),
+        accept: req.get('Accept'),
+        acceptLanguage: req.get('Accept-Language'),
+        cookies: req.cookies,
+        context: 'csrf-426-debug',
+        timestamp: new Date().toISOString()
+    });
+    try {
+        const token = tokens.create(secret);
+        res.cookie('_csrf', token, (0, cookieConfig_1.getCsrfCookieOptions)());
+        res.json({ csrfToken: token });
+        logger_1.default.info('=== CSRF TOKEN RESPONSE ===', {
+            statusCode: res.statusCode,
+            hasToken: !!token,
+            context: 'csrf-debug'
+        });
+    }
+    catch (error) {
+        logger_1.default.error('=== CSRF TOKEN ERROR ===', {
+            error: error.message,
+            stack: error.stack,
+            context: 'csrf-debug'
+        });
+        res.status(500).json({ error: 'Error generando token CSRF' });
+    }
 });
 // Middleware de logging para depuración CSRF
 app.use(["/api/paginas", "/api/auth"], (req, res, next) => {
     const cookieCsrf = req.cookies['_csrf'];
-    const headerCsrf = req.headers['x-csrf-token'] || req.headers['csrf-token'];
+    const headerCsrf = req.headers['x-csrf-token'] || req.headers['X-CSRF-Token'] || req.headers['csrf-token'];
     logger_1.default.debug('Verificando tokens CSRF', { cookieCsrf: cookieCsrf ? 'presente' : 'ausente', headerCsrf: headerCsrf ? 'presente' : 'ausente', context: 'csrf' });
     next();
 });
 // Aplica CSRF a rutas que modifican estado
 // Solo aplicar CSRF a métodos que modifican datos
-// Middleware CSRF adaptado para aceptar solo el header en peticiones móviles
+// Middleware CSRF optimizado para evitar problemas de protocolo
 app.use(["/api/paginas", "/api/auth"], (req, res, next) => {
     if (["POST", "PUT", "DELETE"].includes(req.method)) {
         const userAgent = req.headers['user-agent'] || '';
-        logger_1.default.debug('Verificando CSRF para método modificador', { method: req.method, userAgent, context: 'csrf' });
+        const isDevelopment = process.env.NODE_ENV !== 'production';
+        logger_1.default.debug('Verificando CSRF para método modificador', {
+            method: req.method,
+            userAgent,
+            isDevelopment,
+            context: 'csrf'
+        });
+        // En desarrollo, ser más permisivo con CSRF
+        if (isDevelopment) {
+            // Solo verificar CSRF para métodos críticos en desarrollo
+            if (req.method === 'DELETE') {
+                const headerCsrf = req.headers['x-csrf-token'] || req.headers['X-CSRF-Token'] || req.headers['csrf-token'];
+                const cookieCsrf = req.cookies['_csrf'];
+                const token = headerCsrf || cookieCsrf;
+                if (!token || !tokens.verify(secret, token)) {
+                    logger_1.default.warn('CSRF token inválido en desarrollo, permitiendo request', {
+                        method: req.method,
+                        url: req.originalUrl,
+                        context: 'csrf-dev'
+                    });
+                    // En desarrollo, solo loguear warning pero permitir continuar
+                }
+            }
+            return next();
+        }
+        // En producción, verificar estrictamente
         if (userAgent.includes('ReactNative') || userAgent.includes('okhttp')) {
             // Excluir CSRF para peticiones móviles
             return next();
         }
         else {
-            // Verificar token CSRF
-            const headerCsrf = req.headers['x-csrf-token'] || req.headers['csrf-token'];
+            // Verificar token CSRF estrictamente en producción
+            const headerCsrf = req.headers['x-csrf-token'] || req.headers['X-CSRF-Token'] || req.headers['csrf-token'];
             const cookieCsrf = req.cookies['_csrf'];
             const token = headerCsrf || cookieCsrf;
             if (!token || !tokens.verify(secret, token)) {

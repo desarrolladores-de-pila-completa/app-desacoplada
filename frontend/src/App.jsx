@@ -1,20 +1,53 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, Suspense, lazy } from "react";
 import "./App.css";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
-import Feed from "./components/Feed";
 import Footer from "./components/Footer";
 import OutputMenu from "./components/OutputMenu";
-import RegisterPage from "./components/RegisterPage";
-import LoginPage from "./components/LoginPage";
-import UserPage from "./components/UserPage";
-import AccountPage from "./components/AccountPage";
-import CreatePublication from "./components/CreatePublication";
-import PageBuilder from "./components/PageBuilder";
-import PoliticaDeCookies from "./components/PoliticaDeCookies";
-import Privacidad from "./components/Privacidad";
 import useAuthStore from "./stores/authStore";
 import { useFeed } from "./hooks/useFeed";
+
+// Lazy loading de componentes de páginas
+const Feed = lazy(() => import("./components/Feed"));
+const RegisterPage = lazy(() => import("./components/RegisterPage"));
+const LoginPage = lazy(() => import("./components/LoginPage"));
+const UserPage = lazy(() => import("./components/UserPage"));
+const AccountPage = lazy(() => import("./components/AccountPage"));
+const CreatePublication = lazy(() => import("./components/CreatePublication"));
+const PageBuilder = lazy(() => import("./components/PageBuilder"));
+const PoliticaDeCookies = lazy(() => import("./components/PoliticaDeCookies"));
+const Privacidad = lazy(() => import("./components/Privacidad"));
+
+// Componente de carga para Suspense fallback
+const LoadingFallback = () => (
+  <div style={{
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '200px',
+    fontSize: '18px',
+    color: '#666'
+  }}>
+    <div>
+      <div style={{
+        width: '40px',
+        height: '40px',
+        border: '4px solid #f3f3f3',
+        borderTop: '4px solid #3498db',
+        borderRadius: '50%',
+        animation: 'spin 1s linear infinite',
+        margin: '0 auto 10px'
+      }}></div>
+      Cargando...
+    </div>
+    <style>{`
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    `}</style>
+  </div>
+);
 
 function MainApp({ showOutput }) {
   const { data: feed = [], isLoading, error } = useFeed();
@@ -47,24 +80,30 @@ function MainApp({ showOutput }) {
   return (
     <>
       <Navbar onFeedClick={goToFeed} />
-      <Feed feed={feed} />
+      <Suspense fallback={<LoadingFallback />}>
+        <Feed feed={feed} />
+      </Suspense>
     </>
   );
 }
 
 export default function App() {
-  const { checkAuth } = useAuthStore();
+  const { verifyAuthIfNeeded, initializeFromStorage } = useAuthStore();
   const [output, setOutput] = React.useState({ message: "", type: "" });
   const [outputMinimized, setOutputMinimized] = React.useState(false);
-  const checkAuthCalled = useRef(false);
+  const authInitialized = useRef(false);
 
-  // Verificar autenticación al cargar la app
+  // Inicializar estado desde localStorage al cargar la app
   useEffect(() => {
-    if (!checkAuthCalled.current) {
-      checkAuth();
-      checkAuthCalled.current = true;
+    if (!authInitialized.current) {
+      // Primero inicializar desde localStorage si hay datos
+      initializeFromStorage();
+
+      // Luego verificar autenticación con el servidor solo si es necesario
+      verifyAuthIfNeeded();
+      authInitialized.current = true;
     }
-  }, [checkAuth]);
+  }, [verifyAuthIfNeeded, initializeFromStorage]);
 
   // Output global
   const showOutput = React.useCallback((message, type = "info") => {
@@ -94,30 +133,83 @@ export default function App() {
         <Route
           path="/registro"
           element={
-            <RegisterPage
-              showOutput={showOutput}
-            />
+            <Suspense fallback={<LoadingFallback />}>
+              <RegisterPage
+                showOutput={showOutput}
+              />
+            </Suspense>
           }
         />
         <Route
           path="/login"
           element={
-            <LoginPage
-              showOutput={showOutput}
-            />
+            <Suspense fallback={<LoadingFallback />}>
+              <LoginPage
+                showOutput={showOutput}
+              />
+            </Suspense>
           }
         />
-        <Route path="/cuenta" element={<AccountPage />} />
+        <Route
+          path="/cuenta"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <AccountPage />
+            </Suspense>
+          }
+        />
         {/* Ruta para crear publicaciones - DEBE ir ANTES que las rutas con parámetros */}
-        <Route path="/:username/publicar" element={<PageBuilder />} />
+        <Route
+          path="/:username/publicar"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <PageBuilder />
+            </Suspense>
+          }
+        />
         {/* Ruta para listas de páginas públicas */}
-        <Route path="/pagina/:username" element={<UserPage />} />
+        <Route
+          path="/pagina/:username"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <UserPage />
+            </Suspense>
+          }
+        />
         {/* Ruta para ver publicación específica por ID numérico */}
-        <Route path="/:username/publicacion/:publicacionId" element={<UserPage />} />
+        <Route
+          path="/:username/publicacion/:publicacionId"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <UserPage />
+            </Suspense>
+          }
+        />
         {/* Ruta alternativa para nueva publicación */}
-        <Route path="/:username/nuevapublicacion" element={<PageBuilder />} />
-        <Route path="/politica-de-cookies.html" element={<PoliticaDeCookies />} />
-        <Route path="/privacidad.html" element={<Privacidad />} />
+        <Route
+          path="/:username/nuevapublicacion"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <PageBuilder />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/politica-de-cookies.html"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <PoliticaDeCookies />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/privacidad.html"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <Privacidad />
+            </Suspense>
+          }
+        />
       </Routes>
       <OutputMenu
         outputMsg={output.message}

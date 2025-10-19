@@ -1,8 +1,9 @@
-const API_URL = "http://localhost:3000";
 import React, { useRef, useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import WinBox from "winbox/src/js/winbox.js";
 import "winbox/dist/css/winbox.min.css";
+import { useUserPage } from "../hooks/useFeed.js";
+import { API_URL } from "../config/api.js";
 
 const GRID_ROWS = 3;
 const GRID_COLS = 6;
@@ -11,6 +12,9 @@ const TOTAL_CELLS = GRID_ROWS * GRID_COLS;
 function ImageGrid({ paginaId, editable, images: externalImages }) {
   const [images, setImages] = useState([]);
   const fileInputs = useRef([]);
+
+  // Usar el hook useUserPage para obtener datos de la página incluyendo galería
+  const { data: pageData, refetch } = useUserPage(paginaId);
 
   const openImageInWinBox = (src, alt) => {
     const maxWidth = window.innerWidth * 0.9;
@@ -26,7 +30,7 @@ function ImageGrid({ paginaId, editable, images: externalImages }) {
     });
     winbox.body.innerHTML = `<img src="${src}" alt="${alt}" style="width: 100%; height: 100%; object-fit: contain;" />`;
   };
-  // Cargar imágenes guardadas en el backend
+  // Cargar imágenes desde el hook useUserPage o imágenes externas
   useEffect(() => {
     // Si se proporcionan imágenes externas (desde nueva estructura), usarlas directamente
     if (externalImages && externalImages.length > 0) {
@@ -34,58 +38,51 @@ function ImageGrid({ paginaId, editable, images: externalImages }) {
       return;
     }
 
-    // Si no, hacer petición al servidor (estructura antigua)
-    setImages([]); // Limpiar imágenes al cambiar de usuario
-    if (!paginaId) return;
-    fetch(`/api/paginas/${paginaId}/imagenes`)
-      .then(res => res.json())
-      .then(data => {
-        // Solo renderizar los que existen
-        const imgs = [];
-        data.forEach(img => {
-          imgs[img.idx] = img.src;
-        });
-        setImages(imgs);
-      })
-      .catch(() => {});
-  }, [paginaId, externalImages]);
+    // Si no, usar datos del hook useUserPage
+    if (pageData?.galeria && paginaId) {
+      // Convertir el array de galería al formato esperado por el componente
+      const imgs = [];
+      pageData.galeria.forEach(img => {
+        imgs[img.idx] = img.src;
+      });
+      setImages(imgs);
+    } else {
+      setImages([]);
+    }
+  }, [paginaId, externalImages, pageData]);
 
   const handleImageChange = async (index, event) => {
     const file = event.target.files[0];
     if (!file || !paginaId) return;
-    // Obtener token CSRF
-    let csrfToken = "";
-    try {
-      const res = await fetch("/api/csrf-token", { credentials: "include" });
-      const data = await res.json();
-      csrfToken = data.csrfToken;
-      console.log("[FRONTEND] Enviando CSRF token:", csrfToken);
-    } catch {}
-    // Subir imagen al backend
+
+    // Crear FormData para subir la imagen
     const formData = new FormData();
     formData.append("imagen", file);
     formData.append("index", index);
-    fetch(`${API_URL}/api/paginas/${paginaId}/imagenes`, {
-      method: "POST",
-      headers: {
-        "X-CSRF-Token": csrfToken
-      },
-      body: formData,
-      credentials: "include"
-    })
-      .then(res => res.json())
-      .then(() => {
-        // Volver a consultar las imágenes persistidas en el backend
-        fetch(`${API_URL}/api/paginas/${paginaId}/imagenes`)
-          .then(res => res.json())
-          .then(data => {
-            const imgs = [];
-            data.forEach(img => {
-              imgs[img.idx] = img.src;
-            });
-            setImages(imgs);
-          });
+
+    try {
+      // Obtener token CSRF usando el endpoint estándar
+      const csrfResponse = await fetch("/api/csrf-token", { credentials: "include" });
+      const csrfData = await csrfResponse.json();
+      const csrfToken = csrfData.csrfToken;
+
+      // Subir imagen usando la API estándar
+      const uploadResponse = await fetch(`${API_URL}/api/paginas/${paginaId}?action=upload`, {
+        method: "POST",
+        headers: {
+          "X-CSRF-Token": csrfToken
+        },
+        body: formData,
+        credentials: "include"
       });
+
+      if (uploadResponse.ok) {
+        // Refrescar los datos usando el hook useUserPage
+        refetch();
+      }
+    } catch (error) {
+      console.error("Error al subir imagen:", error);
+    }
   };
 
   return (

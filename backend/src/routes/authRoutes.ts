@@ -1,37 +1,30 @@
 import { Router } from "express";
 import { ValidationService, validateRequest } from '../services/ValidationService';
-import { authRateLimit } from '../middlewares/rateLimit';
-import { register, login, logout, eliminarUsuario, refreshTokens, extendSession } from "../controllers/authController";
+import { authRateLimit, usernameUpdateRateLimit } from '../middlewares/rateLimit';
+import { register, login, logout, eliminarUsuario, refreshTokens, extendSession, updateProfilePhoto, getUserProfilePhoto, getUserByUsername, updateUsername } from "../controllers/authController";
 import { authMiddleware } from "../middlewares/auth";
 import { pool } from "../middlewares/db";
+import { uploadRateLimit } from '../middlewares/security';
+const multer = require("multer");
 const router = Router();
+
+// Configuración de multer para archivos de imagen
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB máximo
+  },
+});
 
 // ❌ ELIMINADA: Ruta /me eliminada según solicitud del usuario
 
-// ❌ ELIMINADA: Ruta /:username con función me eliminada según solicitud del usuario
+// ✅ RESTAURADA: Ruta /:username para verificación de autenticación del frontend
+router.get("/:username", getUserByUsername);
 
 // ❌ ELIMINADO: Endpoint /me/foto eliminado según solicitud del usuario
 
 // ❌ ELIMINADO: Endpoint /me/foto eliminado según solicitud del usuario
 
-// Endpoint público para obtener foto de perfil por id de usuario
-router.get("/user/:id/foto", async (req, res) => {
-  const userId = req.params.id;
-  try {
-    const [rows]: any = await pool.query(
-      "SELECT foto_perfil FROM users WHERE id = ?",
-      [userId]
-    );
-    if (!rows || rows.length === 0 || !rows[0].foto_perfil) {
-      return res.status(404).json({ error: "Sin foto de perfil" });
-    }
-    res.setHeader("Content-Type", "image/jpeg");
-    res.send(rows[0].foto_perfil);
-  } catch (err) {
-    console.error("Error al obtener foto de perfil pública:", err);
-    res.status(500).json({ error: "Error al obtener foto de perfil" });
-  }
-});
 
 router.post("/register", authRateLimit, validateRequest(ValidationService.validateRegister), register);
 router.post("/login", authRateLimit, validateRequest(ValidationService.validateLogin), login);
@@ -39,6 +32,15 @@ router.post("/refresh", refreshTokens); // No requiere autenticación previa
 router.post("/extend-session", authMiddleware, extendSession); // Extender sesión automáticamente
 // router.post("/username", authMiddleware, cambiarUsername); // Función no implementada
 router.post("/logout", logout);
+
+// Ruta para actualizar foto de perfil
+router.post("/profile-photo", authMiddleware, uploadRateLimit, upload.single("photo"), updateProfilePhoto);
+
+// Ruta para obtener foto de perfil de usuario específico (pública, sin autenticación)
+router.get("/user/:id/foto", getUserProfilePhoto);
+
+// Ruta para actualizar username (con rate limiting específico y validación)
+router.put("/users/:userId/username", authMiddleware, usernameUpdateRateLimit, validateRequest(ValidationService.validateUpdateUsername), updateUsername);
 
 router.delete("/user/:id", eliminarUsuario);
 

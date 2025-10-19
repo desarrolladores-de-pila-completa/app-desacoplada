@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import Navbar from "./Navbar";
+import UsernameUpdateForm from "./UsernameUpdateForm";
 import useAuthStore from "../stores/authStore";
 
 function AccountPage() {
@@ -24,6 +25,12 @@ function AccountPage() {
         <h2>Mi Cuenta</h2>
         <p><strong>Usuario:</strong> {user?.display_name}</p>
         <p><strong>Email:</strong> {user?.email}</p>
+
+        {/* Sección para cambiar nombre de usuario */}
+        <div style={{ marginTop: 32, marginBottom: 32 }}>
+          <UsernameUpdateForm />
+        </div>
+
         <Link to={`/pagina/${user?.username}`} style={{ display: 'inline-block', marginTop: 16, padding: '8px 16px', background: '#1976d2', color: '#fff', borderRadius: 4, textDecoration: 'none' }}>
           Ver mi página
         </Link>
