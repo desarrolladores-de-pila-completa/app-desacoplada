@@ -156,7 +156,7 @@ Revisa y copia el archivo `frontend/.env.example` como `.env` en la carpeta `fro
    ```sh
    npm run dev
    ```
-4. Abre en tu navegador: `http://localhost:5173`
+4. Abre en tu navegador: `http://localhost:3000`
 
 ### App móvil (React Native)
 1. Ve al directorio `react-native/mobile`.

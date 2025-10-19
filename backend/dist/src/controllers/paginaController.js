@@ -72,13 +72,36 @@ async function obtenerPaginaPorUserId(req, res) {
  *           type: integer
  *         description: Número de página específico (para action=lista)
  */
+// Función unificada para manejar todas las operaciones de páginas por username
 async function paginaUnificadaPorUsername(req, res) {
     const username = req.params.username;
     const { action = 'info', publicacionId, pageNumber } = req.query;
+    console.log('=== UNIFIED PAGE REQUEST DEBUG ===', {
+        username,
+        action,
+        publicacionId,
+        pageNumber,
+        method: req.method,
+        url: req.originalUrl,
+        headers: req.headers,
+        ip: req.ip,
+        userAgent: req.get('User-Agent'),
+        context: 'unified-page-debug'
+    });
     try {
         // Obtener información del usuario primero
         const [users] = await db_1.pool.query("SELECT id, username, display_name, foto_perfil FROM users WHERE username = ?", [username]);
+        console.log('=== UNIFIED PAGE DB USER LOOKUP ===', {
+            username,
+            usersFound: users.length,
+            context: 'unified-page-debug'
+        });
         if (!users || users.length === 0) {
+            console.log('=== UNIFIED PAGE USER NOT FOUND ===', {
+                username,
+                statusCode: 404,
+                context: 'unified-page-debug'
+            });
             return res.status(404).json({ error: "Usuario no encontrado" });
         }
         const user = users[0];

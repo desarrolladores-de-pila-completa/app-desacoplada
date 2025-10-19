@@ -47,6 +47,10 @@ export declare function validateFileUpload(req: any, res: any, next: any): void;
  */
 export declare function sanitizeForLogging(data: any): any;
 /**
+ * Middleware para logging detallado de headers CORS
+ */
+export declare function corsHeaderLogger(req: any, res: any, next: any): void;
+/**
  * Configuración de CORS segura
  */
 export declare const corsOptions: {
@@ -56,4 +60,8 @@ export declare const corsOptions: {
     methods: string[];
     allowedHeaders: string[];
 };
+/**
+ * Función para validar diagnóstico CORS con logging detallado
+ */
+export declare function corsDiagnosticLogger(req: any, res: any, next: any): void;
 //# sourceMappingURL=security.d.ts.map

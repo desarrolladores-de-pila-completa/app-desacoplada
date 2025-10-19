@@ -8,6 +8,8 @@ exports.additionalSecurityHeaders = additionalSecurityHeaders;
 exports.botProtection = botProtection;
 exports.validateFileUpload = validateFileUpload;
 exports.sanitizeForLogging = sanitizeForLogging;
+exports.corsHeaderLogger = corsHeaderLogger;
+exports.corsDiagnosticLogger = corsDiagnosticLogger;
 const rateLimit = require('express-rate-limit');
 const { RateLimitError } = require('../errors/AppErrors');
 /**
@@ -205,19 +207,21 @@ function validateContentType(req, res, next) {
  * Middleware para agregar headers de seguridad adicionales
  */
 function additionalSecurityHeaders(req, res, next) {
-    // Evitar que la página sea embebida en frames
-    res.setHeader('X-Frame-Options', 'DENY');
+    // Evitar que la página sea embebida en frames (más permisivo para desarrollo)
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
     // Evitar MIME type sniffing
     res.setHeader('X-Content-Type-Options', 'nosniff');
     // Habilitar protección XSS del navegador
     res.setHeader('X-XSS-Protection', '1; mode=block');
-    // Referrer Policy para controlar información enviada en referrers
+    // Referrer Policy para controlar información enviada en referrers (más permisivo para desarrollo)
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-    // Permissions Policy para controlar APIs del navegador
-    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-    // Cross-Origin-Opener-Policy
-    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
-    // Cross-Origin-Resource-Policy
+    // Permissions Policy para controlar APIs del navegador (más permisivo para desarrollo)
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), interest-cohort=()');
+    // Cross-Origin-Opener-Policy (más permisivo para desarrollo)
+    if (process.env.NODE_ENV === 'production') {
+        res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+    }
+    // Cross-Origin-Resource-Policy (más permisivo para desarrollo)
     res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
     next();
 }
@@ -226,6 +230,12 @@ function additionalSecurityHeaders(req, res, next) {
  */
 function botProtection(req, res, next) {
     const userAgent = req.get('User-Agent') || '';
+    console.log('=== BOT PROTECTION DEBUG ===', {
+        userAgent,
+        url: req.originalUrl,
+        ip: req.ip,
+        context: 'bot-protection'
+    });
     // Lista de user agents sospechosos
     const maliciousBots = [
         /sqlmap/i,
@@ -242,6 +252,7 @@ function botProtection(req, res, next) {
             ip: req.ip,
             userAgent,
             url: req.originalUrl,
+            context: 'bot-protection'
         });
         return res.status(403).json({
             success: false,
@@ -249,6 +260,11 @@ function botProtection(req, res, next) {
             code: 'BOT_BLOCKED'
         });
     }
+    console.log('=== BOT PROTECTION PASSED ===', {
+        userAgent,
+        url: req.originalUrl,
+        context: 'bot-protection'
+    });
     next();
 }
 /**
@@ -349,6 +365,46 @@ function sanitizeForLogging(data) {
     return sanitizeObject(data);
 }
 /**
+ * Middleware para logging detallado de headers CORS
+ */
+function corsHeaderLogger(req, res, next) {
+    console.log('=== CORS HEADERS DEBUG ===', {
+        url: req.originalUrl,
+        method: req.method,
+        origin: req.get('Origin'),
+        requestHeaders: req.headers,
+        context: 'cors-headers-debug',
+        timestamp: new Date().toISOString()
+    });
+    // Log específico para detectar problemas con header 'expires'
+    if (req.headers['expires'] || req.headers['Expires']) {
+        console.warn('🚨 HEADER EXPIRES DETECTADO EN REQUEST 🚨', {
+            url: req.originalUrl,
+            method: req.method,
+            expiresHeader: req.headers['expires'] || req.headers['Expires'],
+            allHeaders: req.headers,
+            context: 'expires-header-debug',
+            timestamp: new Date().toISOString()
+        });
+    }
+    // Interceptar respuesta para ver headers de respuesta
+    const originalSetHeader = res.setHeader;
+    res.setHeader = function (name, value) {
+        if (name.toLowerCase() === 'expires') {
+            console.warn('🚨 HEADER EXPIRES ESTABLECIDO EN RESPUESTA 🚨', {
+                url: req.originalUrl,
+                method: req.method,
+                headerName: name,
+                headerValue: value,
+                context: 'expires-response-debug',
+                timestamp: new Date().toISOString()
+            });
+        }
+        return originalSetHeader.call(this, name, value);
+    };
+    next();
+}
+/**
  * Configuración de CORS segura
  */
 exports.corsOptions = {
@@ -358,15 +414,30 @@ exports.corsOptions = {
             'https://yposteriormente.com',
             'http://localhost:3000',
             'http://localhost:5173', // Vite dev server
+            'http://127.0.0.1:5173', // Vite dev server (127.0.0.1)
+            'http://localhost:5174', // Vite dev server (actual port)
+            'http://127.0.0.1:5174', // Vite dev server (127.0.0.1, actual port)
+            'http://127.0.0.1:5500', // Live Server
+            'http://localhost:5500', // Live Server
+            'http://10.0.2.2:3000', // Emulador Android
             ...(process.env.ALLOWED_ORIGINS?.split(',') || [])
         ];
+        console.log('=== CORS ORIGIN DEBUG ===', {
+            origin,
+            allowedOrigins,
+            context: 'cors-origin-debug',
+            timestamp: new Date().toISOString()
+        });
         // Permitir requests sin origin (como Postman)
-        if (!origin)
-            return callback(null, true);
-        if (allowedOrigins.includes(origin)) {
+        if (!origin) {
+            console.log('CORS: Permitiendo request sin origin');
             return callback(null, true);
         }
-        console.warn(`CORS blocked origin: ${origin}`);
+        if (allowedOrigins.includes(origin)) {
+            console.log(`CORS: Origin permitido: ${origin}`);
+            return callback(null, true);
+        }
+        console.warn(`🚨 CORS blocked origin: ${origin} 🚨`);
         callback(new Error('No permitido por CORS'));
     },
     credentials: true,
@@ -378,9 +449,39 @@ exports.corsOptions = {
         'Content-Type',
         'Accept',
         'Authorization',
-        'X-API-Key'
+        'X-API-Key',
+        'x-csrf-token',
+        'expires',
+        'Expires'
     ]
 };
+/**
+ * Función para validar diagnóstico CORS con logging detallado
+ */
+function corsDiagnosticLogger(req, res, next) {
+    console.log('=== CORS DIAGNOSTIC DEBUG ===', {
+        url: req.originalUrl,
+        method: req.method,
+        origin: req.get('Origin'),
+        requestHeaders: req.headers,
+        context: 'cors-diagnostic',
+        timestamp: new Date().toISOString()
+    });
+    // Log específico para detectar si el header 'expires' está siendo bloqueado
+    const expiresHeader = req.headers['expires'] || req.headers['Expires'];
+    if (expiresHeader) {
+        console.error('🚨 HEADER EXPIRES ENCONTRADO - POSIBLE PROBLEMA CORS 🚨', {
+            url: req.originalUrl,
+            method: req.method,
+            expiresHeader,
+            allowedHeaders: exports.corsOptions.allowedHeaders,
+            context: 'cors-expires-problem',
+            timestamp: new Date().toISOString()
+        });
+    }
+    next();
+}
+;
 module.exports = {
     generalRateLimit: exports.generalRateLimit,
     authRateLimit: exports.authRateLimit,

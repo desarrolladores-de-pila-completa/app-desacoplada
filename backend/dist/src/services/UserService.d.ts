@@ -30,8 +30,8 @@ export declare class UserService {
         password: string;
     }) | null>;
     /**
-     * Actualizar foto de perfil
-     */
+      * Actualizar foto de perfil
+      */
     updateProfilePhoto(userId: string, photoBuffer: Buffer): Promise<void>;
     /**
      * Actualizar username

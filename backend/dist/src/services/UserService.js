@@ -140,12 +140,19 @@ class UserService {
         return await this.userRepository.findWithPassword(email);
     }
     /**
-     * Actualizar foto de perfil
-     */
+      * Actualizar foto de perfil
+      */
     async updateProfilePhoto(userId, photoBuffer) {
+        // Obtener información del usuario antes de actualizar para conocer username y email
+        const user = await this.userRepository.findById(userId);
+        if (!user) {
+            throw new interfaces_1.AppError(404, "Usuario no encontrado");
+        }
         await this.userRepository.updateProfilePhoto(userId, photoBuffer);
-        // Invalidar caché del usuario
+        // Invalidar todos los patrones de caché relacionados con este usuario
         CacheService_1.cacheService.invalidatePattern(`user:id:${userId}`);
+        CacheService_1.cacheService.invalidatePattern(`user:username:${user.username}`);
+        CacheService_1.cacheService.invalidatePattern(`user:email:${user.email}`);
     }
     /**
      * Actualizar username

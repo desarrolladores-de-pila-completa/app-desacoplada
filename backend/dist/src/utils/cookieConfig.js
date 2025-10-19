@@ -18,7 +18,7 @@ function getAuthCookieOptions() {
     const domain = process.env.COOKIE_DOMAIN || undefined;
     return {
         httpOnly: true,
-        secure: isProduction, // Solo HTTPS en producción
+        secure: false, // Deshabilitar secure en desarrollo para evitar problemas con HTTP
         sameSite: isProduction ? 'strict' : 'lax', // Strict en prod para mayor seguridad
         maxAge: 15 * 60 * 1000, // 15 minutos (igual que access token)
         path: '/',
@@ -34,7 +34,7 @@ function getRefreshTokenCookieOptions() {
     const domain = process.env.COOKIE_DOMAIN || undefined;
     return {
         httpOnly: true,
-        secure: isProduction, // Solo HTTPS en producción
+        secure: false, // Deshabilitar secure en desarrollo para evitar problemas con HTTP
         sameSite: isProduction ? 'strict' : 'lax', // Strict en prod para mayor seguridad
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 días
         path: '/',
@@ -49,7 +49,7 @@ function getCsrfCookieOptions() {
     const isProduction = process.env.NODE_ENV === 'production';
     return {
         httpOnly: false, // Debe ser accesible desde el cliente para CSRF
-        secure: isProduction, // Solo HTTPS en producción
+        secure: false, // Deshabilitar secure en desarrollo para evitar problemas con HTTP
         sameSite: 'lax', // Lax es suficiente para CSRF
         maxAge: 3600000, // 1 hora en milisegundos
         path: '/'
