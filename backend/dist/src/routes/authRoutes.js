@@ -17,11 +17,10 @@ const upload = multer({
         fileSize: 5 * 1024 * 1024, // 5MB máximo
     },
 });
-// ❌ ELIMINADA: Ruta /me eliminada según solicitud del usuario
 // ✅ RESTAURADA: Ruta /:username para verificación de autenticación del frontend
 // Ruta para obtener todos los usuarios (debe ir antes de /:username para evitar conflicto)
 router.get("/users", authController_1.getAllUsers);
-router.get("/:username", authController_1.getUserByUsername);
+router.get("/:username", auth_1.authMiddleware, authController_1.getUserByUsername);
 // ❌ ELIMINADO: Endpoint /me/foto eliminado según solicitud del usuario
 // ❌ ELIMINADO: Endpoint /me/foto eliminado según solicitud del usuario
 router.post("/register", rateLimit_1.authRateLimit, (0, ValidationService_1.validateRequest)(ValidationService_1.ValidationService.validateRegister), authController_1.register);

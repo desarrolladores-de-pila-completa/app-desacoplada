@@ -1,33 +1,21 @@
 import { UserService } from './UserService';
-import { User, UserCreateData, IEventBus } from '../types/interfaces';
+import { UserCreateData, IEventBus, AuthResponse } from '../types/interfaces';
 export declare class AuthService {
     private userService;
     private eventBus;
     constructor(userService: UserService, eventBus: IEventBus);
     /**
-     * Registrar un nuevo usuario
-     */
-    /**
-     * Registra un nuevo usuario y retorna el usuario, tokens y username.
-     */
-    register(userData: Omit<UserCreateData, 'username'>): Promise<{
-        user: User;
-        accessToken: string;
-        refreshToken: string;
-        username: string;
-    }>;
+      * Registrar un nuevo usuario
+      */
+    register(userData: Omit<UserCreateData, 'username'>): Promise<AuthResponse>;
     /**
      * Generar username único
      */
     private generateUniqueUsername;
     /**
-     * Autenticar usuario
-     */
-    login(email: string, password: string): Promise<{
-        user: User;
-        accessToken: string;
-        refreshToken: string;
-    }>;
+      * Autenticar usuario para Passport
+      */
+    login(email: string, password: string): Promise<AuthResponse>;
     /**
      * Generar tokens JWT (access y refresh)
      */

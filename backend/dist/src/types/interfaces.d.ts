@@ -109,6 +109,12 @@ export interface LoginResponse {
     user: Omit<User, 'foto_perfil'>;
     message: string;
 }
+export interface AuthResponse {
+    user: User;
+    accessToken: string;
+    refreshToken: string;
+    username: string;
+}
 export interface ValidationError {
     field: string;
     message: string;

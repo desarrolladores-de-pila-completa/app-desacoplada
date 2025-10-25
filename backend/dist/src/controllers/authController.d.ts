@@ -28,7 +28,6 @@ export declare function login(req: RequestWithFile, res: Response): Promise<void
  *     tags: [Auth]
  */
 export declare function logout(req: Request, res: Response): Promise<void>;
-export declare function me(req: Request, res: Response): Promise<void>;
 /**
  * @swagger
  * /api/auth/users:

@@ -6,7 +6,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.register = register;
 exports.login = login;
 exports.logout = logout;
-exports.me = me;
 exports.getAllUsers = getAllUsers;
 exports.getUserByUsername = getUserByUsername;
 exports.extendSession = extendSession;
@@ -21,6 +20,7 @@ const interfaces_1 = require("../types/interfaces");
 const UsernameUpdateService_1 = require("../services/UsernameUpdateService");
 const servicesConfig_1 = require("../utils/servicesConfig");
 const cookieConfig_1 = require("../utils/cookieConfig");
+const passport_1 = __importDefault(require("passport"));
 const authService = (0, servicesConfig_1.getService)('AuthService');
 const userServiceAuth = (0, servicesConfig_1.getService)('UserService');
 /**
@@ -45,16 +45,19 @@ async function register(req, res) {
         const file = req.file;
         const userData = { email, password, file };
         const result = await authService.register(userData);
-        res.cookie("token", result.accessToken, (0, cookieConfig_1.getAuthCookieOptions)());
-        res.cookie("refreshToken", result.refreshToken, (0, cookieConfig_1.getRefreshTokenCookieOptions)());
-        res.json({
-            message: "Usuario creado y página personal en línea",
-            id: result.user.id,
-            username: result.user.username,
-            display_name: result.user.display_name,
-            accessToken: result.accessToken,
-            refreshToken: result.refreshToken,
-            paginaPersonal: null
+        // Autenticar manualmente con Passport
+        req.logIn(result.user, (err) => {
+            if (err) {
+                logger_1.default.error('Error al iniciar sesión después de registro', { error: err });
+                return res.status(500).json({ error: "Error al iniciar sesión" });
+            }
+            res.json({
+                message: "Usuario creado y página personal en línea",
+                id: result.user.id,
+                username: result.user.username,
+                display_name: result.user.display_name,
+                paginaPersonal: null
+            });
         });
     }
     catch (error) {
@@ -84,17 +87,29 @@ async function login(req, res) {
             throw new interfaces_1.AppError(400, 'Datos inválidos');
         }
         const { email, password } = parsed.data;
-        const result = await authService.login(email, password);
-        res.cookie("token", result.accessToken, (0, cookieConfig_1.getAuthCookieOptions)());
-        res.cookie("refreshToken", result.refreshToken, (0, cookieConfig_1.getRefreshTokenCookieOptions)());
-        res.json({
-            message: "Login exitoso",
-            id: result.user.id,
-            username: result.user.username,
-            display_name: result.user.display_name,
-            accessToken: result.accessToken,
-            refreshToken: result.refreshToken
-        });
+        // Usar Passport para autenticar
+        passport_1.default.authenticate('local', (err, user, info) => {
+            if (err) {
+                logger_1.default.error('Error en autenticación Passport', { error: err });
+                return res.status(500).json({ error: "Error en autenticación" });
+            }
+            if (!user) {
+                return res.status(401).json({ error: "Credenciales inválidas" });
+            }
+            // Iniciar sesión con Passport
+            req.logIn(user, (err) => {
+                if (err) {
+                    logger_1.default.error('Error al iniciar sesión', { error: err });
+                    return res.status(500).json({ error: "Error al iniciar sesión" });
+                }
+                res.json({
+                    message: "Login exitoso",
+                    id: user.id,
+                    username: user.username,
+                    display_name: user.display_name
+                });
+            });
+        })(req, res);
     }
     catch (error) {
         logger_1.default.error('Error en login', { error });
@@ -112,25 +127,12 @@ async function login(req, res) {
  *     tags: [Auth]
  */
 async function logout(req, res) {
-    (0, cookieConfig_1.clearAuthCookies)(res);
-    res.json({ message: "Sesión cerrada y tokens eliminados" });
-}
-async function me(req, res) {
-    const userId = req.userId;
-    if (!userId) {
-        res.status(401).json({ error: 'No autenticado' });
-        return;
-    }
-    const user = await userServiceAuth.getUserById(userId);
-    if (!user) {
-        res.status(404).json({ error: 'Usuario no encontrado' });
-        return;
-    }
-    res.json({
-        id: user.id,
-        username: user.username,
-        display_name: user.display_name,
-        email: user.email
+    req.logout((err) => {
+        if (err) {
+            logger_1.default.error('Error al cerrar sesión', { error: err });
+            return res.status(500).json({ error: "Error al cerrar sesión" });
+        }
+        res.json({ message: "Sesión cerrada exitosamente" });
     });
 }
 /**
