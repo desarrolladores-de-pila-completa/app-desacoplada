@@ -34,7 +34,6 @@ export const USER_CACHE_PATTERNS = {
   USER_PROFILE: 'user:profile',
   USER_PAGES: 'user:pages',
   USER_COMMENTS: 'user:comments',
-  USER_FEED: 'user:feed',
   USER_STATS: 'user:stats',
   USER_PREFERENCES: 'user:preferences',
   USER_SESSIONS: 'user:sessions',
@@ -154,7 +153,6 @@ export class CacheInvalidationService {
       `${USER_CACHE_PATTERNS.USER_PROFILE}:${username}`,
       `${USER_CACHE_PATTERNS.USER_PAGES}:${username}`,
       `${USER_CACHE_PATTERNS.USER_COMMENTS}:${username}`,
-      `${USER_CACHE_PATTERNS.USER_FEED}:${username}`,
       `${USER_CACHE_PATTERNS.USER_STATS}:${username}`,
       `${USER_CACHE_PATTERNS.USER_PREFERENCES}:${username}`,
       `${USER_CACHE_PATTERNS.USER_SESSIONS}:${username}`,
@@ -169,10 +167,7 @@ export class CacheInvalidationService {
       `page:list:${username}`,
       // Patrones de comentarios del usuario
       `comment:user:${username}`,
-      `comment:list:${username}`,
-      // Patrones de feed del usuario
-      `feed:user:${username}`,
-      `feed:recent:${username}`
+      `comment:list:${username}`
     ];
 
     return patterns;

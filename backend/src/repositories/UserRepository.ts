@@ -73,6 +73,13 @@ export class UserRepository implements IUserRepository {
     return rows.length > 0 ? (rows[0] ?? null) : null;
   }
 
+  async findAll(): Promise<User[]> {
+    const [rows]: QueryResult<User & { display_name: string }> = await pool.query(
+      "SELECT id, email, username, display_name, foto_perfil, creado_en FROM users ORDER BY creado_en DESC"
+    );
+    return rows;
+  }
+
   async updateProfilePhoto(userId: string, photoBuffer: Buffer): Promise<void> {
     await pool.query(
       "UPDATE users SET foto_perfil = ? WHERE id = ?",
@@ -97,7 +104,6 @@ export class UserRepository implements IUserRepository {
         "DELETE FROM imagenes WHERE pagina_id IN (SELECT id FROM paginas WHERE user_id = ?)",
         [userId]
       );
-      await conn.query("DELETE FROM feed WHERE user_id = ?", [userId]);
       await conn.query("DELETE FROM paginas WHERE user_id = ?", [userId]);
       await conn.query("DELETE FROM users WHERE id = ?", [userId]);
       await conn.commit();

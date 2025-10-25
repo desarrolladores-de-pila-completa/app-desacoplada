@@ -25,7 +25,6 @@ Aplicación web de red social con arquitectura desacoplada:
 #### Controllers
 - `authController.ts`: Registro, login, logout, eliminación de usuarios
 - `paginaController.ts`: CRUD de páginas personales, visibilidad, comentarios
-- `feedController.ts`: Feed público de actividades
 
 #### Middlewares
 - `auth.ts`: Verificación JWT y usuario
@@ -35,7 +34,6 @@ Aplicación web de red social con arquitectura desacoplada:
 #### Routes
 - `authRoutes.ts`: Rutas de autenticación y fotos de perfil
 - `paginaRoutes.ts`: Rutas de páginas, comentarios e imágenes
-- `feedRoutes.ts`: Rutas del feed público
 
 #### Utils
 - `generarAvatarBuffer.ts`: Generación de avatares por defecto
@@ -45,7 +43,6 @@ Aplicación web de red social con arquitectura desacoplada:
 #### Componentes
 - `App.jsx`: Componente raíz con enrutamiento
 - `Navbar.jsx`: Navegación principal
-- `Feed.jsx`: Lista de actividades públicas
 - `UserPage.jsx`: Página de perfil de usuario
 - `LoginPage.jsx` / `RegisterPage.jsx`: Formularios de autenticación
 - `ComentariosList.jsx` / `AgregarComentario.jsx`: Sistema de comentarios
@@ -109,16 +106,6 @@ CREATE TABLE comentarios (
 );
 ```
 
-#### `feed`
-```sql
-CREATE TABLE feed (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  user_id VARCHAR(36) NOT NULL,        -- FK a users
-  mensaje TEXT,
-  enlace VARCHAR(255),
-  creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
 
 #### `imagenes`
 ```sql
@@ -184,8 +171,6 @@ CREATE TABLE imagenes (
 - `GET /:id/visibilidad` - Consultar visibilidad
 - `POST /:id/visibilidad` - Actualizar visibilidad
 
-### Feed (`/api/feed`)
-- `GET /` - Feed público de actividades
 
 ---
 

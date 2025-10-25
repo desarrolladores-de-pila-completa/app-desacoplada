@@ -21,9 +21,6 @@ router.post("/", auth_1.authMiddleware, async (req, res) => {
         // Crear la página
         const [result] = await db_1.pool.query("INSERT INTO paginas (user_id, usuario) VALUES (?, ?)", [userId, usuario]);
         const pageId = result.insertId;
-        // Crear entrada en el feed
-        const mensaje = `Nuevo perfil creado: <a href="/pagina/${usuario}">${usuario}</a>`;
-        await db_1.pool.query("INSERT INTO feed (user_id, mensaje) VALUES (?, ?)", [userId, mensaje]);
         res.json({ message: "Página creada", id: pageId });
     }
     catch (err) {
@@ -208,9 +205,6 @@ router.post("/guardar-pagina", auth_1.authMiddleware, rateLimit_1.userRateLimit,
             hasEntities: /&[a-z]+;/.test(contenido || ''),
             username: username
         });
-        // Crear entrada en el feed
-        const mensaje = `Nueva página creada: <a href="/pagina/${username}">${titulo || "Página creada con PageBuilder"}</a>`;
-        await db_1.pool.query("INSERT INTO feed (user_id, mensaje) VALUES (?, ?)", [userId, mensaje]);
         res.json({ message: "Página creada", id: pageId });
     }
     catch (err) {

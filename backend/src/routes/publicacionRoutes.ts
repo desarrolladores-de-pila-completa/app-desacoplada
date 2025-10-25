@@ -22,17 +22,6 @@ router.post("/", authMiddleware, userRateLimit, async (req: any, res: any) => {
 
     const publicacionId = (result as any).insertId;
 
-    // Crear entrada en el feed
-    const { getService } = require('../utils/servicesConfig');
-    const userService = getService('UserService');
-    const user = await userService.getUserById(userId);
-    const mensaje = `Nueva publicación: <strong>${titulo}</strong>`;
-
-    await pool.query(
-      "INSERT INTO feed (user_id, mensaje) VALUES (?, ?)",
-      [userId, mensaje]
-    );
-
     res.json({ message: "Publicación creada", id: publicacionId });
   } catch (err) {
     console.error(err);

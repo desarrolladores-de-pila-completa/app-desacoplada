@@ -39,7 +39,6 @@ export interface UsernameUpdatePreview {
   userId: string;
   contentReferences: {
     comments: number;
-    feed: number;
     privateMessages: number;
     publications: number;
     total: number;
@@ -320,7 +319,6 @@ export class UsernameUpdateService {
       userId,
       contentReferences: {
         comments: 0,
-        feed: 0,
         privateMessages: 0,
         publications: 0,
         total: 0

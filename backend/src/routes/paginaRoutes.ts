@@ -25,13 +25,6 @@ router.post("/", authMiddleware, async (req: any, res: any) => {
 
     const pageId = (result as any).insertId;
 
-    // Crear entrada en el feed
-    const mensaje = `Nuevo perfil creado: <a href="/pagina/${usuario}">${usuario}</a>`;
-    await pool.query(
-      "INSERT INTO feed (user_id, mensaje) VALUES (?, ?)",
-      [userId, mensaje]
-    );
-
     res.json({ message: "Página creada", id: pageId });
   } catch (err) {
     console.error(err);
@@ -248,13 +241,6 @@ router.post("/guardar-pagina", authMiddleware, userRateLimit, async (req: any, r
       hasEntities: /&[a-z]+;/.test(contenido || ''),
       username: username
     });
-
-    // Crear entrada en el feed
-    const mensaje = `Nueva página creada: <a href="/pagina/${username}">${titulo || "Página creada con PageBuilder"}</a>`;
-    await pool.query(
-      "INSERT INTO feed (user_id, mensaje) VALUES (?, ?)",
-      [userId, mensaje]
-    );
 
     res.json({ message: "Página creada", id: pageId });
   } catch (err) {

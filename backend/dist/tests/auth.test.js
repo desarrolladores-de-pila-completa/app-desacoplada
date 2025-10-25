@@ -343,14 +343,14 @@ describe('Authentication Tests', () => {
             it('should identify protected routes', () => {
                 const protectedRoutes = [
                     '/api/auth/profile',
-                    '/api/paginas/create',
-                    '/api/paginas/edit',
-                    '/api/paginas/delete'
+                    '/api/create',
+                    '/api/edit',
+                    '/api/delete'
                 ];
                 const publicRoutes = [
                     '/api/auth/register',
                     '/api/auth/login',
-                    '/api/paginas',
+                    '/api',
                     '/api/csrf-token'
                 ];
                 const isProtectedRoute = (path) => {
@@ -365,7 +365,7 @@ describe('Authentication Tests', () => {
             });
             it('should handle unauthorized access attempts', () => {
                 const handleUnauthorizedAccess = (route, hasValidToken) => {
-                    const protectedPaths = ['/api/auth/profile', '/api/paginas/create'];
+                    const protectedPaths = ['/api/auth/profile', '/api/create'];
                     const isProtected = protectedPaths.some(path => route.startsWith(path));
                     if (isProtected && !hasValidToken) {
                         return {
@@ -389,7 +389,7 @@ describe('Authentication Tests', () => {
                 expect(authorizedResult.allowed).toBe(true);
                 expect(authorizedResult.status).toBe(200);
                 // Test acceso a ruta pública
-                const publicResult = handleUnauthorizedAccess('/api/paginas', false);
+                const publicResult = handleUnauthorizedAccess('/api', false);
                 expect(publicResult.allowed).toBe(true);
             });
         });

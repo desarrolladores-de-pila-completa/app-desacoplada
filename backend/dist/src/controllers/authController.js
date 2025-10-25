@@ -7,6 +7,7 @@ exports.register = register;
 exports.login = login;
 exports.logout = logout;
 exports.me = me;
+exports.getAllUsers = getAllUsers;
 exports.getUserByUsername = getUserByUsername;
 exports.extendSession = extendSession;
 exports.refreshTokens = refreshTokens;
@@ -46,9 +47,6 @@ async function register(req, res) {
         const result = await authService.register(userData);
         res.cookie("token", result.accessToken, (0, cookieConfig_1.getAuthCookieOptions)());
         res.cookie("refreshToken", result.refreshToken, (0, cookieConfig_1.getRefreshTokenCookieOptions)());
-        const { pool } = require('../middlewares/db');
-        const mensaje = `Nuevo usuario registrado: <a href="/pagina/${result.username}">${result.username}</a>`;
-        await pool.query("INSERT INTO feed (user_id, mensaje) VALUES (?, ?)", [result.user.id, mensaje]);
         res.json({
             message: "Usuario creado y página personal en línea",
             id: result.user.id,
@@ -137,6 +135,23 @@ async function me(req, res) {
 }
 /**
  * @swagger
+ * /api/auth/users:
+ *   get:
+ *     summary: Obtener lista de todos los usuarios
+ *     tags: [Auth]
+ */
+async function getAllUsers(req, res) {
+    try {
+        const users = await userServiceAuth.getAllUsers();
+        res.json(users);
+    }
+    catch (error) {
+        logger_1.default.error('Error al obtener usuarios', { error });
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+}
+/**
+ * @swagger
  * /api/auth/:username:
  *   get:
  *     summary: Obtener datos públicos del usuario por username
@@ -154,7 +169,11 @@ async function getUserByUsername(req, res) {
         const { pool } = require('../middlewares/db');
         const [rows] = await pool.query("SELECT username, display_name, foto_perfil FROM users WHERE username = ?", [username]);
         console.log('📊 Resultado de búsqueda:', {
-            username,
+            username: rows && rows.length > 0 ? rows.map((row) => ({
+                display_name: row.display_name,
+                foto_perfil: row.foto_perfil,
+                creado_en: row.creado_en
+            })) : [],
             found: rows && rows.length > 0,
             hasFotoPerfil: rows && rows.length > 0 && !!rows[0].foto_perfil
         });
@@ -404,88 +423,6 @@ async function getUserProfilePhoto(req, res) {
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 }
-/**
- * @swagger
- * /api/auth/users/{userId}/username:
- *   put:
- *     summary: Actualizar nombre de usuario
- *     tags: [Auth]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: userId
- *         required: true
- *         schema:
- *           type: string
- *         description: ID del usuario cuyo username se va a actualizar
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - username
- *             properties:
- *               - username:
- *                   type: string
- *                   minLength: 3
- *                   maxLength: 20
- *                   pattern: '^[a-zA-Z0-9_\\sáéíóúÁÉÍÓÚñÑ-]+$'
- *                   description: Nuevo nombre de usuario
- *               - dryRun:
- *                   type: boolean
- *                   default: false
- *                   description: Si es true, solo previsualiza los cambios sin aplicarlos
- *     responses:
- *       200:
- *         description: Username actualizado exitosamente
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                 oldUsername:
- *                   type: string
- *                 newUsername:
- *                   type: string
- *                 contentUpdate:
- *                   type: object
- *                   properties:
- *                     totalReferences:
- *                       type: number
- *                     updatedReferences:
- *                       type: number
- *                 cacheInvalidation:
- *                   type: object
- *                   properties:
- *                     invalidatedKeys:
- *                       type: array
- *                       items:
- *                         type: string
- *                 redirectsCreated:
- *                   type: number
- *                 executionTimeMs:
- *                   type: number
- *                 timestamp:
- *                   type: string
- *                   format: date-time
- *       400:
- *         description: Datos inválidos o username ya en uso
- *       401:
- *         description: No autenticado
- *       403:
- *         description: No autorizado para actualizar este usuario
- *       404:
- *         description: Usuario no encontrado
- *       429:
- *         description: Demasiadas solicitudes de cambio de username
- *       500:
- *         description: Error interno del servidor
- */
 async function updateUsername(req, res) {
     const userId = req.params.userId;
     const authenticatedUserId = req.userId;
@@ -555,8 +492,6 @@ async function updateUsername(req, res) {
                 updatedReferences: updateResult.contentUpdate.updatedReferences,
                 commentsFound: updateResult.contentUpdate.details.comments.found,
                 commentsUpdated: updateResult.contentUpdate.details.comments.updated,
-                feedFound: updateResult.contentUpdate.details.feed.found,
-                feedUpdated: updateResult.contentUpdate.details.feed.updated,
                 privateMessagesFound: updateResult.contentUpdate.details.privateMessages.found,
                 privateMessagesUpdated: updateResult.contentUpdate.details.privateMessages.updated,
                 publicationsFound: updateResult.contentUpdate.details.publications.found,

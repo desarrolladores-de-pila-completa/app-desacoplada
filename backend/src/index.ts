@@ -19,8 +19,6 @@ logger.info("Container de DI inicializado", { context: 'app' });
 
 // Importar rutas después de inicializar DI
 import { router as authRoutes } from "./routes/authRoutes";
-import paginaRoutes from "./routes/paginaRoutes";
-import publicacionRoutes from "./routes/publicacionRoutes";
 
 const rootPath = path.resolve(__dirname, '../../../');
 
@@ -512,13 +510,15 @@ app.use(["/api", "/api/auth"], (req, res, next) => {
 });
 
 
-import feedRoutes from "./routes/feedRoutes";
+import paginaRoutes from "./routes/paginaRoutes";
+import publicacionRoutes from "./routes/publicacionRoutes";
+
 // ❌ ELIMINADAS: privateRoutes y guestRoutes por contener rutas duplicadas
 // ❌ ELIMINADAS: chatRoutes por rutas HTTP redundantes (chat manejado por WebSocket)
+// ❌ ELIMINADAS: feedRoutes por eliminación del sistema de feed
 app.use("/api/auth", authRoutes);
 app.use("/api", paginaRoutes);
 app.use("/api/publicaciones", publicacionRoutes);
-app.use("/api/feed", feedRoutes);
 // ❌ ELIMINADAS: app.use("/api/private", privateRoutes);
 // ❌ ELIMINADAS: app.use("/api/guest", guestRoutes);
 

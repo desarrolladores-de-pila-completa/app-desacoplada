@@ -4,7 +4,6 @@ const PageService_1 = require("../src/services/PageService");
 describe('PageService', () => {
     let pageService;
     let mockPageRepository;
-    let mockFeedRepository;
     let mockEventBus;
     const mockPage = {
         id: 1,
@@ -51,28 +50,13 @@ describe('PageService', () => {
             getStats: jest.fn(),
             getPageNumber: jest.fn()
         };
-        mockFeedRepository = {
-            findAll: jest.fn(),
-            findByUser: jest.fn(),
-            findById: jest.fn(),
-            createForUser: jest.fn(),
-            createForPage: jest.fn(),
-            updateForPage: jest.fn(),
-            deleteByPage: jest.fn(),
-            deleteByUser: jest.fn(),
-            search: jest.fn(),
-            getStats: jest.fn(),
-            syncWithPages: jest.fn(),
-            cleanOrphaned: jest.fn(),
-            findFollowing: jest.fn()
-        };
         mockEventBus = {
             emit: jest.fn(),
             on: jest.fn(),
             off: jest.fn(),
             removeAllListeners: jest.fn()
         };
-        pageService = new PageService_1.PageService(mockPageRepository, mockFeedRepository, mockEventBus);
+        pageService = new PageService_1.PageService(mockPageRepository, mockEventBus);
     });
     afterEach(() => {
         jest.clearAllMocks();
@@ -173,13 +157,11 @@ describe('PageService', () => {
         it('should create page successfully', async () => {
             // Arrange
             mockPageRepository.create.mockResolvedValue(1);
-            mockFeedRepository.createForUser.mockResolvedValue(1);
             mockEventBus.emit.mockResolvedValue();
             // Act
             const result = await pageService.createPage('user-123', createData);
             // Assert
             expect(mockPageRepository.create).toHaveBeenCalledWith('user-123', createData);
-            expect(mockFeedRepository.createForUser).toHaveBeenCalledWith('user-123', 'newuser');
             expect(mockEventBus.emit).toHaveBeenCalledWith('page.created', {
                 pageId: 1,
                 userId: 'user-123',
@@ -190,7 +172,6 @@ describe('PageService', () => {
         it('should handle event bus errors gracefully', async () => {
             // Arrange
             mockPageRepository.create.mockResolvedValue(1);
-            mockFeedRepository.createForPage.mockResolvedValue(1);
             mockEventBus.emit.mockRejectedValue(new Error('Event bus error'));
             // Act
             const result = await pageService.createPage('user-123', createData);
@@ -221,12 +202,10 @@ describe('PageService', () => {
             const cacheService = require('../src/services/CacheService').cacheService;
             const invalidateSpy = jest.spyOn(cacheService, 'invalidatePattern');
             mockPageRepository.delete.mockResolvedValue();
-            mockFeedRepository.deleteByPage.mockResolvedValue();
             // Act
             await pageService.deletePage(1);
             // Assert
             expect(mockPageRepository.delete).toHaveBeenCalled();
-            expect(mockFeedRepository.deleteByPage).toHaveBeenCalledWith(1);
             expect(invalidateSpy).toHaveBeenCalledWith('page:withImages:1');
             expect(invalidateSpy).toHaveBeenCalledWith('page:byUsername:');
             expect(invalidateSpy).toHaveBeenCalledWith('page:public:');

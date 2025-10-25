@@ -9,10 +9,10 @@ describe('App - Basic Rendering', () => {
     setupDefaultFetchMocks();
   });
 
-  test('renders feed section', () => {
+  test('renders users section', () => {
     render(<App />);
-    const feedElement = screen.getByText(/Feed público/i);
-    expect(feedElement).toBeInTheDocument();
+    const usersElement = screen.getByText(/Usuarios registrados/i);
+    expect(usersElement).toBeInTheDocument();
   });
 
   test('renders navigation', () => {

@@ -1,5 +1,4 @@
 import { UserService } from './UserService';
-import { FeedService } from './FeedService';
 import { User, UserCreateData, AppError, IEventBus } from '../types/interfaces';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
@@ -7,12 +6,10 @@ import winston from '../utils/logger';
 
 export class AuthService {
   private userService: UserService;
-  private feedService: FeedService;
   private eventBus: IEventBus;
 
-  constructor(userService: UserService, feedService: FeedService, eventBus: IEventBus) {
+  constructor(userService: UserService, eventBus: IEventBus) {
     this.userService = userService;
-    this.feedService = feedService;
     this.eventBus = eventBus;
   }
 

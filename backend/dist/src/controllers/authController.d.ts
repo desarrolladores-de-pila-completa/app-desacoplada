@@ -31,6 +31,14 @@ export declare function logout(req: Request, res: Response): Promise<void>;
 export declare function me(req: Request, res: Response): Promise<void>;
 /**
  * @swagger
+ * /api/auth/users:
+ *   get:
+ *     summary: Obtener lista de todos los usuarios
+ *     tags: [Auth]
+ */
+export declare function getAllUsers(req: Request, res: Response): Promise<void>;
+/**
+ * @swagger
  * /api/auth/:username:
  *   get:
  *     summary: Obtener datos públicos del usuario por username
@@ -103,88 +111,6 @@ export declare function updateProfilePhoto(req: RequestWithFile, res: Response):
  *         description: Error interno del servidor
  */
 export declare function getUserProfilePhoto(req: Request, res: Response): Promise<void>;
-/**
- * @swagger
- * /api/auth/users/{userId}/username:
- *   put:
- *     summary: Actualizar nombre de usuario
- *     tags: [Auth]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: userId
- *         required: true
- *         schema:
- *           type: string
- *         description: ID del usuario cuyo username se va a actualizar
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - username
- *             properties:
- *               - username:
- *                   type: string
- *                   minLength: 3
- *                   maxLength: 20
- *                   pattern: '^[a-zA-Z0-9_\\sáéíóúÁÉÍÓÚñÑ-]+$'
- *                   description: Nuevo nombre de usuario
- *               - dryRun:
- *                   type: boolean
- *                   default: false
- *                   description: Si es true, solo previsualiza los cambios sin aplicarlos
- *     responses:
- *       200:
- *         description: Username actualizado exitosamente
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                 oldUsername:
- *                   type: string
- *                 newUsername:
- *                   type: string
- *                 contentUpdate:
- *                   type: object
- *                   properties:
- *                     totalReferences:
- *                       type: number
- *                     updatedReferences:
- *                       type: number
- *                 cacheInvalidation:
- *                   type: object
- *                   properties:
- *                     invalidatedKeys:
- *                       type: array
- *                       items:
- *                         type: string
- *                 redirectsCreated:
- *                   type: number
- *                 executionTimeMs:
- *                   type: number
- *                 timestamp:
- *                   type: string
- *                   format: date-time
- *       400:
- *         description: Datos inválidos o username ya en uso
- *       401:
- *         description: No autenticado
- *       403:
- *         description: No autorizado para actualizar este usuario
- *       404:
- *         description: Usuario no encontrado
- *       429:
- *         description: Demasiadas solicitudes de cambio de username
- *       500:
- *         description: Error interno del servidor
- */
 export declare function updateUsername(req: Request, res: Response): Promise<void>;
 /**
  * @swagger

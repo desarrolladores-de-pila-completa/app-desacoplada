@@ -335,11 +335,6 @@ async function actualizarUsuarioPagina(req, res) {
         const usernameSanitizado = usuario.replace(/\s+/g, '-');
         await db_1.pool.query("UPDATE paginas SET usuario = ? WHERE id = ?", [usernameSanitizado, paginaId]);
         await db_1.pool.query("UPDATE users SET username = ?, display_name = ? WHERE id = ?", [usernameSanitizado, usuario, rows[0].user_id]);
-        // Actualizar el feed para ese usuario
-        if (usuario && usuario.trim()) {
-            const mensaje = `Usuario actualizado: <a href="/pagina/${usernameSanitizado}">${usuario}</a>`;
-            await db_1.pool.query("UPDATE feed SET mensaje = ? WHERE user_id = ?", [mensaje, rows[0].user_id]);
-        }
         res.json({ message: "Usuario de página actualizado" });
     }
     catch (err) {
@@ -348,7 +343,7 @@ async function actualizarUsuarioPagina(req, res) {
     }
 }
 const userService = (0, servicesConfig_1.getService)('UserService');
-// Eliminar usuario y todo su rastro (perfil, comentarios, imágenes, feed)
+// Eliminar usuario y todo su rastro (perfil, comentarios, imágenes)
 /**
  * @swagger
  * /api/pagina/eliminar-usuario/{id}:

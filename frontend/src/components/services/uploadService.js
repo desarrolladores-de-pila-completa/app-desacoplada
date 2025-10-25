@@ -1,16 +1,18 @@
 // Servicio de upload para React Page
+import { API_BASE } from '../../config/api.js';
+
 export const createUploadFileService = () => {
   return async (file, reportProgress) => {
     try {
       // Obtener CSRF token
-      const csrfRes = await fetch('/api/csrf-token', { credentials: 'include' });
+      const csrfRes = await fetch(`${API_BASE}/csrf-token`, { credentials: 'include' });
       const csrfData = await csrfRes.json();
       const csrfToken = csrfData.csrfToken;
 
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch('/api/upload', {
+      const response = await fetch(`${API_BASE}/upload`, {
         method: 'POST',
         headers: {
           'X-CSRF-Token': csrfToken,

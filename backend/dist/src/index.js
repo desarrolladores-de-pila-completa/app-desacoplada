@@ -22,8 +22,6 @@ const ws_1 = __importDefault(require("ws"));
 logger_1.default.info("Container de DI inicializado", { context: 'app' });
 // Importar rutas después de inicializar DI
 const authRoutes_1 = require("./routes/authRoutes");
-const paginaRoutes_1 = __importDefault(require("./routes/paginaRoutes"));
-const publicacionRoutes_1 = __importDefault(require("./routes/publicacionRoutes"));
 const rootPath = path_1.default.resolve(__dirname, '../../../');
 const app = (0, express_1.default)();
 // Middleware para logging detallado de headers CORS
@@ -468,13 +466,14 @@ app.use(["/api", "/api/auth"], (req, res, next) => {
     }
     next();
 });
-const feedRoutes_1 = __importDefault(require("./routes/feedRoutes"));
+const paginaRoutes_1 = __importDefault(require("./routes/paginaRoutes"));
+const publicacionRoutes_1 = __importDefault(require("./routes/publicacionRoutes"));
 // ❌ ELIMINADAS: privateRoutes y guestRoutes por contener rutas duplicadas
 // ❌ ELIMINADAS: chatRoutes por rutas HTTP redundantes (chat manejado por WebSocket)
+// ❌ ELIMINADAS: feedRoutes por eliminación del sistema de feed
 app.use("/api/auth", authRoutes_1.router);
 app.use("/api", paginaRoutes_1.default);
 app.use("/api/publicaciones", publicacionRoutes_1.default);
-app.use("/api/feed", feedRoutes_1.default);
 // ❌ ELIMINADAS: app.use("/api/private", privateRoutes);
 // ❌ ELIMINADAS: app.use("/api/guest", guestRoutes);
 // Endpoint para verificar esquema de tabla

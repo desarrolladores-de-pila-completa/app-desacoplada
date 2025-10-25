@@ -1,12 +1,11 @@
-import { Pagina, CreatePaginaData, UpdatePaginaData, PaginaWithImages, ImagenData, FeedEntry, IEventBus } from '../types/interfaces';
-import { IPageRepository, IFeedRepository } from '../repositories';
+import { Pagina, CreatePaginaData, UpdatePaginaData, PaginaWithImages, ImagenData, IEventBus } from '../types/interfaces';
+import { IPageRepository } from '../repositories';
 import { cacheService } from './CacheService';
 import winston from '../utils/logger';
 
 export class PageService {
   constructor(
     private pageRepository: IPageRepository,
-    private feedRepository: IFeedRepository,
     private eventBus: IEventBus
   ) {}
   /**
@@ -72,16 +71,10 @@ export class PageService {
   }
 
   /**
-   /**
-    * Crear nueva página
-    */
+   * Crear nueva página
+   */
    async createPage(userId: string, pageData: CreatePaginaData): Promise<number> {
      const pageId = await this.pageRepository.create(userId, pageData);
-
-     // Crear entrada en el feed para nuevo perfil
-     const mensaje = `Nuevo perfil creado: ${pageData.usuario}`;
-     const enlace = `/pagina/${pageData.usuario}`;
-     await this.feedRepository.createForUser(userId, pageData.usuario);
 
      // Emitir evento de página creada
      try {
@@ -116,7 +109,6 @@ export class PageService {
    */
   async deletePage(pageId: number): Promise<void> {
     await this.pageRepository.delete(pageId);
-    await this.feedRepository.deleteByPage(pageId);
     // Invalidar caché de la página
     cacheService.invalidatePattern(`page:withImages:${pageId}`);
     cacheService.invalidatePattern(`page:byUsername:`); // Invalidar búsquedas por username
@@ -132,7 +124,6 @@ export class PageService {
     // Invalidar caché de la página
     cacheService.invalidatePattern(`page:withImages:${pageId}`);
 
-    // Nota: Las páginas ya no tienen contenido propio para actualizar en el feed
 
     return imageId;
   }

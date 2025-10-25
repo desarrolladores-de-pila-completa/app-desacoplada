@@ -148,8 +148,21 @@ export class UserService {
   }
 
   /**
-    * Actualizar foto de perfil
-    */
+   * Obtener todos los usuarios
+   */
+  async getAllUsers(): Promise<User[]> {
+    const cacheKey = `users:all`;
+    const cached = cacheService.get<User[]>(cacheKey);
+    if (cached) return cached;
+
+    const users = await this.userRepository.findAll();
+    cacheService.set(cacheKey, users);
+    return users;
+  }
+
+  /**
+     * Actualizar foto de perfil
+     */
    async updateProfilePhoto(userId: string, photoBuffer: Buffer): Promise<void> {
      // Obtener información del usuario antes de actualizar para conocer username y email
      const user = await this.userRepository.findById(userId);

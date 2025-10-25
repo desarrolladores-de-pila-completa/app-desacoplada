@@ -53,6 +53,10 @@ class UserRepository {
         const [rows] = await db_1.pool.query("SELECT * FROM users WHERE email = ?", [email]);
         return rows.length > 0 ? (rows[0] ?? null) : null;
     }
+    async findAll() {
+        const [rows] = await db_1.pool.query("SELECT id, email, username, display_name, foto_perfil, creado_en FROM users ORDER BY creado_en DESC");
+        return rows;
+    }
     async updateProfilePhoto(userId, photoBuffer) {
         await db_1.pool.query("UPDATE users SET foto_perfil = ? WHERE id = ?", [photoBuffer, userId]);
     }
@@ -66,7 +70,6 @@ class UserRepository {
             // Eliminar en orden para respetar foreign keys
             await conn.query("DELETE FROM comentarios WHERE user_id = ?", [userId]);
             await conn.query("DELETE FROM imagenes WHERE pagina_id IN (SELECT id FROM paginas WHERE user_id = ?)", [userId]);
-            await conn.query("DELETE FROM feed WHERE user_id = ?", [userId]);
             await conn.query("DELETE FROM paginas WHERE user_id = ?", [userId]);
             await conn.query("DELETE FROM users WHERE id = ?", [userId]);
             await conn.commit();

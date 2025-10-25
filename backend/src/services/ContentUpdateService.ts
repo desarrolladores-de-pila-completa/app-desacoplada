@@ -2,7 +2,6 @@ import { AppError } from '../types/interfaces';
 import winston from '../utils/logger';
 import { pool } from "../middlewares/db";
 import { CommentRepository } from '../repositories/CommentRepository';
-import { FeedRepository } from '../repositories/FeedRepository';
 import { PrivateMessageRepository } from '../repositories/PrivateMessageRepository';
 import { PublicacionRepository } from '../repositories/PublicacionRepository';
 
@@ -16,7 +15,7 @@ export interface ContentUpdateOptions {
 
 export interface ContentReference {
   id: number;
-  type: 'comment' | 'feed' | 'private_message' | 'publication';
+  type: 'comment' | 'private_message' | 'publication';
   content: string;
   userId?: string;
   tableName: string;
@@ -29,7 +28,6 @@ export interface UpdateStatistics {
   errors: Array<{ type: string; id: number; error: string }>;
   details: {
     comments: { found: number; updated: number };
-    feed: { found: number; updated: number };
     privateMessages: { found: number; updated: number };
     publications: { found: number; updated: number };
   };
@@ -43,13 +41,11 @@ export interface SearchPattern {
 
 export class ContentUpdateService {
   private commentRepository: CommentRepository;
-  private feedRepository: FeedRepository;
   private privateMessageRepository: PrivateMessageRepository;
   private publicacionRepository: PublicacionRepository;
 
   constructor() {
     this.commentRepository = new CommentRepository();
-    this.feedRepository = new FeedRepository();
     this.privateMessageRepository = new PrivateMessageRepository();
     this.publicacionRepository = new PublicacionRepository();
   }
@@ -70,7 +66,6 @@ export class ContentUpdateService {
       errors: [],
       details: {
         comments: { found: 0, updated: 0 },
-        feed: { found: 0, updated: 0 },
         privateMessages: { found: 0, updated: 0 },
         publications: { found: 0, updated: 0 }
       }
@@ -85,7 +80,6 @@ export class ContentUpdateService {
 
       // Buscar y actualizar referencias en cada tipo de contenido
       await this.updateCommentsReferences(options, patterns, stats);
-      await this.updateFeedReferences(options, patterns, stats);
       await this.updatePrivateMessagesReferences(options, patterns, stats);
       await this.updatePublicationsReferences(options, patterns, stats);
 
@@ -222,107 +216,6 @@ export class ContentUpdateService {
     }
   }
 
-  /**
-   * Actualizar referencias en entradas del feed
-   */
-  private async updateFeedReferences(
-    options: ContentUpdateOptions,
-    patterns: SearchPattern[],
-    stats: UpdateStatistics
-  ): Promise<void> {
-    try {
-      winston.debug('Buscando referencias en feed', { oldUsername: options.oldUsername });
-
-      // Buscar entradas del feed que contengan referencias
-      const [feedRows] = await pool.query(
-        `SELECT id, titulo, contenido, mensaje FROM feed
-         WHERE titulo LIKE ? OR titulo LIKE ? OR titulo LIKE ?
-            OR contenido LIKE ? OR contenido LIKE ? OR contenido LIKE ?
-            OR mensaje LIKE ? OR mensaje LIKE ? OR mensaje LIKE ?`,
-        [
-          `%@${options.oldUsername}%`, `%/pagina/${options.oldUsername}%`, `%%${options.oldUsername}%%`,
-          `%@${options.oldUsername}%`, `%/pagina/${options.oldUsername}%`, `%%${options.oldUsername}%%`,
-          `%@${options.oldUsername}%`, `%/pagina/${options.oldUsername}%`, `%%${options.oldUsername}%%`
-        ]
-      );
-
-      stats.details.feed.found = (feedRows as any[]).length;
-
-      for (const row of feedRows as any[]) {
-        try {
-          let needsUpdate = false;
-          const updates: any = {};
-
-          // Procesar título
-          if (row.titulo) {
-            let updatedTitulo = row.titulo;
-            for (const pattern of patterns) {
-              updatedTitulo = updatedTitulo.replace(pattern.pattern, pattern.replacement);
-            }
-            if (updatedTitulo !== row.titulo) {
-              updates.titulo = updatedTitulo;
-              needsUpdate = true;
-            }
-          }
-
-          // Procesar contenido
-          if (row.contenido) {
-            let updatedContenido = row.contenido;
-            for (const pattern of patterns) {
-              updatedContenido = updatedContenido.replace(pattern.pattern, pattern.replacement);
-            }
-            if (updatedContenido !== row.contenido) {
-              updates.contenido = updatedContenido;
-              needsUpdate = true;
-            }
-          }
-
-          // Procesar mensaje
-          if (row.mensaje) {
-            let updatedMensaje = row.mensaje;
-            for (const pattern of patterns) {
-              updatedMensaje = updatedMensaje.replace(pattern.pattern, pattern.replacement);
-            }
-            if (updatedMensaje !== row.mensaje) {
-              updates.mensaje = updatedMensaje;
-              needsUpdate = true;
-            }
-          }
-
-          // Actualizar si hay cambios y no es dry run
-          if (needsUpdate && !options.dryRun) {
-            const setParts = Object.keys(updates).map(key => `${key} = ?`).join(', ');
-            const values = Object.values(updates);
-            values.push(row.id);
-
-            await pool.query(
-              `UPDATE feed SET ${setParts}, actualizado_en = NOW() WHERE id = ?`,
-              values
-            );
-          }
-
-          if (needsUpdate) {
-            stats.details.feed.updated++;
-            stats.updatedReferences++;
-          }
-
-          stats.totalReferences++;
-        } catch (error) {
-          stats.errors.push({
-            type: 'feed',
-            id: row.id,
-            error: error instanceof Error ? error.message : 'Error desconocido'
-          });
-          winston.error(`Error actualizando entrada de feed ${row.id}`, { error });
-        }
-      }
-
-      winston.info(`Feed procesado: ${stats.details.feed.found} encontrados, ${stats.details.feed.updated} actualizados`);
-    } catch (error) {
-      winston.error('Error procesando feed', { error });
-      throw error;
-    }
-  }
 
   /**
    * Actualizar referencias en mensajes privados
@@ -489,7 +382,6 @@ export class ContentUpdateService {
    */
   async getReferenceStatistics(oldUsername: string): Promise<{
     comments: number;
-    feed: number;
     privateMessages: number;
     publications: number;
     total: number;
@@ -504,18 +396,6 @@ export class ContentUpdateService {
         `SELECT COUNT(*) as count FROM comentarios
          WHERE comentario LIKE ? OR comentario LIKE ? OR comentario LIKE ?`,
         [`%@${oldUsername}%`, `%/pagina/${oldUsername}%`, `%%${oldUsername}%%`]
-      );
-
-      const [feedCount] = await pool.query(
-        `SELECT COUNT(*) as count FROM feed
-         WHERE titulo LIKE ? OR titulo LIKE ? OR titulo LIKE ?
-            OR contenido LIKE ? OR contenido LIKE ? OR contenido LIKE ?
-            OR mensaje LIKE ? OR mensaje LIKE ? OR mensaje LIKE ?`,
-        [
-          `%@${oldUsername}%`, `%/pagina/${oldUsername}%`, `%%${oldUsername}%%`,
-          `%@${oldUsername}%`, `%/pagina/${oldUsername}%`, `%%${oldUsername}%%`,
-          `%@${oldUsername}%`, `%/pagina/${oldUsername}%`, `%%${oldUsername}%%`
-        ]
       );
 
       const [messageCount] = await pool.query(
@@ -536,11 +416,9 @@ export class ContentUpdateService {
 
       const result = {
         comments: (commentCount as any[])[0]?.count || 0,
-        feed: (feedCount as any[])[0]?.count || 0,
         privateMessages: (messageCount as any[])[0]?.count || 0,
         publications: (publicationCount as any[])[0]?.count || 0,
         total: ((commentCount as any[])[0]?.count || 0) +
-               ((feedCount as any[])[0]?.count || 0) +
                ((messageCount as any[])[0]?.count || 0) +
                ((publicationCount as any[])[0]?.count || 0)
       };

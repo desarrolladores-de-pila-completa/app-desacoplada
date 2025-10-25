@@ -2,7 +2,6 @@ import { container } from './diContainer';
 import { UserService } from '../services/UserService';
 import { PageService } from '../services/PageService';
 import { CommentService } from '../services/CommentService';
-import { FeedService } from '../services/FeedService';
 import { AuthService } from '../services/AuthService';
 import { eventBus } from './eventBus';
 import { IEventBus } from '../types/interfaces';
@@ -10,13 +9,11 @@ import {
   UserRepository,
   PageRepository,
   CommentRepository,
-  FeedRepository,
   PublicacionRepository,
   PrivateMessageRepository,
   IUserRepository,
   IPageRepository,
   ICommentRepository,
-  IFeedRepository,
   IPrivateMessageRepository
 } from '../repositories';
 import { PublicacionService } from '../services/PublicacionService';
@@ -34,7 +31,6 @@ export function configureServices(): void {
   container.registerSingleton('IUserRepository', () => new UserRepository());
   container.registerSingleton('IPageRepository', () => new PageRepository());
   container.registerSingleton('ICommentRepository', () => new CommentRepository());
-  container.registerSingleton('IFeedRepository', () => new FeedRepository());
   container.registerSingleton('IPrivateMessageRepository', () => new PrivateMessageRepository());
 
   // Servicios con dependencias de repositorios
@@ -46,19 +42,13 @@ export function configureServices(): void {
 
   container.registerSingleton('PageService', (c) => {
     const pageRepository = c.resolve<IPageRepository>('IPageRepository');
-    const feedRepository = c.resolve<IFeedRepository>('IFeedRepository');
     const eventBus = c.resolve<IEventBus>('IEventBus');
-    return new PageService(pageRepository, feedRepository, eventBus);
+    return new PageService(pageRepository, eventBus);
   });
 
   container.registerSingleton('CommentService', (c) => {
     const commentRepository = c.resolve<ICommentRepository>('ICommentRepository');
     return new CommentService(commentRepository);
-  });
-
-  container.registerSingleton('FeedService', (c) => {
-    const feedRepository = c.resolve<IFeedRepository>('IFeedRepository');
-    return new FeedService(feedRepository);
   });
 
 
@@ -75,9 +65,8 @@ export function configureServices(): void {
   // Servicios con dependencias
   container.registerSingleton('AuthService', (c) => {
     const userService = c.resolve<UserService>('UserService');
-    const feedService = c.resolve<FeedService>('FeedService');
     const eventBus = c.resolve<IEventBus>('IEventBus');
-    return new AuthService(userService, feedService, eventBus);
+    return new AuthService(userService, eventBus);
   });
 }
 

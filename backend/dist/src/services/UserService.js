@@ -140,8 +140,20 @@ class UserService {
         return await this.userRepository.findWithPassword(email);
     }
     /**
-      * Actualizar foto de perfil
-      */
+     * Obtener todos los usuarios
+     */
+    async getAllUsers() {
+        const cacheKey = `users:all`;
+        const cached = CacheService_1.cacheService.get(cacheKey);
+        if (cached)
+            return cached;
+        const users = await this.userRepository.findAll();
+        CacheService_1.cacheService.set(cacheKey, users);
+        return users;
+    }
+    /**
+       * Actualizar foto de perfil
+       */
     async updateProfilePhoto(userId, photoBuffer) {
         // Obtener información del usuario antes de actualizar para conocer username y email
         const user = await this.userRepository.findById(userId);
