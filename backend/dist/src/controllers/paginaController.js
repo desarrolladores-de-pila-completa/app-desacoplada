@@ -10,7 +10,6 @@ exports.obtenerPaginasPublicasPorUsuario = obtenerPaginasPublicasPorUsuario;
 exports.obtenerPaginaPorUsernameYNumero = obtenerPaginaPorUsernameYNumero;
 exports.consultarUsuarioPagina = consultarUsuarioPagina;
 exports.actualizarUsuarioPagina = actualizarUsuarioPagina;
-exports.obtenerPagina = obtenerPagina;
 exports.eliminarUsuarioTotal = eliminarUsuarioTotal;
 exports.paginasPublicas = paginasPublicas;
 exports.guardarComentario = guardarComentario;
@@ -348,29 +347,6 @@ async function actualizarUsuarioPagina(req, res) {
         res.status(500).json({ error: "Error al actualizar usuario de página" });
     }
 }
-// Obtener una página por su id
-async function obtenerPagina(req, res) {
-    const paginaId = req.params.id;
-    try {
-        logger_1.default.debug('Buscando página por ID', { paginaId, context: 'pagina' });
-        const [rows] = await db_1.pool.query("SELECT p.*, u.display_name FROM paginas p JOIN users u ON p.user_id = u.id WHERE p.id = ?", [paginaId]);
-        logger_1.default.debug('Resultado de consulta de página', { paginaId, found: rows && rows.length > 0, context: 'pagina' });
-        if (!rows || rows.length === 0)
-            return sendError(res, 404, "Página no encontrada");
-        // Logs detallados para debugging
-        console.log('📄 [BACKEND DEBUG] Página recuperada:', {
-            id: rows[0].id,
-            usuario: rows[0].usuario,
-            user_id: rows[0].user_id,
-            creado_en: rows[0].creado_en
-        });
-        res.json(rows[0]);
-    }
-    catch (err) {
-        logger_1.default.error('Error al obtener página', { paginaId, error: err.message, stack: err.stack, context: 'pagina' });
-        sendError(res, 500, "Error al obtener página");
-    }
-}
 const userService = (0, servicesConfig_1.getService)('UserService');
 // Eliminar usuario y todo su rastro (perfil, comentarios, imágenes, feed)
 /**
@@ -450,7 +426,7 @@ async function guardarComentario(req, res) {
         const [result] = await db_1.pool.query("INSERT INTO comentarios (pagina_id, user_id, comentario, creado_en) VALUES (?, ?, ?, NOW())", [pageId, userId, comentario.getValue()]);
         const commentId = result.insertId;
         // Asociar imágenes subidas con el comentario
-        const imageRegex = /\/api\/paginas\/comment-images\/(\d+)/g;
+        const imageRegex = /\/api\/comment-images\/(\d+)/g;
         let match;
         while ((match = imageRegex.exec(comentario.getValue())) !== null) {
             const imageId = match[1];

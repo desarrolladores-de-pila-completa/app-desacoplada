@@ -1,22 +1,19 @@
 import React, { useEffect, useRef, Suspense, lazy } from "react";
 import "./App.css";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
-import OutputMenu from "./components/OutputMenu";
-import useAuthStore from "./stores/authStore";
-import { useFeed } from "./hooks/useFeed";
+import Navbar from "./components/ui/Navbar";
+import OutputMenu from "./components/ui/OutputMenu";
 
 // Lazy loading de componentes de páginas
-const Feed = lazy(() => import("./components/Feed"));
-const RegisterPage = lazy(() => import("./components/RegisterPage"));
-const LoginPage = lazy(() => import("./components/LoginPage"));
-const UserPage = lazy(() => import("./components/UserPage"));
-const AccountPage = lazy(() => import("./components/AccountPage"));
-const CreatePublication = lazy(() => import("./components/CreatePublication"));
-const PageBuilder = lazy(() => import("./components/PageBuilder"));
-const PoliticaDeCookies = lazy(() => import("./components/PoliticaDeCookies"));
-const Privacidad = lazy(() => import("./components/Privacidad"));
+const Feed = lazy(() => import("./components/feed/Feed"));
+const RegisterPage = lazy(() => import("./components/auth/RegisterPage"));
+const LoginPage = lazy(() => import("./components/auth/LoginPage"));
+const UserPage = lazy(() => import("./components/main/UserPage"));
+const AccountPage = lazy(() => import("./components/main/AccountPage"));
+const CreatePublication = lazy(() => import("./components/main/CreatePublication"));
+const PageBuilder = lazy(() => import("./components/main/PageBuilder"));
+const PoliticaDeCookies = lazy(() => import("./components/policy/PoliticaDeCookies"));
+const Privacidad = lazy(() => import("./components/policy/Privacidad"));
 
 // Componente de carga para Suspense fallback
 const LoadingFallback = () => (
@@ -50,60 +47,37 @@ const LoadingFallback = () => (
 );
 
 function MainApp({ showOutput }) {
-  const { data: feed = [], isLoading, error } = useFeed();
   const lastMessageRef = useRef("");
 
-  // Mostrar mensajes de carga y error
+  // Mostrar mensaje inicial
   useEffect(() => {
-    let message = "";
-    if (isLoading) {
-      message = "Cargando feed...";
-    } else if (error) {
-      message = "Error al cargar el feed";
-    } else if (feed.length > 0) {
-      message = `Feed cargado: ${feed.length} entradas`;
-    } else {
-      message = "No hay entradas disponibles en el feed.";
-    }
-
+    const message = "Aplicación cargada correctamente.";
     if (message !== lastMessageRef.current) {
-      showOutput(message, isLoading ? "info" : error ? "error" : "success");
+      showOutput(message, "success");
       lastMessageRef.current = message;
     }
-  }, [isLoading, error, feed, showOutput]);
+  }, [showOutput]);
 
   const goToFeed = (e) => {
     e.preventDefault();
-    // El feed se recarga automáticamente con React Query
+    // El feed se maneja en el componente Feed
   };
 
   return (
     <>
       <Navbar onFeedClick={goToFeed} />
       <Suspense fallback={<LoadingFallback />}>
-        <Feed feed={feed} />
+        <Feed />
       </Suspense>
     </>
   );
 }
 
 export default function App() {
-  const { verifyAuthIfNeeded, initializeFromStorage } = useAuthStore();
   const [output, setOutput] = React.useState({ message: "", type: "" });
   const [outputMinimized, setOutputMinimized] = React.useState(false);
   const authInitialized = useRef(false);
 
-  // Inicializar estado desde localStorage al cargar la app
-  useEffect(() => {
-    if (!authInitialized.current) {
-      // Primero inicializar desde localStorage si hay datos
-      initializeFromStorage();
-
-      // Luego verificar autenticación con el servidor solo si es necesario
-      verifyAuthIfNeeded();
-      authInitialized.current = true;
-    }
-  }, [verifyAuthIfNeeded, initializeFromStorage]);
 
   // Output global
   const showOutput = React.useCallback((message, type = "info") => {

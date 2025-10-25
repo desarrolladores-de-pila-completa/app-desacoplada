@@ -2,8 +2,6 @@ import { Router } from "express";
 import { authMiddleware } from "../middlewares/auth";
 import { userRateLimit } from '../middlewares/rateLimit';
 import {
-  obtenerPublicacion,
-  obtenerPublicacionesPorUsuario,
   obtenerTodasLasPublicaciones
 } from "../controllers/publicacionController";
 
@@ -42,11 +40,8 @@ router.post("/", authMiddleware, userRateLimit, async (req: any, res: any) => {
   }
 });
 
-// Obtener publicación por ID
-router.get("/:id", obtenerPublicacion);
-
-// Obtener publicaciones por usuario
-router.get("/usuario/:username", obtenerPublicacionesPorUsuario);
+// ❌ ELIMINADAS: Rutas para obtener publicaciones específicas
+// Estas funcionalidades pueden ser manejadas por la ruta general o por páginas
 
 // Obtener todas las publicaciones
 router.get("/", obtenerTodasLasPublicaciones);

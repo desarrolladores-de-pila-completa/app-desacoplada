@@ -75,7 +75,6 @@ export declare function actualizarUsuarioPagina(req: RequestWithValidatedData, r
 interface RequestWithValidatedData extends Request {
     validatedData?: any;
 }
-export declare function obtenerPagina(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
 /**
  * @swagger
  * /api/pagina/eliminar-usuario/{id}:

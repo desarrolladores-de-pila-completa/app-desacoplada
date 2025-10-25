@@ -17,7 +17,7 @@ export default defineConfig({
     },
     hmr: {
         // Vite automáticamente encontrará un puerto disponible
-        host: true
+        host: 'localhost'
       }
   },
   build: {

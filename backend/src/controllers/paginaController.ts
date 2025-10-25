@@ -415,29 +415,6 @@ export async function actualizarUsuarioPagina(req: RequestWithValidatedData, res
 interface RequestWithValidatedData extends Request {
   validatedData?: any;
 }
-// Obtener una página por su id
-export async function obtenerPagina(req: Request, res: Response) {
-  const paginaId = req.params.id;
-  try {
-  winston.debug('Buscando página por ID', { paginaId, context: 'pagina' });
-    const [rows]: any = await pool.query("SELECT p.*, u.display_name FROM paginas p JOIN users u ON p.user_id = u.id WHERE p.id = ?", [paginaId]);
-  winston.debug('Resultado de consulta de página', { paginaId, found: rows && rows.length > 0, context: 'pagina' });
-    if (!rows || rows.length === 0) return sendError(res, 404, "Página no encontrada");
-
-    // Logs detallados para debugging
-    console.log('📄 [BACKEND DEBUG] Página recuperada:', {
-       id: rows[0].id,
-       usuario: rows[0].usuario,
-       user_id: rows[0].user_id,
-       creado_en: rows[0].creado_en
-    });
-
-    res.json(rows[0]);
-  } catch (err) {
-  winston.error('Error al obtener página', { paginaId, error: (err as Error).message, stack: (err as Error).stack, context: 'pagina' });
-    sendError(res, 500, "Error al obtener página");
-  }
-}
 
 const userService = getService<UserService>('UserService');
 
@@ -525,7 +502,7 @@ export async function guardarComentario(req: RequestWithValidatedData, res: Resp
     const commentId = (result as any).insertId;
 
     // Asociar imágenes subidas con el comentario
-    const imageRegex = /\/api\/paginas\/comment-images\/(\d+)/g;
+    const imageRegex = /\/api\/comment-images\/(\d+)/g;
     let match;
     while ((match = imageRegex.exec(comentario.getValue())) !== null) {
       const imageId = match[1];
