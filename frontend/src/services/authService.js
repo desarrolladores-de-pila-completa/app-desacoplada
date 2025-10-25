@@ -1,5 +1,6 @@
 // Servicio de autenticación que interactúa directamente con la API del backend
-const API_BASE_URL = '/api/auth';
+import { API_BASE } from '../config/api.js';
+const API_BASE_URL = `${API_BASE}/auth`;
 
 class AuthService {
   constructor() {

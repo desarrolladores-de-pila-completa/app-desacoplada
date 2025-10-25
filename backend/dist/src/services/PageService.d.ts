@@ -1,10 +1,9 @@
 import { Pagina, CreatePaginaData, UpdatePaginaData, PaginaWithImages, IEventBus } from '../types/interfaces';
-import { IPageRepository, IFeedRepository } from '../repositories';
+import { IPageRepository } from '../repositories';
 export declare class PageService {
     private pageRepository;
-    private feedRepository;
     private eventBus;
-    constructor(pageRepository: IPageRepository, feedRepository: IFeedRepository, eventBus: IEventBus);
+    constructor(pageRepository: IPageRepository, eventBus: IEventBus);
     /**
      * Obtener página por ID con imágenes
      */
@@ -25,9 +24,8 @@ export declare class PageService {
      */
     getPublicPages(limit?: number, offset?: number): Promise<Pagina[]>;
     /**
-     /**
-      * Crear nueva página
-      */
+     * Crear nueva página
+     */
     createPage(userId: string, pageData: CreatePaginaData): Promise<number>;
     /**
      * Actualizar página existente

@@ -4,7 +4,6 @@ const AuthService_1 = require("../src/services/AuthService");
 describe('AuthService', () => {
     let authService;
     let mockUserService;
-    let mockFeedService;
     let mockEventBus;
     const mockUser = {
         id: 'user-123',
@@ -26,21 +25,6 @@ describe('AuthService', () => {
             deleteUserCompletely: jest.fn(),
             isPageOwner: jest.fn()
         };
-        mockFeedService = {
-            getFeed: jest.fn(),
-            getUserFeed: jest.fn(),
-            getFeedEntry: jest.fn(),
-            createUserRegistrationEntry: jest.fn(),
-            createFeedEntry: jest.fn(),
-            updateFeedEntry: jest.fn(),
-            deleteFeedEntry: jest.fn(),
-            deleteUserFeedEntries: jest.fn(),
-            searchFeed: jest.fn(),
-            getFeedStats: jest.fn(),
-            syncFeedWithPages: jest.fn(),
-            cleanOrphanedEntries: jest.fn(),
-            getFollowingFeed: jest.fn()
-        };
         mockEventBus = {
             emit: jest.fn(),
             on: jest.fn(),
@@ -49,7 +33,7 @@ describe('AuthService', () => {
         };
         // Configurar variables de entorno para JWT
         process.env.JWT_SECRET = 'test-secret';
-        authService = new AuthService_1.AuthService(mockUserService, mockFeedService, mockEventBus);
+        authService = new AuthService_1.AuthService(mockUserService, mockEventBus);
     });
     afterEach(() => {
         jest.clearAllMocks();
@@ -64,7 +48,6 @@ describe('AuthService', () => {
             const expectedUser = { ...mockUser };
             const expectedToken = 'mock-jwt-token';
             mockUserService.createUser.mockResolvedValue(expectedUser);
-            mockFeedService.createUserRegistrationEntry.mockResolvedValue(1);
             mockEventBus.emit.mockResolvedValue();
             // Mock crypto.randomUUID
             const mockRandomUUID = jest.spyOn(require('crypto'), 'randomUUID');
@@ -76,7 +59,6 @@ describe('AuthService', () => {
                 ...userData,
                 username: 'unique-username'
             });
-            expect(mockFeedService.createUserRegistrationEntry).toHaveBeenCalledWith(expectedUser.id, expectedUser.username);
             expect(mockEventBus.emit).toHaveBeenCalledWith('user.registered', {
                 userId: expectedUser.id,
                 username: expectedUser.username,
@@ -94,7 +76,6 @@ describe('AuthService', () => {
             // Arrange
             const expectedUser = { ...mockUser };
             mockUserService.createUser.mockResolvedValue(expectedUser);
-            mockFeedService.createUserRegistrationEntry.mockRejectedValue(new Error('Feed error'));
             mockEventBus.emit.mockResolvedValue();
             const mockRandomUUID = jest.spyOn(require('crypto'), 'randomUUID');
             mockRandomUUID.mockReturnValue('unique-username');
@@ -110,7 +91,6 @@ describe('AuthService', () => {
             // Arrange
             const expectedUser = { ...mockUser };
             mockUserService.createUser.mockResolvedValue(expectedUser);
-            mockFeedService.createUserRegistrationEntry.mockResolvedValue(1);
             mockEventBus.emit.mockRejectedValue(new Error('Event bus error'));
             const mockRandomUUID = jest.spyOn(require('crypto'), 'randomUUID');
             mockRandomUUID.mockReturnValue('unique-username');

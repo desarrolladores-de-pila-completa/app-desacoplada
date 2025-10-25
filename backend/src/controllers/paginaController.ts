@@ -395,14 +395,6 @@ export async function actualizarUsuarioPagina(req: RequestWithValidatedData, res
   const usernameSanitizado = usuario.replace(/\s+/g, '-');
   await pool.query("UPDATE paginas SET usuario = ? WHERE id = ?", [usernameSanitizado, paginaId]);
   await pool.query("UPDATE users SET username = ?, display_name = ? WHERE id = ?", [usernameSanitizado, usuario, rows[0].user_id]);
-    // Actualizar el feed para ese usuario
-    if (usuario && usuario.trim()) {
-      const mensaje = `Usuario actualizado: <a href="/pagina/${usernameSanitizado}">${usuario}</a>`;
-      await pool.query(
-        "UPDATE feed SET mensaje = ? WHERE user_id = ?",
-        [mensaje, rows[0].user_id]
-      );
-    }
     res.json({ message: "Usuario de página actualizado" });
   } catch (err) {
     winston.error('Error al actualizar usuario de página', { error: err });
@@ -418,7 +410,7 @@ interface RequestWithValidatedData extends Request {
 
 const userService = getService<UserService>('UserService');
 
-// Eliminar usuario y todo su rastro (perfil, comentarios, imágenes, feed)
+// Eliminar usuario y todo su rastro (perfil, comentarios, imágenes)
 /**
  * @swagger
  * /api/pagina/eliminar-usuario/{id}:

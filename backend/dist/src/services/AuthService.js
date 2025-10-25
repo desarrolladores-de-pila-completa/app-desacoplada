@@ -10,11 +10,9 @@ const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const logger_1 = __importDefault(require("../utils/logger"));
 class AuthService {
     userService;
-    feedService;
     eventBus;
-    constructor(userService, feedService, eventBus) {
+    constructor(userService, eventBus) {
         this.userService = userService;
-        this.feedService = feedService;
         this.eventBus = eventBus;
     }
     /**

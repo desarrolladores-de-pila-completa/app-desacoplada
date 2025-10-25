@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { ValidationService, validateRequest } from '../services/ValidationService';
 import { authRateLimit, usernameUpdateRateLimit } from '../middlewares/rateLimit';
-import { register, login, logout, eliminarUsuario, refreshTokens, extendSession, updateProfilePhoto, getUserProfilePhoto, getUserByUsername, updateUsername } from "../controllers/authController";
+import { register, login, logout, eliminarUsuario, refreshTokens, extendSession, updateProfilePhoto, getUserProfilePhoto, getUserByUsername, updateUsername, getAllUsers } from "../controllers/authController";
 import { authMiddleware } from "../middlewares/auth";
 import { pool } from "../middlewares/db";
 import { uploadRateLimit } from '../middlewares/security';
@@ -19,6 +19,9 @@ const upload = multer({
 // ❌ ELIMINADA: Ruta /me eliminada según solicitud del usuario
 
 // ✅ RESTAURADA: Ruta /:username para verificación de autenticación del frontend
+// Ruta para obtener todos los usuarios (debe ir antes de /:username para evitar conflicto)
+router.get("/users", getAllUsers);
+
 router.get("/:username", getUserByUsername);
 
 // ❌ ELIMINADO: Endpoint /me/foto eliminado según solicitud del usuario

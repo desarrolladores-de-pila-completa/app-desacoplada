@@ -6,7 +6,6 @@ const diContainer_1 = require("./diContainer");
 const UserService_1 = require("../services/UserService");
 const PageService_1 = require("../services/PageService");
 const CommentService_1 = require("../services/CommentService");
-const FeedService_1 = require("../services/FeedService");
 const AuthService_1 = require("../services/AuthService");
 const eventBus_1 = require("./eventBus");
 const repositories_1 = require("../repositories");
@@ -23,7 +22,6 @@ function configureServices() {
     diContainer_1.container.registerSingleton('IUserRepository', () => new repositories_1.UserRepository());
     diContainer_1.container.registerSingleton('IPageRepository', () => new repositories_1.PageRepository());
     diContainer_1.container.registerSingleton('ICommentRepository', () => new repositories_1.CommentRepository());
-    diContainer_1.container.registerSingleton('IFeedRepository', () => new repositories_1.FeedRepository());
     diContainer_1.container.registerSingleton('IPrivateMessageRepository', () => new repositories_1.PrivateMessageRepository());
     // Servicios con dependencias de repositorios
     diContainer_1.container.registerSingleton('UserService', (c) => {
@@ -33,17 +31,12 @@ function configureServices() {
     });
     diContainer_1.container.registerSingleton('PageService', (c) => {
         const pageRepository = c.resolve('IPageRepository');
-        const feedRepository = c.resolve('IFeedRepository');
         const eventBus = c.resolve('IEventBus');
-        return new PageService_1.PageService(pageRepository, feedRepository, eventBus);
+        return new PageService_1.PageService(pageRepository, eventBus);
     });
     diContainer_1.container.registerSingleton('CommentService', (c) => {
         const commentRepository = c.resolve('ICommentRepository');
         return new CommentService_1.CommentService(commentRepository);
-    });
-    diContainer_1.container.registerSingleton('FeedService', (c) => {
-        const feedRepository = c.resolve('IFeedRepository');
-        return new FeedService_1.FeedService(feedRepository);
     });
     diContainer_1.container.registerSingleton('PrivateMessageService', (c) => {
         const privateMessageRepository = c.resolve('IPrivateMessageRepository');
@@ -56,9 +49,8 @@ function configureServices() {
     // Servicios con dependencias
     diContainer_1.container.registerSingleton('AuthService', (c) => {
         const userService = c.resolve('UserService');
-        const feedService = c.resolve('FeedService');
         const eventBus = c.resolve('IEventBus');
-        return new AuthService_1.AuthService(userService, feedService, eventBus);
+        return new AuthService_1.AuthService(userService, eventBus);
     });
 }
 /**

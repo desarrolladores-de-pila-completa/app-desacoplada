@@ -19,6 +19,8 @@ const upload = multer({
 });
 // ❌ ELIMINADA: Ruta /me eliminada según solicitud del usuario
 // ✅ RESTAURADA: Ruta /:username para verificación de autenticación del frontend
+// Ruta para obtener todos los usuarios (debe ir antes de /:username para evitar conflicto)
+router.get("/users", authController_1.getAllUsers);
 router.get("/:username", authController_1.getUserByUsername);
 // ❌ ELIMINADO: Endpoint /me/foto eliminado según solicitud del usuario
 // ❌ ELIMINADO: Endpoint /me/foto eliminado según solicitud del usuario

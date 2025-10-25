@@ -10,17 +10,17 @@ describe('App - UI Components and Navigation', () => {
   });
 
   describe('Navigation', () => {
-    test('navigates to feed when clicking feed link', async () => {
+    test('navigates to users section when clicking feed link', async () => {
       render(<App />);
-      
+
       const feedLink = screen.getByRole('link', { name: /Feed/i });
-      
+
       await act(async () => {
         fireEvent.click(feedLink);
       });
-      
-      // Verificar que se mantiene en la sección del feed
-      expect(screen.getByText(/Feed público/i)).toBeInTheDocument();
+
+      // Verificar que se mantiene en la sección de usuarios
+      expect(screen.getByText(/Usuarios registrados/i)).toBeInTheDocument();
     });
 
     test('feed link has correct href', () => {
@@ -93,15 +93,12 @@ describe('App - UI Components and Navigation', () => {
       expect(userIconContainer).toHaveStyle('cursor: pointer');
     });
 
-    test('renders feed section structure', () => {
+    test('renders users section structure', () => {
       render(<App />);
-      
-      // Verificar estructura de la sección del feed
-      const feedSection = document.querySelector('#section-feed');
-      expect(feedSection).toBeInTheDocument();
-      
-      const feedList = document.querySelector('#listaFeed');
-      expect(feedList).toBeInTheDocument();
+
+      // Verificar estructura de la sección de usuarios
+      const usersSection = document.querySelector('#registros');
+      expect(usersSection).toBeInTheDocument();
     });
 
     test('renders output menu container structure', () => {

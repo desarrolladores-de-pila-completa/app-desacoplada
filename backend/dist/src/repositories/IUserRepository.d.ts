@@ -7,6 +7,7 @@ export interface IUserRepository {
     findWithPassword(email: string): Promise<(User & {
         password: string;
     }) | null>;
+    findAll(): Promise<User[]>;
     updateProfilePhoto(userId: string, photoBuffer: Buffer): Promise<void>;
     updateUsername(userId: string, newUsername: string): Promise<void>;
     delete(userId: string): Promise<void>;

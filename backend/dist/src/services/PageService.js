@@ -8,11 +8,9 @@ const CacheService_1 = require("./CacheService");
 const logger_1 = __importDefault(require("../utils/logger"));
 class PageService {
     pageRepository;
-    feedRepository;
     eventBus;
-    constructor(pageRepository, feedRepository, eventBus) {
+    constructor(pageRepository, eventBus) {
         this.pageRepository = pageRepository;
-        this.feedRepository = feedRepository;
         this.eventBus = eventBus;
     }
     /**
@@ -74,15 +72,10 @@ class PageService {
         return pages;
     }
     /**
-     /**
-      * Crear nueva página
-      */
+     * Crear nueva página
+     */
     async createPage(userId, pageData) {
         const pageId = await this.pageRepository.create(userId, pageData);
-        // Crear entrada en el feed para nuevo perfil
-        const mensaje = `Nuevo perfil creado: ${pageData.usuario}`;
-        const enlace = `/pagina/${pageData.usuario}`;
-        await this.feedRepository.createForUser(userId, pageData.usuario);
         // Emitir evento de página creada
         try {
             await this.eventBus.emit('page.created', {
@@ -112,7 +105,6 @@ class PageService {
      */
     async deletePage(pageId) {
         await this.pageRepository.delete(pageId);
-        await this.feedRepository.deleteByPage(pageId);
         // Invalidar caché de la página
         CacheService_1.cacheService.invalidatePattern(`page:withImages:${pageId}`);
         CacheService_1.cacheService.invalidatePattern(`page:byUsername:`); // Invalidar búsquedas por username
@@ -125,7 +117,6 @@ class PageService {
         const imageId = await this.pageRepository.addImage(pageId, imageBuffer, mimeType);
         // Invalidar caché de la página
         CacheService_1.cacheService.invalidatePattern(`page:withImages:${pageId}`);
-        // Nota: Las páginas ya no tienen contenido propio para actualizar en el feed
         return imageId;
     }
     /**

@@ -1,15 +1,14 @@
 ## Funcionalidades actuales
 
 ### Backend (Node.js/TypeScript)
-- API RESTful con endpoints para usuarios, páginas, publicaciones, comentarios y feed público.
+- API RESTful con endpoints para usuarios, páginas, publicaciones y comentarios.
 - Autenticación con JWT y protección CSRF en operaciones sensibles.
 - Registro y login de usuarios.
 - Creación automática de página personal al registrar usuario.
 - Sistema de publicaciones: crear, listar y ver publicaciones específicas por ID.
-- Borrado total de usuario (perfil, comentarios, imágenes, feed).
+- Borrado total de usuario (perfil, comentarios, imágenes).
 - Endpoints para obtener y modificar datos de página, visibilidad, propietario, descripción y usuario.
 - Gestión de comentarios: agregar, listar y actualizar comentarios por página.
-- Feed público con entradas de actividad (registro, etc). Las publicaciones no se incluyen en el feed.
 - Middleware de seguridad, rate limiting y logging.
 
 ### Frontend Web (React + Vite)
@@ -17,23 +16,23 @@
 - Registro y login de usuarios con validación y feedback visual.
 - Sistema de publicaciones: crear nuevas publicaciones y ver publicaciones específicas.
 - Visualización y edición de página personal (título, descripción, contenido, imágenes).
-- Feed público con renderizado de enlaces, fechas y avatares (solo registros de usuarios).
+- Lista de usuarios registrados con enlaces a sus perfiles.
 - Sistema de comentarios en cada página, con refresco automático tras agregar.
 - Borrado de usuario con confirmación y feedback visual.
 - Mensajes Toast/Snackbar para éxito/error (OutputMenu).
-- Navegación entre perfiles desde comentarios y feed.
+- Navegación entre perfiles desde comentarios.
 - Pruebas automáticas de UI y componentes principales.
 
 ### App móvil (React Native)
 - Interfaz nativa adaptada a Android/iOS.
-- Navegación entre pantallas con React Navigation (Feed, Registro, Login, Perfil).
+- Navegación entre pantallas con React Navigation (Registro, Login, Perfil).
 - Registro y login de usuarios con feedback visual.
-- Visualización de página personal y feed público.
+- Visualización de página personal y lista de usuarios.
 - Sistema de comentarios con refresco automático tras agregar.
 - Borrado de usuario con confirmación y navegación automática.
 - Mensajes Toast/Snackbar para éxito/error.
 - Navegación entre perfiles desde comentarios.
-- Renderizado de imágenes y avatares en perfil y feed.
+- Renderizado de imágenes y avatares en perfil.
 
 ## Endpoints API Completos
 
@@ -81,8 +80,6 @@
 - `POST /api/chat/global` — Enviar mensaje al chat global
 - `POST /api/chat/private` — Enviar mensaje privado
 
-### 📡 Feed (`/api/feed/`)
-- `GET /api/feed` — Obtener feed público (solo registros de usuarios)
 
 ### 🔧 Utilidades
 - `GET /api/csrf-token` — Obtener token CSRF para protección de formularios
@@ -109,14 +106,14 @@ Proyecto desacoplado con backend Node.js/TypeScript, frontend web (React + Vite)
 - Sistema de comentarios en tiempo real.
 - Mensajes de éxito/error tipo Toast/Snackbar (OutputMenu).
 - Borrado de usuario con confirmación y feedback visual.
-- Feed con renderizado de enlaces y fechas amigables.
+- Lista de usuarios con enlaces a sus perfiles.
 
 ### App móvil (React Native)
 - Interfaz y navegación adaptadas a móvil usando React Navigation.
 - Agregar comentarios y refresco automático de la lista tras publicar.
 - Mensajes Toast/Snackbar para feedback de usuario.
 - Borrado de usuario con confirmación y navegación automática.
-- Feed y perfil de usuario con renderizado nativo y visual moderno.
+- Perfil de usuario con renderizado nativo y visual moderno.
 - Navegación entre perfiles desde comentarios.
 
 ## Estructura

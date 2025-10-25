@@ -14,15 +14,13 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.usernameUpdateService = exports.UsernameUpdateService = exports.cacheInvalidationService = exports.CacheInvalidationService = exports.ContentUpdateService = exports.cacheService = exports.CacheService = exports.ValidationService = exports.FeedService = exports.CommentService = exports.PageService = exports.UserService = void 0;
+exports.usernameUpdateService = exports.UsernameUpdateService = exports.cacheInvalidationService = exports.CacheInvalidationService = exports.ContentUpdateService = exports.cacheService = exports.CacheService = exports.ValidationService = exports.CommentService = exports.PageService = exports.UserService = void 0;
 var UserService_1 = require("./UserService");
 Object.defineProperty(exports, "UserService", { enumerable: true, get: function () { return UserService_1.UserService; } });
 var PageService_1 = require("./PageService");
 Object.defineProperty(exports, "PageService", { enumerable: true, get: function () { return PageService_1.PageService; } });
 var CommentService_1 = require("./CommentService");
 Object.defineProperty(exports, "CommentService", { enumerable: true, get: function () { return CommentService_1.CommentService; } });
-var FeedService_1 = require("./FeedService");
-Object.defineProperty(exports, "FeedService", { enumerable: true, get: function () { return FeedService_1.FeedService; } });
 var ValidationService_1 = require("./ValidationService");
 Object.defineProperty(exports, "ValidationService", { enumerable: true, get: function () { return ValidationService_1.ValidationService; } });
 var CacheService_1 = require("./CacheService");

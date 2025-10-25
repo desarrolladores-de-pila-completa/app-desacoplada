@@ -20,7 +20,6 @@ API RESTful construida con Node.js, TypeScript y Express para el proyecto app-de
 - Gestión de páginas de usuario
 - Sistema de publicaciones
 - Comentarios en páginas
-- Feed público
 - Upload de imágenes
 - Borrado completo de usuarios
 
@@ -126,8 +125,6 @@ npm test
 - `POST /api/chat/global` — Enviar mensaje al chat global
 - `POST /api/chat/private` — Enviar mensaje privado
 
-### 📡 Feed (`/api/feed/`)
-- `GET /api/feed` — Obtener feed público (solo registros de usuarios)
 
 ### 🔧 Utilidades
 - `GET /api/csrf-token` — Obtener token CSRF para protección de formularios

@@ -14,12 +14,6 @@ router.post("/", auth_1.authMiddleware, rateLimit_1.userRateLimit, async (req, r
         const { pool } = require('../middlewares/db');
         const [result] = await pool.query("INSERT INTO publicaciones (user_id, titulo, contenido) VALUES (?, ?, ?)", [userId, titulo, contenido]);
         const publicacionId = result.insertId;
-        // Crear entrada en el feed
-        const { getService } = require('../utils/servicesConfig');
-        const userService = getService('UserService');
-        const user = await userService.getUserById(userId);
-        const mensaje = `Nueva publicación: <strong>${titulo}</strong>`;
-        await pool.query("INSERT INTO feed (user_id, mensaje) VALUES (?, ?)", [userId, mensaje]);
         res.json({ message: "Publicación creada", id: publicacionId });
     }
     catch (err) {

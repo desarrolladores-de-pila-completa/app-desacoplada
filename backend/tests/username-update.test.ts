@@ -34,7 +34,6 @@ describe('UsernameUpdateService', () => {
     errors: [],
     details: {
       comments: { found: 2, updated: 2 },
-      feed: { found: 1, updated: 1 },
       privateMessages: { found: 1, updated: 1 },
       publications: { found: 1, updated: 1 }
     }
@@ -396,7 +395,6 @@ describe('UsernameUpdateService', () => {
           errors: [],
           details: {
             comments: { found: 1, updated: 1 },
-            feed: { found: 1, updated: 1 },
             privateMessages: { found: 1, updated: 1 },
             publications: { found: 0, updated: 0 }
           }
@@ -466,10 +464,9 @@ describe('UsernameUpdateService', () => {
         // Arrange
         const referenceStats = {
           comments: 5,
-          feed: 3,
           privateMessages: 2,
           publications: 1,
-          total: 11
+          total: 8
         };
   
         const mockUser = {
@@ -556,7 +553,6 @@ describe('UsernameUpdateService', () => {
           errors: [],
           details: {
             comments: { found: 0, updated: 0 },
-            feed: { found: 0, updated: 0 },
             privateMessages: { found: 0, updated: 0 },
             publications: { found: 0, updated: 0 }
           }
@@ -612,7 +608,6 @@ describe('UsernameUpdateService', () => {
           errors: [],
           details: {
             comments: { found: 0, updated: 0 },
-            feed: { found: 0, updated: 0 },
             privateMessages: { found: 0, updated: 0 },
             publications: { found: 0, updated: 0 }
           }
@@ -661,7 +656,6 @@ describe('UsernameUpdateService', () => {
           errors: [],
           details: {
             comments: { found: 0, updated: 0 },
-            feed: { found: 0, updated: 0 },
             privateMessages: { found: 0, updated: 0 },
             publications: { found: 0, updated: 0 }
           }
@@ -891,10 +885,9 @@ describe('UsernameUpdateService', () => {
       // Arrange
       const referenceStats = {
         comments: 2,
-        feed: 1,
         privateMessages: 1,
         publications: 1,
-        total: 5
+        total: 4
       };
 
       mockPool.query.mockResolvedValueOnce([[mockUser]]);
