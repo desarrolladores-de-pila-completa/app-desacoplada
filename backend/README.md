@@ -47,16 +47,25 @@ Compila TypeScript y ejecuta el servidor.
 
 ## Variables de Entorno
 
-Crear archivo `.env` en el directorio `backend/`:
+Crear archivo `.env` en el directorio `backend/` basado en `.env.example`:
 
 ```env
+PORT=3000
+JWT_SECRET=tu_jwt_secreto
+JWT_EXPIRES_IN=1d
 DB_HOST=localhost
+DB_PORT=3306
 DB_USER=usuario
 DB_PASSWORD=contraseña
-DB_NAME=base_datos
-JWT_SECRET=tu_jwt_secret
+DB_NAME=app1
+CORS_ORIGIN=http://localhost:5173
 NODE_ENV=development
 ```
+
+- **PORT**: Puerto del servidor backend (3000)
+- **JWT_SECRET**: Secreto para tokens JWT
+- **DB_NAME**: Nombre de la base de datos principal (app1)
+- **CORS_ORIGIN**: Origen permitido para CORS (http://localhost:5173 para frontend)
 
 ## Estructura del Proyecto
 
@@ -72,6 +81,16 @@ NODE_ENV=development
 ## Base de Datos
 
 El sistema incluye migraciones automáticas para crear y actualizar tablas al iniciar.
+
+- **Bases de datos**: app1 (principal), vvveb (secundaria)
+- **Tablas principales**: users, paginas, comentarios, imagenes_comentarios, imagenes, publicaciones
+
+## WebSocket
+
+El servidor incluye un servidor WebSocket para funcionalidades en tiempo real como chat.
+
+- **Puerto**: 3003
+- **Funcionalidades**: Chat global y privado
 
 ## Pruebas
 

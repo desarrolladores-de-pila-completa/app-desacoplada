@@ -12,6 +12,12 @@ import { corsOptions, corsHeaderLogger, corsDiagnosticLogger } from "./middlewar
 import logger from "./utils/logger";
 import WebSocket from "ws";
 import { IncomingMessage } from "http";
+import session from "express-session";
+import passport from "passport";
+import { Strategy as LocalStrategy } from "passport-local";
+import { getService } from "./utils/servicesConfig";
+import { AuthService } from "./services/AuthService";
+import { UserService } from "./services/UserService";
 
 // Inicializar el container de DI antes de importar rutas
 configureServices();
@@ -23,6 +29,59 @@ import { router as authRoutes } from "./routes/authRoutes";
 const rootPath = path.resolve(__dirname, '../../../');
 
 const app = express();
+
+// Middleware para parsear JSON
+app.use(express.json());
+app.use(cookieParser());
+
+// Configurar sesiones y Passport
+const authService = getService<AuthService>('AuthService');
+const userService = getService<UserService>('UserService');
+
+// Configurar express-session
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'your-session-secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000 // 24 horas
+  }
+}));
+
+// Inicializar Passport
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Configurar estrategia local de Passport
+passport.use(new LocalStrategy(
+  { usernameField: 'email', passwordField: 'password' },
+  async (email: string, password: string, done: any) => {
+    try {
+      const user = await authService.login(email, password);
+      return done(null, user);
+    } catch (error) {
+      return done(error, false);
+    }
+  }
+));
+
+// Serialización y deserialización
+passport.serializeUser((user: any, done) => {
+  done(null, user.id);
+});
+
+passport.deserializeUser(async (id: string, done) => {
+  try {
+    const user = await userService.getUserById(id);
+    done(null, user);
+  } catch (error) {
+    done(error, null);
+  }
+});
+
+logger.info("Passport y sesiones configurados", { context: 'app' });
 
 // Middleware para logging detallado de headers CORS
 // app.use(corsHeaderLogger);
@@ -345,7 +404,6 @@ wss.on('connection', (ws: WebSocket, request: IncomingMessage) => {
     });
   });
 });
-app.use(express.json());
 app.use(cookieParser());
 app.use(express.static(path.join(rootPath, 'frontend')));
 
@@ -353,47 +411,47 @@ app.use(express.static(path.join(rootPath, 'frontend')));
 app.use("/api", generalRateLimit);
 
 // Middleware de logging detallado para debugging del error 426
-app.use("/api", (req, res, next) => {
-  logger.info('=== REQUEST DEBUG ===', {
-    method: req.method,
-    url: req.originalUrl,
-    protocol: req.protocol,
-    httpVersion: req.httpVersion,
-    headers: req.headers,
-    ip: req.ip,
-    userAgent: req.get('User-Agent'),
-    context: 'debug-426'
-  });
+// app.use("/api", (req, res, next) => {
+//   logger.info('=== REQUEST DEBUG ===', {
+//     method: req.method,
+//     url: req.originalUrl,
+//     protocol: req.protocol,
+//     httpVersion: req.httpVersion,
+//     headers: req.headers,
+//     ip: req.ip,
+//     userAgent: req.get('User-Agent'),
+//     context: 'debug-426'
+//   });
 
-  // Log de respuesta para detectar error 426
-  const originalSend = res.send;
-  res.send = function(data) {
-    logger.info('=== RESPONSE DEBUG ===', {
-      statusCode: res.statusCode,
-      url: req.originalUrl,
-      method: req.method,
-      context: 'debug-426'
-    });
+//   // Log de respuesta para detectar error 426
+//   const originalSend = res.send;
+//   res.send = function(data) {
+//     logger.info('=== RESPONSE DEBUG ===', {
+//       statusCode: res.statusCode,
+//       url: req.originalUrl,
+//       method: req.method,
+//       context: 'debug-426'
+//     });
 
-    // Si detectamos error 426, log detallado
-    if (res.statusCode === 426) {
-      logger.error('🚨 ERROR 426 DETECTADO 🚨', {
-        url: req.originalUrl,
-        method: req.method,
-        headers: req.headers,
-        body: req.body,
-        query: req.query,
-        ip: req.ip,
-        userAgent: req.get('User-Agent'),
-        context: 'error-426'
-      });
-    }
+//     // Si detectamos error 426, log detallado
+//     if (res.statusCode === 426) {
+//       logger.error('🚨 ERROR 426 DETECTADO 🚨', {
+//         url: req.originalUrl,
+//         method: req.method,
+//         headers: req.headers,
+//         body: req.body,
+//         query: req.query,
+//         ip: req.ip,
+//         userAgent: req.get('User-Agent'),
+//         context: 'error-426'
+//       });
+//     }
 
-    return originalSend.call(this, data);
-  };
+//     return originalSend.call(this, data);
+//   };
 
-  next();
-});
+//   next();
+// });
 
 // Configurar CSRF con el nuevo paquete
 const tokens = new csrf();
@@ -458,56 +516,56 @@ app.use(["/api", "/api/auth"], (req, res, next) => {
 // Aplica CSRF a rutas que modifican estado
 // Solo aplicar CSRF a métodos que modifican datos
 // Middleware CSRF optimizado para evitar problemas de protocolo
-app.use(["/api", "/api/auth"], (req, res, next) => {
-  if (["POST", "PUT", "DELETE"].includes(req.method)) {
-    const userAgent = req.headers['user-agent'] || '';
-    const isDevelopment = process.env.NODE_ENV !== 'production';
+// app.use(["/api", "/api/auth"], (req, res, next) => {
+//   if (["POST", "PUT", "DELETE"].includes(req.method)) {
+//     const userAgent = req.headers['user-agent'] || '';
+//     const isDevelopment = process.env.NODE_ENV !== 'production';
 
-    logger.debug('Verificando CSRF para método modificador', {
-      method: req.method,
-      userAgent,
-      isDevelopment,
-      context: 'csrf'
-    });
+//     logger.debug('Verificando CSRF para método modificador', {
+//       method: req.method,
+//       userAgent,
+//       isDevelopment,
+//       context: 'csrf'
+//     });
 
-    // En desarrollo, ser más permisivo con CSRF
-    if (isDevelopment) {
-      // Solo verificar CSRF para métodos críticos en desarrollo
-      if (req.method === 'DELETE') {
-        const headerCsrf = req.headers['x-csrf-token'] || req.headers['X-CSRF-Token'] || req.headers['csrf-token'];
-        const cookieCsrf = req.cookies['_csrf'];
-        const token = headerCsrf || cookieCsrf;
+//     // En desarrollo, ser más permisivo con CSRF
+//     if (isDevelopment) {
+//       // Solo verificar CSRF para métodos críticos en desarrollo
+//       if (req.method === 'DELETE') {
+//         const headerCsrf = req.headers['x-csrf-token'] || req.headers['X-CSRF-Token'] || req.headers['csrf-token'];
+//         const cookieCsrf = req.cookies['_csrf'];
+//         const token = headerCsrf || cookieCsrf;
 
-        if (!token || !tokens.verify(secret, token)) {
-          logger.warn('CSRF token inválido en desarrollo, permitiendo request', {
-            method: req.method,
-            url: req.originalUrl,
-            context: 'csrf-dev'
-          });
-          // En desarrollo, solo loguear warning pero permitir continuar
-        }
-      }
-      return next();
-    }
+//         if (!token || !tokens.verify(secret, token)) {
+//           logger.warn('CSRF token inválido en desarrollo, permitiendo request', {
+//             method: req.method,
+//             url: req.originalUrl,
+//             context: 'csrf-dev'
+//           });
+//           // En desarrollo, solo loguear warning pero permitir continuar
+//         }
+//       }
+//       return next();
+//     }
 
-    // En producción, verificar estrictamente
-    if (userAgent.includes('ReactNative') || userAgent.includes('okhttp')) {
-      // Excluir CSRF para peticiones móviles
-      return next();
-    } else {
-      // Verificar token CSRF estrictamente en producción
-      const headerCsrf = req.headers['x-csrf-token'] || req.headers['X-CSRF-Token'] || req.headers['csrf-token'];
-      const cookieCsrf = req.cookies['_csrf'];
-      const token = headerCsrf || cookieCsrf;
+//     // En producción, verificar estrictamente
+//     if (userAgent.includes('ReactNative') || userAgent.includes('okhttp')) {
+//       // Excluir CSRF para peticiones móviles
+//       return next();
+//     } else {
+//       // Verificar token CSRF estrictamente en producción
+//       const headerCsrf = req.headers['x-csrf-token'] || req.headers['X-CSRF-Token'] || req.headers['csrf-token'];
+//       const cookieCsrf = req.cookies['_csrf'];
+//       const token = headerCsrf || cookieCsrf;
 
-      if (!token || !tokens.verify(secret, token)) {
-        return res.status(403).json({ error: 'Invalid CSRF token' });
-      }
-      return next();
-    }
-  }
-  next();
-});
+//       if (!token || !tokens.verify(secret, token)) {
+//         return res.status(403).json({ error: 'Invalid CSRF token' });
+//       }
+//       return next();
+//     }
+//   }
+//   next();
+// });
 
 
 import paginaRoutes from "./routes/paginaRoutes";

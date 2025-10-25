@@ -16,11 +16,8 @@ class AuthService {
         this.eventBus = eventBus;
     }
     /**
-     * Registrar un nuevo usuario
-     */
-    /**
-     * Registra un nuevo usuario y retorna el usuario, tokens y username.
-     */
+      * Registrar un nuevo usuario
+      */
     async register(userData) {
         logger_1.default.info('AuthService.register called');
         // Generar username único
@@ -31,6 +28,9 @@ class AuthService {
         logger_1.default.debug('Calling userService.createUser');
         const user = await this.userService.createUser(fullUserData);
         logger_1.default.info('User created', { userId: user.id });
+        // Generar tokens para el nuevo usuario
+        const { accessToken, refreshToken } = this.generateTokens(user.id);
+        logger_1.default.debug('Tokens generated for new user', { userId: user.id });
         // Emitir evento de usuario registrado
         try {
             await this.eventBus.emit('user.registered', {
@@ -44,10 +44,6 @@ class AuthService {
             logger_1.default.error('Error emitiendo evento user.registered', { error });
             // No fallar el registro por esto
         }
-        // Generar tokens JWT con rotación
-        logger_1.default.debug('Generating tokens');
-        const { accessToken, refreshToken } = this.generateTokensWithRotation(user.id);
-        logger_1.default.debug('Tokens generated');
         return {
             user,
             accessToken,
@@ -63,8 +59,8 @@ class AuthService {
         return randomUUID().replace(/-/g, '');
     }
     /**
-     * Autenticar usuario
-     */
+      * Autenticar usuario para Passport
+      */
     async login(email, password) {
         // Obtener usuario con contraseña
         const userWithPassword = await this.userService.getUserWithPassword(email);
@@ -78,12 +74,14 @@ class AuthService {
         }
         // Retornar usuario sin contraseña
         const { password: _, ...user } = userWithPassword;
-        // Generar tokens con rotación
-        const { accessToken, refreshToken } = this.generateTokensWithRotation(user.id);
+        // Generar tokens para el usuario autenticado
+        const { accessToken, refreshToken } = this.generateTokens(user.id);
+        logger_1.default.debug('Tokens generated for login', { userId: user.id });
         return {
             user,
             accessToken,
             refreshToken,
+            username: user.username,
         };
     }
     /**

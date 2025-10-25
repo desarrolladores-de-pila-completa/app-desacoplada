@@ -32,7 +32,14 @@ npm install
 npm run dev
 ```
 
-La aplicación estará disponible en `http://localhost:5173`
+La aplicación estará disponible en `http://localhost:5173`.
+
+### Configuración
+
+- **Puerto Frontend**: 5173
+- **Backend API**: Se conecta a `http://localhost:3000` para la API REST
+- **WebSocket**: Conexión a `ws://localhost:3003` para chat en tiempo real
+- **CORS**: Configurado para permitir origen `http://localhost:5173`
 
 ## Build
 
@@ -48,8 +55,17 @@ npm run test
 
 ## Estructura del Proyecto
 
-- `src/components/` - Componentes React
+- `src/components/` - Componentes React (auth, content, feed, main, ui, user)
 - `src/hooks/` - Hooks personalizados (useFeed, useUserPage, etc.)
-- `src/stores/` - Stores Zustand
-- `src/config/` - Configuración de API
+- `src/stores/` - Stores Zustand para estado global
+- `src/config/` - Configuración de API (api.js)
+- `src/services/` - Servicios para API (authService.js, uploadService.js)
 - `src/tests/` - Pruebas
+
+## Integración con Backend
+
+El frontend se integra con el backend a través de:
+
+- **API REST**: Llamadas a `http://localhost:3000/api/*` para autenticación, páginas, publicaciones, etc.
+- **WebSocket**: Conexión a `ws://localhost:3003` para chat global y privado.
+- **Configuración CORS**: Permite solicitudes desde `http://localhost:5173`.

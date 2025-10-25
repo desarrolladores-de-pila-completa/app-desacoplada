@@ -7,6 +7,7 @@ import { UserService } from '../services/UserService';
 import { UsernameUpdateService, usernameUpdateService } from '../services/UsernameUpdateService';
 import { getService } from '../utils/servicesConfig';
 import { getAuthCookieOptions, getRefreshTokenCookieOptions, getSlidingSessionCookieOptions, clearAuthCookies } from '../utils/cookieConfig';
+import passport from 'passport';
 
 const authService = getService<AuthService>('AuthService');
 const userServiceAuth = getService<UserService>('UserService');
@@ -38,16 +39,21 @@ export async function register(req: RequestWithFile, res: Response): Promise<voi
     const file = req.file;
     const userData = { email, password, file };
     const result = await authService.register(userData);
-    res.cookie("token", result.accessToken, getAuthCookieOptions());
-    res.cookie("refreshToken", result.refreshToken, getRefreshTokenCookieOptions());
-    res.json({
-      message: "Usuario creado y página personal en línea",
-      id: result.user.id,
-      username: result.user.username,
-      display_name: result.user.display_name,
-      accessToken: result.accessToken,
-      refreshToken: result.refreshToken,
-      paginaPersonal: null
+
+    // Autenticar manualmente con Passport
+    req.logIn(result.user, (err) => {
+      if (err) {
+        winston.error('Error al iniciar sesión después de registro', { error: err });
+        return res.status(500).json({ error: "Error al iniciar sesión" });
+      }
+
+      res.json({
+        message: "Usuario creado y página personal en línea",
+        id: result.user.id,
+        username: result.user.username,
+        display_name: result.user.display_name,
+        paginaPersonal: null
+      });
     });
   } catch (error) {
     winston.error('Error en register', { error });
@@ -77,17 +83,32 @@ export async function login(req: RequestWithFile, res: Response): Promise<void> 
       throw new AppError(400, 'Datos inválidos');
     }
     const { email, password } = parsed.data;
-    const result = await authService.login(email, password);
-    res.cookie("token", result.accessToken, getAuthCookieOptions());
-    res.cookie("refreshToken", result.refreshToken, getRefreshTokenCookieOptions());
-    res.json({
-      message: "Login exitoso",
-      id: result.user.id,
-      username: result.user.username,
-      display_name: result.user.display_name,
-      accessToken: result.accessToken,
-      refreshToken: result.refreshToken
-    });
+
+    // Usar Passport para autenticar
+    passport.authenticate('local', (err: any, user: any, info: any) => {
+      if (err) {
+        winston.error('Error en autenticación Passport', { error: err });
+        return res.status(500).json({ error: "Error en autenticación" });
+      }
+      if (!user) {
+        return res.status(401).json({ error: "Credenciales inválidas" });
+      }
+
+      // Iniciar sesión con Passport
+      req.logIn(user, (err) => {
+        if (err) {
+          winston.error('Error al iniciar sesión', { error: err });
+          return res.status(500).json({ error: "Error al iniciar sesión" });
+        }
+
+        res.json({
+          message: "Login exitoso",
+          id: user.id,
+          username: user.username,
+          display_name: user.display_name
+        });
+      });
+    })(req, res);
   } catch (error) {
     winston.error('Error en login', { error });
     if (error instanceof AppError) {
@@ -105,28 +126,15 @@ export async function login(req: RequestWithFile, res: Response): Promise<void> 
  *     tags: [Auth]
  */
 export async function logout(req: Request, res: Response): Promise<void> {
-  clearAuthCookies(res);
-  res.json({ message: "Sesión cerrada y tokens eliminados" });
+  req.logout((err) => {
+    if (err) {
+      winston.error('Error al cerrar sesión', { error: err });
+      return res.status(500).json({ error: "Error al cerrar sesión" });
+    }
+    res.json({ message: "Sesión cerrada exitosamente" });
+  });
 }
 
-export async function me(req: Request, res: Response): Promise<void> {
-    const userId = (req as any).userId;
-    if (!userId) {
-      res.status(401).json({ error: 'No autenticado' });
-      return;
-    }
-    const user = await userServiceAuth.getUserById(userId);
-    if (!user) {
-      res.status(404).json({ error: 'Usuario no encontrado' });
-      return;
-    }
-    res.json({
-      id: user.id,
-      username: user.username,
-      display_name: user.display_name,
-      email: user.email
-    });
-  }
 
 /**
  * @swagger

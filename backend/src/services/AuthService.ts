@@ -1,5 +1,5 @@
 import { UserService } from './UserService';
-import { User, UserCreateData, AppError, IEventBus } from '../types/interfaces';
+import { User, UserCreateData, AppError, IEventBus, AuthResponse } from '../types/interfaces';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import winston from '../utils/logger';
@@ -14,53 +14,44 @@ export class AuthService {
   }
 
   /**
-   * Registrar un nuevo usuario
-   */
-  /**
-   * Registra un nuevo usuario y retorna el usuario, tokens y username.
-   */
-  async register(userData: Omit<UserCreateData, 'username'>): Promise<{
-    user: User;
-    accessToken: string;
-    refreshToken: string;
-    username: string;
-  }> {
-    winston.info('AuthService.register called');
-    // Generar username único
-    const username = this.generateUniqueUsername();
-    winston.debug('Username generated', { username });
+    * Registrar un nuevo usuario
+    */
+   async register(userData: Omit<UserCreateData, 'username'>): Promise<AuthResponse> {
+     winston.info('AuthService.register called');
+     // Generar username único
+     const username = this.generateUniqueUsername();
+     winston.debug('Username generated', { username });
 
-    // Crear usuario usando UserService
-    const fullUserData: UserCreateData = { ...userData, username };
-    winston.debug('Calling userService.createUser');
-    const user = await this.userService.createUser(fullUserData);
-    winston.info('User created', { userId: user.id });
+     // Crear usuario usando UserService
+     const fullUserData: UserCreateData = { ...userData, username };
+     winston.debug('Calling userService.createUser');
+     const user = await this.userService.createUser(fullUserData);
+     winston.info('User created', { userId: user.id });
 
-    // Emitir evento de usuario registrado
-    try {
-      await this.eventBus.emit('user.registered', {
-        userId: user.id,
-        username: user.username,
-        email: userData.email,
-      });
-      winston.info('Event emitted user.registered');
-    } catch (error) {
-      winston.error('Error emitiendo evento user.registered', { error });
-      // No fallar el registro por esto
-    }
+     // Generar tokens para el nuevo usuario
+     const { accessToken, refreshToken } = this.generateTokens(user.id);
+     winston.debug('Tokens generated for new user', { userId: user.id });
 
-    // Generar tokens JWT con rotación
-    winston.debug('Generating tokens');
-    const { accessToken, refreshToken } = this.generateTokensWithRotation(user.id);
-    winston.debug('Tokens generated');
+     // Emitir evento de usuario registrado
+     try {
+       await this.eventBus.emit('user.registered', {
+         userId: user.id,
+         username: user.username,
+         email: userData.email,
+       });
+       winston.info('Event emitted user.registered');
+     } catch (error) {
+       winston.error('Error emitiendo evento user.registered', { error });
+       // No fallar el registro por esto
+     }
 
-    return {
-      user,
-      accessToken,
-      refreshToken,
-      username: user.username,
-    };
-  }
+     return {
+       user,
+       accessToken,
+       refreshToken,
+       username: user.username,
+     };
+   }
 
   /**
    * Generar username único
@@ -71,37 +62,35 @@ export class AuthService {
   }
 
   /**
-   * Autenticar usuario
-   */
-  async login(email: string, password: string): Promise<{
-    user: User;
-    accessToken: string;
-    refreshToken: string;
-  }> {
-    // Obtener usuario con contraseña
-    const userWithPassword = await this.userService.getUserWithPassword(email);
-    if (!userWithPassword) {
-      throw new AppError(401, 'Credenciales inválidas');
-    }
+    * Autenticar usuario para Passport
+    */
+   async login(email: string, password: string): Promise<AuthResponse> {
+     // Obtener usuario con contraseña
+     const userWithPassword = await this.userService.getUserWithPassword(email);
+     if (!userWithPassword) {
+       throw new AppError(401, 'Credenciales inválidas');
+     }
 
-    // Verificar contraseña
-    const isPasswordValid = await bcrypt.compare(password, userWithPassword.password);
-    if (!isPasswordValid) {
-      throw new AppError(401, 'Credenciales inválidas');
-    }
+     // Verificar contraseña
+     const isPasswordValid = await bcrypt.compare(password, userWithPassword.password);
+     if (!isPasswordValid) {
+       throw new AppError(401, 'Credenciales inválidas');
+     }
 
-    // Retornar usuario sin contraseña
-    const { password: _, ...user } = userWithPassword;
+     // Retornar usuario sin contraseña
+     const { password: _, ...user } = userWithPassword;
 
-    // Generar tokens con rotación
-    const { accessToken, refreshToken } = this.generateTokensWithRotation(user.id);
+     // Generar tokens para el usuario autenticado
+     const { accessToken, refreshToken } = this.generateTokens(user.id);
+     winston.debug('Tokens generated for login', { userId: user.id });
 
-    return {
-      user,
-      accessToken,
-      refreshToken,
-    };
-  }
+     return {
+       user,
+       accessToken,
+       refreshToken,
+       username: user.username,
+     };
+   }
 
   /**
    * Generar tokens JWT (access y refresh)

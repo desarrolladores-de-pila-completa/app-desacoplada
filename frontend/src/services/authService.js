@@ -3,9 +3,22 @@ import { API_BASE } from '../config/api.js';
 const API_BASE_URL = `${API_BASE}/auth`;
 
 class AuthService {
+  // Función helper para manejar respuestas y errores de autenticación
+  async handleAuthResponse(response) {
+    if (response.status === 401) {
+      this.clearStoredUser();
+      throw new Error('Sesión expirada. Por favor, inicia sesión nuevamente.');
+    }
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Error en la solicitud');
+    }
+    return response.json();
+  }
   constructor() {
     this.user = this.getStoredUser();
     this.isAuthenticated = !!this.user;
+    this.checkAuth(); // Verificar sesión al inicializar
   }
 
   // Obtener usuario almacenado en localStorage
@@ -45,6 +58,15 @@ class AuthService {
     }
   }
 
+  // Verificar autenticación actual
+  async checkAuth() {
+    if (this.user) {
+      return { success: true, user: this.user };
+    } else {
+      return { success: false, error: 'No autenticado' };
+    }
+  }
+
   // Login
   async login(email, password) {
     try {
@@ -63,8 +85,8 @@ class AuthService {
       }
 
       const data = await response.json();
-      this.setStoredUser(data.user);
-      return { success: true, user: data.user };
+      this.setStoredUser(data);
+      return { success: true, user: data };
     } catch (error) {
       console.error('Login error:', error);
       return { success: false, error: error.message };
@@ -89,8 +111,8 @@ class AuthService {
       }
 
       const data = await response.json();
-      this.setStoredUser(data.user);
-      return { success: true, user: data.user };
+      this.setStoredUser(data);
+      return { success: true, user: data };
     } catch (error) {
       console.error('Register error:', error);
       return { success: false, error: error.message };
@@ -111,8 +133,11 @@ class AuthService {
     }
   }
 
-  // Obtener usuario actual
-  getCurrentUser() {
+  // Obtener usuario actual (verifica con el servidor)
+  async getCurrentUser() {
+    if (!this.user) {
+      await this.checkAuth();
+    }
     return this.user;
   }
 
