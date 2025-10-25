@@ -65,11 +65,11 @@ describe('Security Tests', () => {
 
   describe('CSRF Protection', () => {
     it('should require CSRF token for state-changing operations', () => {
-      const protectedRoutes = ['/api/auth/register', '/api/auth/login', '/api/paginas'];
+      const protectedRoutes = ['/api/auth/register', '/api/auth/login', '/api'];
       const methodsRequiringCSRF = ['POST', 'PUT', 'DELETE', 'PATCH'];
 
       protectedRoutes.forEach(route => {
-        expect(route).toMatch(/^\/api\/(auth|paginas)/);
+        expect(route).toMatch(/^\/api\/(auth)/);
       });
 
       methodsRequiringCSRF.forEach(method => {

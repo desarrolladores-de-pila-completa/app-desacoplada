@@ -1,5 +1,5 @@
 import React from "react";
-import ContentRenderer from "../ContentRenderer";
+import ContentRenderer from "../content/ContentRenderer";
 
 function UserContent({ paginaUser, renderContent }) {
   if (!paginaUser?.pagina?.contenido) return null;

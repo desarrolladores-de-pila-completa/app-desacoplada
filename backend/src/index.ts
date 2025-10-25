@@ -62,15 +62,15 @@ app.use((req, res, next) => {
 });
 
 // WebSocket server
-const wss = new WebSocket.Server({ port: 3001 });
+const wss = new WebSocket.Server({ port: 3003 });
 
 // Log para debugging de puerto WebSocket
-logger.info("Iniciando servidor WebSocket", { port: 3001, context: 'websocket' });
+logger.info("Iniciando servidor WebSocket", { port: 3003, context: 'websocket' });
 
 // Log detallado del estado del servidor WebSocket
 wss.on('listening', () => {
   logger.info('✅ Servidor WebSocket escuchando correctamente', {
-    port: 3001,
+    port: 3003,
     address: wss.address(),
     context: 'websocket'
   });
@@ -79,12 +79,12 @@ wss.on('listening', () => {
 // Manejar errores de binding del puerto WebSocket
 wss.on('error', (error: Error & { code?: string }) => {
   if (error.code === 'EADDRINUSE') {
-    logger.error('🚨 Puerto WebSocket 3001 ya está en uso', {
+    logger.error('🚨 Puerto WebSocket 3003 ya está en uso', {
       error: error.message,
       code: error.code,
-      port: 3001,
+      port: 3003,
       context: 'websocket',
-      suggestion: 'Detener otros servidores que puedan estar usando el puerto 3001'
+      suggestion: 'Detener otros servidores que puedan estar usando el puerto 3003'
     });
   } else {
     logger.error('🚨 Error en servidor WebSocket', {
@@ -109,7 +109,7 @@ console.log('=== WEBSOCKET SERVER INIT DEBUG ===', {
   context: 'websocket-server-init-debug'
 });
 
-logger.info('Servidor WebSocket inicializado en puerto 3001', { context: 'websocket' });
+logger.info('Servidor WebSocket inicializado en puerto 3003', { context: 'websocket' });
 
 wss.on('connection', (ws: WebSocket, request: IncomingMessage) => {
   logger.info('🔗 Nueva conexión WebSocket establecida', {
@@ -451,7 +451,7 @@ app.get("/api/csrf-token", (req, res) => {
 
 
 // Middleware de logging para depuración CSRF
-app.use(["/api/paginas", "/api/auth"], (req, res, next) => {
+app.use(["/api", "/api/auth"], (req, res, next) => {
   const cookieCsrf = req.cookies['_csrf'];
   const headerCsrf = req.headers['x-csrf-token'] || req.headers['X-CSRF-Token'] || req.headers['csrf-token'];
   logger.debug('Verificando tokens CSRF', { cookieCsrf: cookieCsrf ? 'presente' : 'ausente', headerCsrf: headerCsrf ? 'presente' : 'ausente', context: 'csrf' });
@@ -460,7 +460,7 @@ app.use(["/api/paginas", "/api/auth"], (req, res, next) => {
 // Aplica CSRF a rutas que modifican estado
 // Solo aplicar CSRF a métodos que modifican datos
 // Middleware CSRF optimizado para evitar problemas de protocolo
-app.use(["/api/paginas", "/api/auth"], (req, res, next) => {
+app.use(["/api", "/api/auth"], (req, res, next) => {
   if (["POST", "PUT", "DELETE"].includes(req.method)) {
     const userAgent = req.headers['user-agent'] || '';
     const isDevelopment = process.env.NODE_ENV !== 'production';
@@ -513,13 +513,12 @@ app.use(["/api/paginas", "/api/auth"], (req, res, next) => {
 
 
 import feedRoutes from "./routes/feedRoutes";
-import chatRoutes from "./routes/chatRoutes";
 // ❌ ELIMINADAS: privateRoutes y guestRoutes por contener rutas duplicadas
+// ❌ ELIMINADAS: chatRoutes por rutas HTTP redundantes (chat manejado por WebSocket)
 app.use("/api/auth", authRoutes);
-app.use("/api/paginas", paginaRoutes);
+app.use("/api", paginaRoutes);
 app.use("/api/publicaciones", publicacionRoutes);
 app.use("/api/feed", feedRoutes);
-app.use("/api/chat", chatRoutes);
 // ❌ ELIMINADAS: app.use("/api/private", privateRoutes);
 // ❌ ELIMINADAS: app.use("/api/guest", guestRoutes);
 

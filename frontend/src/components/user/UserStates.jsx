@@ -12,10 +12,11 @@ function UserStates({ isLoadingPage, pageError, paginaUser, params }) {
 
   // Error state
   if (pageError) {
+    const isNotFound = pageError.message === 'User not found';
     return (
       <div style={{ maxWidth: 600, margin: "40px auto", background: "#fff", padding: 32, borderRadius: 12, boxShadow: "0 4px 24px #0002", textAlign: "center" }}>
-        <h2>Error al cargar</h2>
-        <p>{pageError.message}</p>
+        <h2>{isNotFound ? 'Usuario no encontrado' : 'Error al cargar'}</h2>
+        <p>{isNotFound ? 'El usuario que buscas no existe o ha sido eliminado.' : pageError.message}</p>
       </div>
     );
   }

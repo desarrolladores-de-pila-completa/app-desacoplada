@@ -73,79 +73,8 @@ router.get("/", limiter, paginasPublicas);
 // - action=lista: Lista de páginas públicas del usuario
 router.get("/pagina/:username", paginaUnificadaPorUsername);
 
-// Mantener compatibilidad con ruta antigua
-router.get("/:username", paginaUnificadaPorUsername);
 
-// Endpoint para obtener una publicación específica por ID
-router.get("/:username/publicar/:publicacionId", async (req: any, res: any) => {
-  const { username, publicacionId } = req.params;
 
-  try {
-    // Obtener user_id del username
-    const [userRows]: any = await pool.query("SELECT id FROM users WHERE username = ?", [username]);
-    if (userRows.length === 0) {
-      return res.status(404).json({ error: "Usuario no encontrado" });
-    }
-    const userId = userRows[0].id;
-
-    // Obtener la publicación específica
-    const [rows]: any = await pool.query(
-      "SELECT id, titulo, contenido, created_at FROM publicaciones WHERE id = ? AND user_id = ?",
-      [publicacionId, userId]
-    );
-
-    if (rows.length === 0) {
-      return res.status(404).json({ error: "Publicación no encontrada" });
-    }
-
-    // Logs detallados para debugging del contenido HTML
-    console.log('🔍 [BACKEND DEBUG] Publicación encontrada:', {
-      id: rows[0].id,
-      titulo: rows[0].titulo,
-      contenidoLength: rows[0].contenido?.length,
-      contenidoPreview: rows[0].contenido?.substring(0, 300),
-      hasHtmlTags: /<\/?[a-z][\s\S]*>/i.test(rows[0].contenido || ''),
-      hasEntities: /&[a-z]+;/.test(rows[0].contenido || '')
-    });
-
-    res.json({ publicacion: rows[0] });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Error al obtener publicación" });
-  }
-});
-
-// Endpoint para publicar contenido en una página específica
-router.post("/:username/publicar/:numeroDePagina", authMiddleware, userRateLimit, async (req: any, res: any) => {
-  const { username } = req.params;
-  const { titulo, contenido } = req.body;
-  const userId = req.user.id;
-
-  try {
-    // Verificar que el usuario autenticado es el propietario
-    const { getService } = require('../utils/servicesConfig');
-    const userService = getService('UserService');
-    const user = await userService.getUserById(userId);
-    if (!user || user.username !== username) {
-      return res.status(403).json({ error: "No autorizado" });
-    }
-
-    // Crear la publicación en la tabla publicaciones
-    const [result] = await pool.query(
-      "INSERT INTO publicaciones (user_id, titulo, contenido) VALUES (?, ?, ?)",
-      [userId, titulo, contenido]
-    );
-
-    const publicacionId = (result as any).insertId;
-
-    // No crear entrada en el feed para publicaciones
-
-    res.json({ message: "Publicación creada", id: publicacionId });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Error al crear publicación" });
-  }
-});
 
 // Endpoint para obtener página por user_id (UUID sin guiones)
 router.get("/pagina/id/:user_id", obtenerPaginaPorUserId);
@@ -262,7 +191,7 @@ router.post("/upload-comment-image", authMiddleware, userRateLimit, upload.singl
        [req.user.id, null, file.buffer, file.originalname, file.mimetype, file.size]
      );
      const imageId = (result as any).insertId;
-     res.json({ url: `/api/paginas/comment-images/${imageId}` });
+     res.json({ url: `/api/comment-images/${imageId}` });
   } catch (err) {
      console.error("Error uploading comment image:", err);
      res.status(500).json({ error: "Upload failed" });

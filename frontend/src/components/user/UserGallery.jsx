@@ -1,5 +1,5 @@
 import React from "react";
-import ImageGrid from "../ImageGrid";
+import ImageGrid from "../content/ImageGrid";
 
 function UserGallery({ paginaUser, authUser }) {
   return (
@@ -40,7 +40,7 @@ function UserGallery({ paginaUser, authUser }) {
         overflowX: 'hidden'
       }}>
         <ImageGrid
-          paginaId={paginaUser?.pagina?.id}
+          username={paginaUser?.usuario?.username}
           editable={authUser?.id === paginaUser?.usuario?.id}
           images={paginaUser?.galeria}
         />

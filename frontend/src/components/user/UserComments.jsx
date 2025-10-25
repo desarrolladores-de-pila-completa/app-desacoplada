@@ -1,9 +1,9 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import ComentariosList from "../ComentariosList";
-import AgregarComentario from "../AgregarComentario";
+import ComentariosList from "../content/ComentariosList";
+import AgregarComentario from "../content/AgregarComentario";
 
-function UserComments({ paginaUser, comentarios, isAuthenticated }) {
+function UserComments({ paginaUser, comentarios, isAuthenticated, createCommentMutation, deleteCommentMutation }) {
   return (
     <div style={{
       width: '100%',
@@ -50,7 +50,7 @@ function UserComments({ paginaUser, comentarios, isAuthenticated }) {
             borderRadius: '12px',
             border: '1px solid #e3e8ff'
           }}>
-            <AgregarComentario paginaId={paginaUser?.pagina?.id} />
+            <AgregarComentario paginaId={paginaUser?.pagina?.id} createCommentMutation={createCommentMutation} />
           </div>
         ) : (
           <div style={{
@@ -68,7 +68,7 @@ function UserComments({ paginaUser, comentarios, isAuthenticated }) {
         <div style={{
           marginTop: '8px'
         }}>
-          <ComentariosList comentarios={comentarios} pageId={paginaUser?.pagina?.id} />
+          <ComentariosList comentarios={comentarios} pageId={paginaUser?.pagina?.id} deleteCommentMutation={deleteCommentMutation} />
         </div>
       </div>
     </div>
