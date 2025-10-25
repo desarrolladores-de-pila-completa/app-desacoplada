@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import FotoPerfil from "../FotoPerfil";
+import FotoPerfil from "../content/FotoPerfil";
+import authService from "../../services/authService";
 
 function UserHeader({
   authUser,
@@ -30,17 +31,10 @@ function UserHeader({
         <FotoPerfil
           user={authUser}
           setUser={(updater) => {
-            // Actualizar el usuario en el authStore usando Zustand set
-            const { useAuthStore } = require("../../stores/authStore");
-            useAuthStore.setState(prevState => ({
-              user: typeof updater === 'function' ? updater(prevState.user) : updater,
-              isAuthenticated: true
-            }));
-            // También actualizar localStorage para mantener consistencia
-            const newUser = useAuthStore.getState().user;
-            if (newUser) {
-              localStorage.setItem('authUser', JSON.stringify(newUser));
-            }
+            // Actualizar el usuario en el servicio
+            const currentUser = authService.getCurrentUser();
+            const newUser = typeof updater === 'function' ? updater(currentUser) : updater;
+            authService.setStoredUser(newUser);
           }}
           editable={authUser?.id === paginaUser?.usuario?.id}
           authUserId={authUser?.id}

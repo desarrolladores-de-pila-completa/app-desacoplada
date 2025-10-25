@@ -16,6 +16,8 @@
     "browser-image-compression": "^2.0.2",
     "react": "^18.3.1",
     "react-dom": "^19.2.0",
+    "react": "^19.2.0",
+    "react-dom": "^18.3.1",
     "react-router-dom": "^7.9.3",
     "sanitize-html": "^2.17.0",
     "winbox": "^0.2.82",
@@ -24,7 +26,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^5.0.4",
-    "vite": "^7.1.9",
+    "vite": "^7.1.11",
     "vite-plugin-static-copy": "^3.1.4"
   }
 }

@@ -27,10 +27,8 @@ router.post("/", auth_1.authMiddleware, rateLimit_1.userRateLimit, async (req, r
         res.status(500).json({ error: "Error al crear publicación" });
     }
 });
-// Obtener publicación por ID
-router.get("/:id", publicacionController_1.obtenerPublicacion);
-// Obtener publicaciones por usuario
-router.get("/usuario/:username", publicacionController_1.obtenerPublicacionesPorUsuario);
+// ❌ ELIMINADAS: Rutas para obtener publicaciones específicas
+// Estas funcionalidades pueden ser manejadas por la ruta general o por páginas
 // Obtener todas las publicaciones
 router.get("/", publicacionController_1.obtenerTodasLasPublicaciones);
 exports.default = router;
