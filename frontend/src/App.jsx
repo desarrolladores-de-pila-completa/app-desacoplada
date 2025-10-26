@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, Suspense, lazy } from "react";
 import "./App.css";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/ui/Navbar";
 import OutputMenu from "./components/ui/OutputMenu";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -14,6 +14,7 @@ const CreatePublication = lazy(() => import("./components/main/CreatePublication
 const PageBuilder = lazy(() => import("./components/main/PageBuilder"));
 const PoliticaDeCookies = lazy(() => import("./components/policy/PoliticaDeCookies"));
 const Privacidad = lazy(() => import("./components/policy/Privacidad"));
+const NotFound = lazy(() => import("./components/ui/NotFound"));
 
 // Componente de carga para Suspense fallback
 const LoadingFallback = () => {
@@ -99,6 +100,7 @@ export default function App() {
   return (
     <AuthProvider>
       <Router>
+        {console.log('[App] Router inicializado, esperando rutas')}
         <Routes>
         <Route
           path="/"
@@ -165,7 +167,7 @@ export default function App() {
           }
         />
         <Route
-          path="/politica-de-cookies.html"
+          path="/politica-de-cookies"
           element={
             <Suspense fallback={<LoadingFallback />}>
               <PoliticaDeCookies />
@@ -173,10 +175,19 @@ export default function App() {
           }
         />
         <Route
-          path="/privacidad.html"
+          path="/privacidad"
           element={
             <Suspense fallback={<LoadingFallback />}>
               <Privacidad />
+            </Suspense>
+          }
+        />
+        {/* Catch-all para rutas no existentes - con logs para debug */}
+        <Route
+          path="*"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              {console.log('[App] Ruta no encontrada, renderizando NotFound') || <NotFound />}
             </Suspense>
           }
         />
