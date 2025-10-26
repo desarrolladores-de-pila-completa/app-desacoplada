@@ -25,7 +25,7 @@ const UserPage = () => {
     const fetchUser = async () => {
       try {
         // Consultar el usuario por username (ruta corregida)
-        const response = await api.get(`/paginas/${username}`);
+        const response = await api.get(`/pagina/${username}`);
         setUser(response.data);
         setError('');
         // Ya no se cargan comentarios aquí, ComentariosList lo hace por sí mismo
@@ -61,7 +61,7 @@ const UserPage = () => {
               const csrfRes = await api.get('/csrf-token');
               const csrfToken = csrfRes.data.csrfToken;
               // Petición DELETE
-              const res = await api.delete(`/paginas/usuario/${user?.user_id}`, {
+              const res = await api.delete(`/pagina/usuario/${user?.user_id}`, {
                 headers: { 'X-CSRF-Token': csrfToken },
                 withCredentials: true,
               });

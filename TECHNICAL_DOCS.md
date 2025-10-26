@@ -159,10 +159,10 @@ CREATE TABLE imagenes (
 - `GET /user/:id/foto` - Obtener foto pública
 - `DELETE /user/:id` - Eliminar usuario
 
-### Páginas (`/api/paginas`)
+### Páginas (`/api/pagina`)
 - `GET /` - Lista de páginas públicas
 - `GET /:id` - Página por ID
-- `GET /pagina/:username` - Página por username
+- `GET /:username` - Página por username
 - `GET /:id/comentarios` - Comentarios de página
 - `POST /:id/comentarios` - Agregar comentario
 - `POST /:id/imagenes` - Subir imagen

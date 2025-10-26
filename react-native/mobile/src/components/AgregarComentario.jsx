@@ -39,7 +39,7 @@ const AgregarComentario = ({ paginaId, onComentarioAgregado }) => {
         console.log('CSRF token que se envía:', csrfToken);
         // Eliminar lógica de token, solo enviar CSRF
         await api.post(
-          `/paginas/${paginaId}/comentarios`,
+          `/pagina/${paginaId}/comentarios`,
           { comentario },
           {
             headers: {

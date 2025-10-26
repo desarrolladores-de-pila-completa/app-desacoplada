@@ -13,7 +13,6 @@ const db_1 = require("./middlewares/db");
 const csrf_1 = __importDefault(require("csrf"));
 const servicesConfig_1 = require("./utils/servicesConfig");
 const cookieConfig_1 = require("./utils/cookieConfig");
-const rateLimit_1 = require("./middlewares/rateLimit");
 const security_1 = require("./middlewares/security");
 const logger_1 = __importDefault(require("./utils/logger"));
 const ws_1 = __importDefault(require("ws"));
@@ -75,10 +74,6 @@ passport_1.default.deserializeUser(async (id, done) => {
     }
 });
 logger_1.default.info("Passport y sesiones configurados", { context: 'app' });
-// Middleware para logging detallado de headers CORS
-// app.use(corsHeaderLogger);
-// Middleware para diagnóstico específico de problemas CORS
-// app.use(corsDiagnosticLogger);
 app.use((0, cors_1.default)(security_1.corsOptions));
 // Middleware para logging de CORS
 app.use((req, res, next) => {
@@ -210,9 +205,7 @@ wss.on('connection', (ws, request) => {
                     clientsAfter: clients.size,
                     context: 'websocket-register-success'
                 });
-                // Notificar a otros usuarios que este usuario está en línea
-                // Para usuarios registrados, obtener su display_name
-                // Para usuarios invitados, usar el nombre directamente
+                // Usar el nombre directamente
                 let displayName = data.userId;
                 // Notificar solo a usuarios en la sala global
                 const globalRoomDisconnect = rooms.get('global');
@@ -372,46 +365,6 @@ wss.on('connection', (ws, request) => {
 });
 app.use((0, cookie_parser_1.default)());
 app.use(express_1.default.static(path_1.default.join(rootPath, 'frontend')));
-// Aplicar rate limiting general a todas las rutas API
-app.use("/api", rateLimit_1.generalRateLimit);
-// Middleware de logging detallado para debugging del error 426
-// app.use("/api", (req, res, next) => {
-//   logger.info('=== REQUEST DEBUG ===', {
-//     method: req.method,
-//     url: req.originalUrl,
-//     protocol: req.protocol,
-//     httpVersion: req.httpVersion,
-//     headers: req.headers,
-//     ip: req.ip,
-//     userAgent: req.get('User-Agent'),
-//     context: 'debug-426'
-//   });
-//   // Log de respuesta para detectar error 426
-//   const originalSend = res.send;
-//   res.send = function(data) {
-//     logger.info('=== RESPONSE DEBUG ===', {
-//       statusCode: res.statusCode,
-//       url: req.originalUrl,
-//       method: req.method,
-//       context: 'debug-426'
-//     });
-//     // Si detectamos error 426, log detallado
-//     if (res.statusCode === 426) {
-//       logger.error('🚨 ERROR 426 DETECTADO 🚨', {
-//         url: req.originalUrl,
-//         method: req.method,
-//         headers: req.headers,
-//         body: req.body,
-//         query: req.query,
-//         ip: req.ip,
-//         userAgent: req.get('User-Agent'),
-//         context: 'error-426'
-//       });
-//     }
-//     return originalSend.call(this, data);
-//   };
-//   next();
-// });
 // Configurar CSRF con el nuevo paquete
 const tokens = new csrf_1.default();
 const secret = tokens.secretSync();
@@ -467,64 +420,11 @@ app.use(["/api", "/api/auth"], (req, res, next) => {
     logger_1.default.debug('Verificando tokens CSRF', { cookieCsrf: cookieCsrf ? 'presente' : 'ausente', headerCsrf: headerCsrf ? 'presente' : 'ausente', context: 'csrf' });
     next();
 });
-// Aplica CSRF a rutas que modifican estado
-// Solo aplicar CSRF a métodos que modifican datos
-// Middleware CSRF optimizado para evitar problemas de protocolo
-// app.use(["/api", "/api/auth"], (req, res, next) => {
-//   if (["POST", "PUT", "DELETE"].includes(req.method)) {
-//     const userAgent = req.headers['user-agent'] || '';
-//     const isDevelopment = process.env.NODE_ENV !== 'production';
-//     logger.debug('Verificando CSRF para método modificador', {
-//       method: req.method,
-//       userAgent,
-//       isDevelopment,
-//       context: 'csrf'
-//     });
-//     // En desarrollo, ser más permisivo con CSRF
-//     if (isDevelopment) {
-//       // Solo verificar CSRF para métodos críticos en desarrollo
-//       if (req.method === 'DELETE') {
-//         const headerCsrf = req.headers['x-csrf-token'] || req.headers['X-CSRF-Token'] || req.headers['csrf-token'];
-//         const cookieCsrf = req.cookies['_csrf'];
-//         const token = headerCsrf || cookieCsrf;
-//         if (!token || !tokens.verify(secret, token)) {
-//           logger.warn('CSRF token inválido en desarrollo, permitiendo request', {
-//             method: req.method,
-//             url: req.originalUrl,
-//             context: 'csrf-dev'
-//           });
-//           // En desarrollo, solo loguear warning pero permitir continuar
-//         }
-//       }
-//       return next();
-//     }
-//     // En producción, verificar estrictamente
-//     if (userAgent.includes('ReactNative') || userAgent.includes('okhttp')) {
-//       // Excluir CSRF para peticiones móviles
-//       return next();
-//     } else {
-//       // Verificar token CSRF estrictamente en producción
-//       const headerCsrf = req.headers['x-csrf-token'] || req.headers['X-CSRF-Token'] || req.headers['csrf-token'];
-//       const cookieCsrf = req.cookies['_csrf'];
-//       const token = headerCsrf || cookieCsrf;
-//       if (!token || !tokens.verify(secret, token)) {
-//         return res.status(403).json({ error: 'Invalid CSRF token' });
-//       }
-//       return next();
-//     }
-//   }
-//   next();
-// });
 const paginaRoutes_1 = __importDefault(require("./routes/paginaRoutes"));
 const publicacionRoutes_1 = __importDefault(require("./routes/publicacionRoutes"));
-// ❌ ELIMINADAS: privateRoutes y guestRoutes por contener rutas duplicadas
-// ❌ ELIMINADAS: chatRoutes por rutas HTTP redundantes (chat manejado por WebSocket)
-// ❌ ELIMINADAS: feedRoutes por eliminación del sistema de feed
 app.use("/api/auth", authRoutes_1.router);
 app.use("/api", paginaRoutes_1.default);
 app.use("/api/publicaciones", publicacionRoutes_1.default);
-// ❌ ELIMINADAS: app.use("/api/private", privateRoutes);
-// ❌ ELIMINADAS: app.use("/api/guest", guestRoutes);
 // Endpoint para verificar esquema de tabla
 app.get('/test-db', async (req, res) => {
     try {
@@ -536,62 +436,9 @@ app.get('/test-db', async (req, res) => {
     }
 });
 app.use(errorHandler_1.errorHandler);
-// Ruta para redirigir /privacidad.html a /PRIVACIDAD
-app.get('/privacidad.html', (req, res) => {
-    logger_1.default.info('Redirigiendo /privacidad.html a /PRIVACIDAD', {
-        path: req.path,
-        originalUrl: req.originalUrl,
-        method: req.method,
-        userAgent: req.get('User-Agent'),
-        context: 'privacy-redirect'
-    });
-    res.redirect('/PRIVACIDAD');
-});
 // Ruta para servir la política de privacidad desde el servidor
-app.get('/PRIVACIDAD', (req, res) => {
-    logger_1.default.info('Sirviendo política de privacidad desde el servidor', {
-        path: req.path,
-        originalUrl: req.originalUrl,
-        method: req.method,
-        userAgent: req.get('User-Agent'),
-        context: 'privacy-server-route'
-    });
-    const html = `<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <title>Política de Privacidad</title>
-</head>
-<body>
-  <div style="max-width: 900px; margin: 0 auto; padding: 20px;">
-    <h1>Política de Privacidad</h1>
-    <p>Esta Política de Privacidad describe cómo recopilamos, utilizamos y protegemos tu información personal cuando utilizas nuestra aplicación.</p>
-    <h2>Información que recopilamos</h2>
-    <ul>
-      <li>Datos de registro y perfil</li>
-      <li>Contenido que publicas (posts, comentarios, fotos)</li>
-      <li>Datos de uso y navegación</li>
-    </ul>
-    <h2>Uso de la información</h2>
-    <ul>
-      <li>Mejorar la experiencia de usuario</li>
-      <li>Personalizar el contenido</li>
-      <li>Garantizar la seguridad de la plataforma</li>
-    </ul>
-    <h2>Cookies y tecnologías similares</h2>
-    <p>Utilizamos cookies para analizar el tráfico y personalizar la experiencia. Consulta la <a href="/politica-de-cookies">Política de Cookies</a> para más detalles.</p>
-    <h2>Actualizaciones</h2>
-    <p>Podemos actualizar esta política ocasionalmente. Te notificaremos sobre cambios significativos publicando la nueva política en esta página.</p>
-    <h2>Contacto</h2>
-    <p>Si tienes preguntas sobre esta política o deseas ejercer tus derechos, contáctanos a través del formulario de soporte.</p>
-  </div>
-</body>
-</html>`;
-    res.send(html);
-});
-// Ruta para /privacidad (lowercase)
 app.get('/privacidad', (req, res) => {
-    logger_1.default.info('Sirviendo política de privacidad desde /privacidad', {
+    logger_1.default.info('Sirviendo política de privacidad desde el servidor', {
         path: req.path,
         originalUrl: req.originalUrl,
         method: req.method,
@@ -665,20 +512,6 @@ app.get('/politica-de-cookies', (req, res) => {
 </body>
 </html>`;
     res.send(html);
-});
-// Ruta SPA: sirve index.html en rutas no API
-app.get(/^\/(?!api).*/, (req, res) => {
-    // Log para debugging de solicitudes a /PRIVACIDAD
-    if (req.path === '/PRIVACIDAD' || req.path === '/privacidad.html') {
-        logger_1.default.info('Solicitud a política de privacidad detectada', {
-            path: req.path,
-            originalUrl: req.originalUrl,
-            method: req.method,
-            userAgent: req.get('User-Agent'),
-            context: 'privacy-route-debug'
-        });
-    }
-    res.sendFile(path_1.default.join(rootPath, 'frontend/index.html'));
 });
 if (require.main === module) {
     (async () => {

@@ -51,11 +51,38 @@ class AuthService {
   // Almacenar usuario en localStorage
   setStoredUser(user) {
     try {
-      localStorage.setItem('user', JSON.stringify(user));
-      this.user = user;
+      const userString = JSON.stringify(user);
+      console.log('=== DEBUG: Almacenando usuario en localStorage ===', {
+        userSize: userString.length,
+        userKeys: Object.keys(user),
+        timestamp: new Date().toISOString()
+      });
+      // Verificar si el tamaño excede el límite (aprox 5MB)
+      if (userString.length > 4 * 1024 * 1024) {
+        console.warn('Usuario demasiado grande para localStorage, limpiando datos innecesarios');
+        // Remover campos grandes como tokens si es necesario
+        const minimalUser = { ...user };
+        delete minimalUser.accessToken;
+        delete minimalUser.refreshToken;
+        const minimalString = JSON.stringify(minimalUser);
+        localStorage.setItem('user', minimalString);
+        this.user = minimalUser;
+      } else {
+        localStorage.setItem('user', userString);
+        this.user = user;
+      }
       this.isAuthenticated = true;
     } catch (error) {
       console.error('Error storing user:', error);
+      // Si falla, intentar con datos mínimos
+      try {
+        const minimalUser = { id: user.id, username: user.username };
+        localStorage.setItem('user', JSON.stringify(minimalUser));
+        this.user = minimalUser;
+        this.isAuthenticated = true;
+      } catch (e) {
+        console.error('Error crítico: No se pudo almacenar usuario', e);
+      }
     }
   }
 

@@ -8,27 +8,22 @@ const GlobalChat = () => {
   const [loading, setLoading] = React.useState(true);
   const [sending, setSending] = React.useState(false);
 
-  // Fetch messages
+  // Fetch messages - Chat now handled by WebSocket, return empty array
   const fetchMessages = async () => {
-    try {
-      const response = await api.get('/chat/global');
-      setMessages(response.data);
-    } catch (error) {
-      console.error('Error fetching messages:', error);
-    } finally {
-      setLoading(false);
-    }
+    // Rutas de chat eliminadas, devolver array vacío
+    setMessages([]);
+    setLoading(false);
   };
 
-  // Send message
+  // Send message - Chat now handled by WebSocket, no action needed
   const sendMessage = async () => {
     if (!message.trim()) return;
 
     setSending(true);
     try {
-      await api.post('/chat/global', { message: message.trim() });
+      // Rutas de chat eliminadas, no hacer nada
       setMessage('');
-      fetchMessages(); // Refresh messages
+      fetchMessages(); // Refresh messages (empty)
     } catch (error) {
       console.error('Error sending message:', error);
       Alert.alert('Error', 'No se pudo enviar el mensaje');

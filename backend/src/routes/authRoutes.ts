@@ -1,10 +1,7 @@
 import { Router } from "express";
 import { ValidationService, validateRequest } from '../services/ValidationService';
-import { authRateLimit } from '../middlewares/rateLimit';
-import { register, login, logout, eliminarUsuario, refreshTokens, extendSession, updateProfilePhoto, getUserProfilePhoto, getUserByUsername, getAllUsers } from "../controllers/authController";
+import { register, login, logout, eliminarUsuario, refreshTokens, updateProfilePhoto, getUserProfilePhoto, getUserByUsername, getAllUsers } from "../controllers/authController";
 import { authMiddleware } from "../middlewares/auth";
-import { pool } from "../middlewares/db";
-import { uploadRateLimit } from '../middlewares/security';
 const multer = require("multer");
 const router = Router();
 
@@ -16,29 +13,23 @@ const upload = multer({
   },
 });
 
-// ✅ RESTAURADA: Ruta /:username para verificación de autenticación del frontend
-// Ruta para obtener todos los usuarios (debe ir antes de /:username para evitar conflicto)
 router.get("/users", getAllUsers);
-
 router.get("/:username",authMiddleware, getUserByUsername);
-
-// ❌ ELIMINADO: Endpoint /me/foto eliminado según solicitud del usuario
-
-// ❌ ELIMINADO: Endpoint /me/foto eliminado según solicitud del usuario
-
-
-router.post("/register", authRateLimit, validateRequest(ValidationService.validateRegister), register);
-router.post("/login", authRateLimit, validateRequest(ValidationService.validateLogin), login);
+router.post("/register", validateRequest(ValidationService.validateRegister), register);
+router.post("/login", validateRequest(ValidationService.validateLogin), login);
 router.post("/refresh", refreshTokens); // No requiere autenticación previa
-router.post("/extend-session", authMiddleware, extendSession); // Extender sesión automáticamente
-// router.post("/username", authMiddleware, cambiarUsername); // Función no implementada
 router.post("/logout", logout);
 
-// Ruta para actualizar foto de perfil
-router.post("/profile-photo", authMiddleware, uploadRateLimit, upload.single("photo"), updateProfilePhoto);
-
 // Ruta para obtener foto de perfil de usuario específico (pública, sin autenticación)
-router.get("/user/:id/foto", getUserProfilePhoto);
+router.get("/user/:id/foto", (req, res) => {
+  console.log('=== DEBUG: Solicitud a /user/:id/foto ===', {
+    id: req.params.id,
+    headers: req.headers,
+    origin: req.get('Origin'),
+    timestamp: new Date().toISOString()
+  });
+  getUserProfilePhoto(req, res);
+});
 
 // Ruta para actualizar username eliminada
 

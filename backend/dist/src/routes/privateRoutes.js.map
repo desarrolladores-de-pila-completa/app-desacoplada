@@ -1,1 +1,1 @@
-{"version":3,"file":"privateRoutes.js","sourceRoot":"","sources":["../../../src/routes/privateRoutes.ts"],"names":[],"mappings":";;AAAA,qCAAiC;AAEjC,MAAM,MAAM,GAAG,IAAA,gBAAM,GAAE,CAAC;AAExB,qDAAqD;AACrD,gEAAgE;AAChE,mEAAmE;AAEnE,kBAAe,MAAM,CAAC"}
+{"version":3,"file":"privateRoutes.js","sourceRoot":"","sources":["../../../src/routes/privateRoutes.ts"],"names":[],"mappings":";;AAAA,qCAAiC;AAEjC,MAAM,MAAM,GAAG,IAAA,gBAAM,GAAE,CAAC;AACxB,kBAAe,MAAM,CAAC"}

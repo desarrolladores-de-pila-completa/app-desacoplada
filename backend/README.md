@@ -109,21 +109,21 @@ npm test
 - `POST /api/auth/logout` — Cerrar sesión
 - `DELETE /api/auth/user/:id` — Eliminar usuario completamente
 
-### 📄 Páginas (`/api/paginas/`)
-- `POST /api/paginas/` — Crear nueva página (requiere autenticación)
-- `GET /api/paginas/` — Obtener páginas públicas
-- `GET /api/paginas/pagina/:username` — Página unificada por username con acciones múltiples
-- `GET /api/paginas/:username` — Página por username (compatibilidad)
-- `GET /api/paginas/pagina/id/:user_id` — Obtener página por ID de usuario
-- `POST /api/paginas/:id/usuario` — Actualizar nombre de usuario de página (requiere autenticación)
-- `POST /api/paginas/:id/comentarios` — Agregar comentario a página (requiere autenticación)
-- `DELETE /api/paginas/:id/comentarios/:commentId` — Eliminar comentario (requiere autenticación)
-- `POST /api/paginas/:id/imagenes` — Subir imagen a página (requiere autenticación)
-- `GET /api/paginas/:id/imagenes` — Obtener imágenes de página
-- `POST /api/paginas/upload-comment-image` — Subir imagen para comentario (requiere autenticación)
-- `GET /api/paginas/comment-images/:id` — Servir imagen de comentario
-- `DELETE /api/paginas/usuario/:id` — Borrar usuario y todo su rastro (requiere autenticación)
-- `POST /api/paginas/guardar-pagina` — Guardar página creada con PageBuilder (requiere autenticación)
+### 📄 Páginas (`/api/pagina/`)
+- `POST /api/pagina/` — Crear nueva página (requiere autenticación)
+- `GET /api/pagina/` — Obtener páginas públicas
+- `GET /api/pagina/:username` — Página unificada por username con acciones múltiples
+- `GET /api/pagina/:username` — Página por username (compatibilidad)
+- `GET /api/pagina/id/:user_id` — Obtener página por ID de usuario
+- `POST /api/pagina/:id/usuario` — Actualizar nombre de usuario de página (requiere autenticación)
+- `POST /api/pagina/:id/comentarios` — Agregar comentario a página (requiere autenticación)
+- `DELETE /api/pagina/:id/comentarios/:commentId` — Eliminar comentario (requiere autenticación)
+- `POST /api/pagina/:id/imagenes` — Subir imagen a página (requiere autenticación)
+- `GET /api/pagina/:id/imagenes` — Obtener imágenes de página
+- `POST /api/pagina/upload-comment-image` — Subir imagen para comentario (requiere autenticación)
+- `GET /api/pagina/comment-images/:id` — Servir imagen de comentario
+- `DELETE /api/pagina/usuario/:id` — Borrar usuario y todo su rastro (requiere autenticación)
+- `POST /api/pagina/guardar-pagina` — Guardar página creada con PageBuilder (requiere autenticación)
 
 ### 📝 Publicaciones (`/api/publicaciones/`)
 - `POST /api/publicaciones/` — Crear nueva publicación (requiere autenticación)
@@ -132,18 +132,11 @@ npm test
 - `GET /api/publicaciones/` — Obtener todas las publicaciones
 
 ### 💬 Comentarios
-- **Nota**: Los comentarios ahora se incluyen automáticamente en la respuesta del endpoint unificado `/api/paginas/pagina/:username?action=info`
+- **Nota**: Los comentarios ahora se incluyen automáticamente en la respuesta del endpoint unificado `/api/pagina/:username?action=info`
 
-### 🌐 Publicaciones específicas (`/api/paginas/`)
-- `GET /api/paginas/:username/publicar/:publicacionId` — Obtener publicación específica por ID
-- `POST /api/paginas/:username/publicar/:numeroDePagina` — Crear publicación en página específica (requiere autenticación)
-
-### 💬 Chat (WebSocket + API REST) (`/api/chat/`)
-- `GET /api/chat/global` — Obtener mensajes del chat global
-- `GET /api/chat/private/:userId` — Obtener mensajes privados con usuario específico
-- `POST /api/chat/global` — Enviar mensaje al chat global
-- `POST /api/chat/private` — Enviar mensaje privado
-
+### 🌐 Publicaciones específicas (`/api/pagina/`)
+- `GET /api/pagina/:username/publicar/:publicacionId` — Obtener publicación específica por ID
+- `POST /api/pagina/:username/publicar/:numeroDePagina` — Crear publicación en página específica (requiere autenticación)
 
 ### 🔧 Utilidades
 - `GET /api/csrf-token` — Obtener token CSRF para protección de formularios

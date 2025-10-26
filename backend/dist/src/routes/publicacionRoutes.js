@@ -2,11 +2,10 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const auth_1 = require("../middlewares/auth");
-const rateLimit_1 = require("../middlewares/rateLimit");
 const publicacionController_1 = require("../controllers/publicacionController");
 const router = (0, express_1.Router)();
 // Crear publicación
-router.post("/", auth_1.authMiddleware, rateLimit_1.userRateLimit, async (req, res) => {
+router.post("/", auth_1.authMiddleware, async (req, res) => {
     const { titulo, contenido } = req.body;
     const userId = req.userId;
     try {
@@ -21,8 +20,6 @@ router.post("/", auth_1.authMiddleware, rateLimit_1.userRateLimit, async (req, r
         res.status(500).json({ error: "Error al crear publicación" });
     }
 });
-// ❌ ELIMINADAS: Rutas para obtener publicaciones específicas
-// Estas funcionalidades pueden ser manejadas por la ruta general o por páginas
 // Obtener todas las publicaciones
 router.get("/", publicacionController_1.obtenerTodasLasPublicaciones);
 exports.default = router;
