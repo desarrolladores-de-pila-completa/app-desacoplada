@@ -697,34 +697,8 @@ function PageBuilder() {
       const csrfData = await csrfRes.json();
       const csrfToken = csrfData.csrfToken;
 
-      // Crear la publicación usando la ruta correcta
-      const response = await fetch(`/api/publicaciones/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": csrfToken,
-        },
-        body: JSON.stringify({
-          titulo: title.trim(),
-          contenido: content,
-        }),
-        credentials: "include",
-      });
-
-      if (response.status === 401) {
-        setShowSessionExpired(true);
-        return;
-      }
-
-      if (!response.ok) {
-        const errorData = await response
-          .json()
-          .catch(() => ({ error: "Error desconocido" }));
-        throw new Error(errorData.error || `Error HTTP ${response.status}`);
-      }
-
-      const result = await response.json().catch(() => ({}));
-      alert("Página guardada exitosamente");
+      // Funcionalidad de publicaciones eliminada
+      alert("Página guardada exitosamente (sin crear publicación)");
 
       // Limpiar estado después de guardar exitosamente
       setTitle("Nueva Página");

@@ -9,7 +9,6 @@ const CommentService_1 = require("../services/CommentService");
 const AuthService_1 = require("../services/AuthService");
 const eventBus_1 = require("./eventBus");
 const repositories_1 = require("../repositories");
-const PublicacionService_1 = require("../services/PublicacionService");
 const PrivateMessageService_1 = require("../services/PrivateMessageService");
 /**
  * Configuración de servicios para el container de DI
@@ -41,10 +40,6 @@ function configureServices() {
     diContainer_1.container.registerSingleton('PrivateMessageService', (c) => {
         const privateMessageRepository = c.resolve('IPrivateMessageRepository');
         return new PrivateMessageService_1.PrivateMessageService(privateMessageRepository);
-    });
-    diContainer_1.container.registerSingleton('PublicacionService', (c) => {
-        const publicacionRepository = new repositories_1.PublicacionRepository();
-        return new PublicacionService_1.PublicacionService(publicacionRepository);
     });
     // Servicios con dependencias
     diContainer_1.container.registerSingleton('AuthService', (c) => {

@@ -465,12 +465,10 @@ app.use(["/api", "/api/auth"], (req, res, next) => {
 
 
 import paginaRoutes from "./routes/paginaRoutes";
-import publicacionRoutes from "./routes/publicacionRoutes";
 
 
 app.use("/api/auth", authRoutes);
 app.use("/api", paginaRoutes);
-app.use("/api/publicaciones", publicacionRoutes);
 
 
 // Endpoint para verificar esquema de tabla

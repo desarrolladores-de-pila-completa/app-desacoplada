@@ -18,7 +18,6 @@ API RESTful construida con Node.js, TypeScript y Express para el proyecto app-de
 
 - Autenticación de usuarios (registro, login, logout)
 - Gestión de páginas de usuario
-- Sistema de publicaciones
 - Comentarios en páginas
 - Upload de imágenes
 - Borrado completo de usuarios
@@ -83,7 +82,7 @@ NODE_ENV=development
 El sistema incluye migraciones automáticas para crear y actualizar tablas al iniciar.
 
 - **Bases de datos**: app1 (principal), vvveb (secundaria)
-- **Tablas principales**: users, paginas, comentarios, imagenes_comentarios, imagenes, publicaciones
+- **Tablas principales**: users, paginas, comentarios, imagenes_comentarios, imagenes
 
 ## WebSocket
 
@@ -112,7 +111,7 @@ npm test
 ### 📄 Páginas (`/api/pagina/`)
 - `POST /api/pagina/` — Crear nueva página (requiere autenticación)
 - `GET /api/pagina/` — Obtener páginas públicas
-- `GET /api/pagina/:username` — Página unificada por username con acciones múltiples
+- `GET /api/pagina/:username` — Página unificada por username con acciones múltiples (info, galeria, comentarios, lista)
 - `GET /api/pagina/:username` — Página por username (compatibilidad)
 - `GET /api/pagina/id/:user_id` — Obtener página por ID de usuario
 - `POST /api/pagina/:id/usuario` — Actualizar nombre de usuario de página (requiere autenticación)
@@ -125,18 +124,10 @@ npm test
 - `DELETE /api/pagina/usuario/:id` — Borrar usuario y todo su rastro (requiere autenticación)
 - `POST /api/pagina/guardar-pagina` — Guardar página creada con PageBuilder (requiere autenticación)
 
-### 📝 Publicaciones (`/api/publicaciones/`)
-- `POST /api/publicaciones/` — Crear nueva publicación (requiere autenticación)
-- `GET /api/publicaciones/:id` — Obtener publicación específica por ID
-- `GET /api/publicaciones/usuario/:username` — Listar publicaciones de usuario
-- `GET /api/publicaciones/` — Obtener todas las publicaciones
 
 ### 💬 Comentarios
 - **Nota**: Los comentarios ahora se incluyen automáticamente en la respuesta del endpoint unificado `/api/pagina/:username?action=info`
 
-### 🌐 Publicaciones específicas (`/api/pagina/`)
-- `GET /api/pagina/:username/publicar/:publicacionId` — Obtener publicación específica por ID
-- `POST /api/pagina/:username/publicar/:numeroDePagina` — Crear publicación en página específica (requiere autenticación)
 
 ### 🔧 Utilidades
 - `GET /api/csrf-token` — Obtener token CSRF para protección de formularios
