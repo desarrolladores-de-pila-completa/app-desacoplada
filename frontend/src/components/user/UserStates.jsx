@@ -1,4 +1,5 @@
 import React from "react";
+import sanitizeHtml from 'sanitize-html';
 
 function UserStates({ isLoadingPage, pageError, paginaUser, params }) {
   // Loading state
@@ -49,7 +50,7 @@ function UserStates({ isLoadingPage, pageError, paginaUser, params }) {
                     fontSize: "14px"
                   }}>
                     {(() => {
-                      const plainText = page.contenido.replace(/<[^>]*>/g, '');
+                      const plainText = sanitizeHtml(page.contenido, { allowedTags: [], allowedAttributes: {} });
                       return plainText.length > 150 ? `${plainText.substring(0, 150)}...` : plainText;
                     })()}
                   </div>
