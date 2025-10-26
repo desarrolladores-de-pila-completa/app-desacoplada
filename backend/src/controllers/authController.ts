@@ -4,7 +4,6 @@ import winston from '../utils/logger';
 import { MulterFile, AppError } from '../types/interfaces';
 import { AuthService } from '../services/AuthService';
 import { UserService } from '../services/UserService';
-import { UsernameUpdateService, usernameUpdateService } from '../services/UsernameUpdateService';
 import { getService } from '../utils/servicesConfig';
 import { getAuthCookieOptions, getRefreshTokenCookieOptions, getSlidingSessionCookieOptions, clearAuthCookies } from '../utils/cookieConfig';
 import passport from 'passport';
@@ -47,13 +46,28 @@ export async function register(req: RequestWithFile, res: Response): Promise<voi
         return res.status(500).json({ error: "Error al iniciar sesión" });
       }
 
-      res.json({
+      winston.info('Sesión iniciada exitosamente después de registro', { userId: result.user.id });
+
+      // Generar tokens para el usuario
+      const { accessToken, refreshToken } = authService.generateTokens(result.user.id);
+      winston.info('Tokens generados en registro', { accessToken: !!accessToken, refreshToken: !!refreshToken });
+
+      // Establecer cookies con tokens
+      res.cookie("token", accessToken, getAuthCookieOptions());
+      res.cookie("refreshToken", refreshToken, getRefreshTokenCookieOptions());
+      winston.info('Cookies establecidas en registro', { hasTokenCookie: !!res.getHeader('Set-Cookie') });
+
+      const responseData = {
         message: "Usuario creado y página personal en línea",
         id: result.user.id,
         username: result.user.username,
         display_name: result.user.display_name,
-        paginaPersonal: null
-      });
+        paginaPersonal: null,
+        accessToken,
+        refreshToken
+      };
+      winston.info('Respuesta de registro enviada', { hasAccessToken: !!responseData.accessToken });
+      res.json(responseData);
     });
   } catch (error) {
     winston.error('Error en register', { error });
@@ -480,129 +494,6 @@ export async function getUserProfilePhoto(req: Request, res: Response): Promise<
   }
 }
 
-export async function updateUsername(req: Request, res: Response): Promise<void> {
-  const userId = req.params.userId;
-  const authenticatedUserId = (req as any).userId;
-
-  if (!userId) {
-    throw new AppError(400, "ID de usuario es requerido");
-  }
-
-  if (!authenticatedUserId) {
-    throw new AppError(401, "No autenticado");
-  }
-
-  // Verificar que el usuario autenticado solo pueda actualizar su propio username
-  if (authenticatedUserId !== userId) {
-    throw new AppError(403, "No autorizado para actualizar este usuario");
-  }
-
-  try {
-    const { username, dryRun = false } = req.body;
-
-    if (!username) {
-      throw new AppError(400, "Nuevo username es requerido");
-    }
-
-    winston.info('Iniciando actualización de username', {
-      userId,
-      oldUsername: (req as any).user?.username,
-      newUsername: username,
-      dryRun,
-      context: 'username-update-request'
-    });
-
-    // Usar el servicio de actualización de username
-    const updateResult = await usernameUpdateService.updateUsername({
-      userId,
-      newUsername: username,
-      dryRun: Boolean(dryRun)
-    });
-
-    // Log detallado de la operación para auditoría
-    winston.info('Username actualizado exitosamente', {
-      userId,
-      oldUsername: updateResult.oldUsername,
-      newUsername: updateResult.newUsername,
-      redirectsCreated: updateResult.redirectsCreated,
-      executionTimeMs: updateResult.executionTimeMs,
-      contentReferencesUpdated: updateResult.contentUpdate?.updatedReferences || 0,
-      cacheKeysInvalidated: updateResult.cacheInvalidation?.invalidatedKeys.length || 0,
-      context: 'username-update-success'
-    });
-
-    // Si hubo errores, loggearlos pero no fallar completamente
-    if (updateResult.errors.length > 0) {
-      winston.warn('Username actualizado con errores menores', {
-        userId,
-        errors: updateResult.errors,
-        warnings: updateResult.warnings,
-        context: 'username-update-with-warnings'
-      });
-    }
-
-    // Preparar respuesta informativa
-    const response: any = {
-      message: dryRun
-        ? "Previsualización completada exitosamente"
-        : "Username actualizado exitosamente",
-      oldUsername: updateResult.oldUsername,
-      newUsername: updateResult.newUsername,
-      redirectsCreated: updateResult.redirectsCreated,
-      executionTimeMs: updateResult.executionTimeMs,
-      timestamp: updateResult.timestamp
-    };
-
-    // Incluir estadísticas detalladas si están disponibles
-    if (updateResult.contentUpdate) {
-      response.contentUpdate = {
-        totalReferences: updateResult.contentUpdate.totalReferences,
-        updatedReferences: updateResult.contentUpdate.updatedReferences,
-        commentsFound: updateResult.contentUpdate.details.comments.found,
-        commentsUpdated: updateResult.contentUpdate.details.comments.updated,
-        privateMessagesFound: updateResult.contentUpdate.details.privateMessages.found,
-        privateMessagesUpdated: updateResult.contentUpdate.details.privateMessages.updated,
-        publicationsFound: updateResult.contentUpdate.details.publications.found,
-        publicationsUpdated: updateResult.contentUpdate.details.publications.updated
-      };
-    }
-
-    if (updateResult.cacheInvalidation) {
-      response.cacheInvalidation = {
-        invalidatedKeys: updateResult.cacheInvalidation.invalidatedKeys,
-        success: updateResult.cacheInvalidation.success,
-        errors: updateResult.cacheInvalidation.errors
-      };
-    }
-
-    // Incluir warnings si los hay
-    if (updateResult.warnings.length > 0) {
-      response.warnings = updateResult.warnings;
-    }
-
-    // Incluir errores menores si los hay (pero la operación fue exitosa)
-    if (updateResult.errors.length > 0 && updateResult.success) {
-      response.errors = updateResult.errors;
-      response.message += " (con errores menores)";
-    }
-
-    res.json(response);
-
-  } catch (error) {
-    winston.error('Error al actualizar username', {
-      userId,
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      context: 'username-update-error'
-    });
-
-    if (error instanceof AppError) {
-      throw error;
-    }
-
-    throw new AppError(500, "Error interno al actualizar username");
-  }
-}
 
 /**
  * @swagger

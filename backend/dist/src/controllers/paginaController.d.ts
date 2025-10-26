@@ -93,14 +93,6 @@ interface RequestWithValidatedData extends Request {
 }
 /**
  * @swagger
- * /api/pagina/eliminar-usuario/{id}:
- *   delete:
- *     summary: Eliminar usuario y todos sus datos
- *     tags: [Pagina]
- */
-export declare function eliminarUsuarioTotal(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
-/**
- * @swagger
  * /api/pagina/publicas:
  *   get:
  *     summary: Obtener páginas públicas

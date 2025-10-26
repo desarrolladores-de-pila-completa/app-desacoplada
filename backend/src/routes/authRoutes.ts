@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { ValidationService, validateRequest } from '../services/ValidationService';
-import { authRateLimit, usernameUpdateRateLimit } from '../middlewares/rateLimit';
-import { register, login, logout, eliminarUsuario, refreshTokens, extendSession, updateProfilePhoto, getUserProfilePhoto, getUserByUsername, updateUsername, getAllUsers } from "../controllers/authController";
+import { authRateLimit } from '../middlewares/rateLimit';
+import { register, login, logout, eliminarUsuario, refreshTokens, extendSession, updateProfilePhoto, getUserProfilePhoto, getUserByUsername, getAllUsers } from "../controllers/authController";
 import { authMiddleware } from "../middlewares/auth";
 import { pool } from "../middlewares/db";
 import { uploadRateLimit } from '../middlewares/security';
@@ -40,8 +40,7 @@ router.post("/profile-photo", authMiddleware, uploadRateLimit, upload.single("ph
 // Ruta para obtener foto de perfil de usuario específico (pública, sin autenticación)
 router.get("/user/:id/foto", getUserProfilePhoto);
 
-// Ruta para actualizar username (con rate limiting específico y validación)
-router.put("/users/:userId/username", authMiddleware, usernameUpdateRateLimit, validateRequest(ValidationService.validateUpdateUsername), updateUsername);
+// Ruta para actualizar username eliminada
 
 router.delete("/user/:id", eliminarUsuario);
 

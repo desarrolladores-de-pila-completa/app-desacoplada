@@ -488,31 +488,6 @@ interface RequestWithValidatedData extends Request {
 
 const userService = getService<UserService>('UserService');
 
-// Eliminar usuario y todo su rastro (perfil, comentarios, imágenes)
-/**
- * @swagger
- * /api/pagina/eliminar-usuario/{id}:
- *   delete:
- *     summary: Eliminar usuario y todos sus datos
- *     tags: [Pagina]
- */
-export async function eliminarUsuarioTotal(req: Request, res: Response) {
-  const userId = req.params.id;
-  if (!userId) return res.status(400).json({ error: "Falta el id de usuario" });
-  const authUserId = (req as any).userId;
-  // Solo el propio usuario puede borrar su cuenta
-  if (String(userId) !== String(authUserId)) {
-    return res.status(403).json({ error: "No autorizado" });
-  }
-  try {
-    await userService.deleteUserCompletely(userId);
-    clearAuthCookies(res);
-    res.json({ message: "Usuario y todos sus datos eliminados" });
-  } catch (err) {
-    winston.error('Error al eliminar usuario y sus datos', { error: err });
-    res.status(500).json({ error: "Error al eliminar usuario y sus datos" });
-  }
-}
 
 /**
  * Envía una respuesta de error con código y mensaje, y loguea el error.

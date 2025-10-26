@@ -12,14 +12,12 @@ exports.consultarUsuarioPagina = consultarUsuarioPagina;
 exports.actualizarUsuarioPagina = actualizarUsuarioPagina;
 exports.actualizarFotoPorUsername = actualizarFotoPorUsername;
 exports.actualizarNombrePorUsername = actualizarNombrePorUsername;
-exports.eliminarUsuarioTotal = eliminarUsuarioTotal;
 exports.paginasPublicas = paginasPublicas;
 exports.guardarComentario = guardarComentario;
 exports.eliminarComentario = eliminarComentario;
 const logger_1 = __importDefault(require("../utils/logger"));
 const db_1 = require("../middlewares/db");
 const servicesConfig_1 = require("../utils/servicesConfig");
-const cookieConfig_1 = require("../utils/cookieConfig");
 // Obtener página por user_id (UUID sin guiones)
 /**
  * @swagger
@@ -415,33 +413,6 @@ async function actualizarNombrePorUsername(req, res) {
     }
 }
 const userService = (0, servicesConfig_1.getService)('UserService');
-// Eliminar usuario y todo su rastro (perfil, comentarios, imágenes)
-/**
- * @swagger
- * /api/pagina/eliminar-usuario/{id}:
- *   delete:
- *     summary: Eliminar usuario y todos sus datos
- *     tags: [Pagina]
- */
-async function eliminarUsuarioTotal(req, res) {
-    const userId = req.params.id;
-    if (!userId)
-        return res.status(400).json({ error: "Falta el id de usuario" });
-    const authUserId = req.userId;
-    // Solo el propio usuario puede borrar su cuenta
-    if (String(userId) !== String(authUserId)) {
-        return res.status(403).json({ error: "No autorizado" });
-    }
-    try {
-        await userService.deleteUserCompletely(userId);
-        (0, cookieConfig_1.clearAuthCookies)(res);
-        res.json({ message: "Usuario y todos sus datos eliminados" });
-    }
-    catch (err) {
-        logger_1.default.error('Error al eliminar usuario y sus datos', { error: err });
-        res.status(500).json({ error: "Error al eliminar usuario y sus datos" });
-    }
-}
 /**
  * Envía una respuesta de error con código y mensaje, y loguea el error.
  */

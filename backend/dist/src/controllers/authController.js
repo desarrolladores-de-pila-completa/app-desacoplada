@@ -12,12 +12,10 @@ exports.extendSession = extendSession;
 exports.refreshTokens = refreshTokens;
 exports.updateProfilePhoto = updateProfilePhoto;
 exports.getUserProfilePhoto = getUserProfilePhoto;
-exports.updateUsername = updateUsername;
 exports.eliminarUsuario = eliminarUsuario;
 const zod_1 = require("zod");
 const logger_1 = __importDefault(require("../utils/logger"));
 const interfaces_1 = require("../types/interfaces");
-const UsernameUpdateService_1 = require("../services/UsernameUpdateService");
 const servicesConfig_1 = require("../utils/servicesConfig");
 const cookieConfig_1 = require("../utils/cookieConfig");
 const passport_1 = __importDefault(require("passport"));
@@ -51,13 +49,25 @@ async function register(req, res) {
                 logger_1.default.error('Error al iniciar sesión después de registro', { error: err });
                 return res.status(500).json({ error: "Error al iniciar sesión" });
             }
-            res.json({
+            logger_1.default.info('Sesión iniciada exitosamente después de registro', { userId: result.user.id });
+            // Generar tokens para el usuario
+            const { accessToken, refreshToken } = authService.generateTokens(result.user.id);
+            logger_1.default.info('Tokens generados en registro', { accessToken: !!accessToken, refreshToken: !!refreshToken });
+            // Establecer cookies con tokens
+            res.cookie("token", accessToken, (0, cookieConfig_1.getAuthCookieOptions)());
+            res.cookie("refreshToken", refreshToken, (0, cookieConfig_1.getRefreshTokenCookieOptions)());
+            logger_1.default.info('Cookies establecidas en registro', { hasTokenCookie: !!res.getHeader('Set-Cookie') });
+            const responseData = {
                 message: "Usuario creado y página personal en línea",
                 id: result.user.id,
                 username: result.user.username,
                 display_name: result.user.display_name,
-                paginaPersonal: null
-            });
+                paginaPersonal: null,
+                accessToken,
+                refreshToken
+            };
+            logger_1.default.info('Respuesta de registro enviada', { hasAccessToken: !!responseData.accessToken });
+            res.json(responseData);
         });
     }
     catch (error) {
@@ -433,112 +443,6 @@ async function getUserProfilePhoto(req, res) {
     catch (error) {
         logger_1.default.error('Error al obtener foto de perfil', { error, userId: id });
         res.status(500).json({ error: 'Error interno del servidor' });
-    }
-}
-async function updateUsername(req, res) {
-    const userId = req.params.userId;
-    const authenticatedUserId = req.userId;
-    if (!userId) {
-        throw new interfaces_1.AppError(400, "ID de usuario es requerido");
-    }
-    if (!authenticatedUserId) {
-        throw new interfaces_1.AppError(401, "No autenticado");
-    }
-    // Verificar que el usuario autenticado solo pueda actualizar su propio username
-    if (authenticatedUserId !== userId) {
-        throw new interfaces_1.AppError(403, "No autorizado para actualizar este usuario");
-    }
-    try {
-        const { username, dryRun = false } = req.body;
-        if (!username) {
-            throw new interfaces_1.AppError(400, "Nuevo username es requerido");
-        }
-        logger_1.default.info('Iniciando actualización de username', {
-            userId,
-            oldUsername: req.user?.username,
-            newUsername: username,
-            dryRun,
-            context: 'username-update-request'
-        });
-        // Usar el servicio de actualización de username
-        const updateResult = await UsernameUpdateService_1.usernameUpdateService.updateUsername({
-            userId,
-            newUsername: username,
-            dryRun: Boolean(dryRun)
-        });
-        // Log detallado de la operación para auditoría
-        logger_1.default.info('Username actualizado exitosamente', {
-            userId,
-            oldUsername: updateResult.oldUsername,
-            newUsername: updateResult.newUsername,
-            redirectsCreated: updateResult.redirectsCreated,
-            executionTimeMs: updateResult.executionTimeMs,
-            contentReferencesUpdated: updateResult.contentUpdate?.updatedReferences || 0,
-            cacheKeysInvalidated: updateResult.cacheInvalidation?.invalidatedKeys.length || 0,
-            context: 'username-update-success'
-        });
-        // Si hubo errores, loggearlos pero no fallar completamente
-        if (updateResult.errors.length > 0) {
-            logger_1.default.warn('Username actualizado con errores menores', {
-                userId,
-                errors: updateResult.errors,
-                warnings: updateResult.warnings,
-                context: 'username-update-with-warnings'
-            });
-        }
-        // Preparar respuesta informativa
-        const response = {
-            message: dryRun
-                ? "Previsualización completada exitosamente"
-                : "Username actualizado exitosamente",
-            oldUsername: updateResult.oldUsername,
-            newUsername: updateResult.newUsername,
-            redirectsCreated: updateResult.redirectsCreated,
-            executionTimeMs: updateResult.executionTimeMs,
-            timestamp: updateResult.timestamp
-        };
-        // Incluir estadísticas detalladas si están disponibles
-        if (updateResult.contentUpdate) {
-            response.contentUpdate = {
-                totalReferences: updateResult.contentUpdate.totalReferences,
-                updatedReferences: updateResult.contentUpdate.updatedReferences,
-                commentsFound: updateResult.contentUpdate.details.comments.found,
-                commentsUpdated: updateResult.contentUpdate.details.comments.updated,
-                privateMessagesFound: updateResult.contentUpdate.details.privateMessages.found,
-                privateMessagesUpdated: updateResult.contentUpdate.details.privateMessages.updated,
-                publicationsFound: updateResult.contentUpdate.details.publications.found,
-                publicationsUpdated: updateResult.contentUpdate.details.publications.updated
-            };
-        }
-        if (updateResult.cacheInvalidation) {
-            response.cacheInvalidation = {
-                invalidatedKeys: updateResult.cacheInvalidation.invalidatedKeys,
-                success: updateResult.cacheInvalidation.success,
-                errors: updateResult.cacheInvalidation.errors
-            };
-        }
-        // Incluir warnings si los hay
-        if (updateResult.warnings.length > 0) {
-            response.warnings = updateResult.warnings;
-        }
-        // Incluir errores menores si los hay (pero la operación fue exitosa)
-        if (updateResult.errors.length > 0 && updateResult.success) {
-            response.errors = updateResult.errors;
-            response.message += " (con errores menores)";
-        }
-        res.json(response);
-    }
-    catch (error) {
-        logger_1.default.error('Error al actualizar username', {
-            userId,
-            error: error instanceof Error ? error.message : String(error),
-            stack: error instanceof Error ? error.stack : undefined,
-            context: 'username-update-error'
-        });
-        if (error instanceof interfaces_1.AppError) {
-            throw error;
-        }
-        throw new interfaces_1.AppError(500, "Error interno al actualizar username");
     }
 }
 /**

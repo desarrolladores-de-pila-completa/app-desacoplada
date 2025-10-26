@@ -16,6 +16,8 @@ function Navbar({ onFeedClick }) {
     setDropdownOpen(false);
   };
 
+  console.log('User display_name:', user?.display_name, 'User username:', user?.username);
+
   return (
     <nav style={{ display: "flex", gap: "24px", alignItems: "center", padding: "16px 24px", background: "#f0f0f0", borderBottom: "1px solid #ccc" }}>
       <Link
@@ -64,7 +66,7 @@ function Navbar({ onFeedClick }) {
             }}
           >
             <img src="https://cdn-icons-png.flaticon.com/512/1077/1077063.png" alt="Cuenta" style={{ width: 24, height: 24 }} />
-            {user?.username && <span style={{ marginLeft: 8 }}>{user.username}</span>}
+            {user && <span style={{ marginLeft: 8 }}>{user.display_name}</span>}
           </button>
           {dropdownOpen && (
             <div style={{
@@ -84,13 +86,6 @@ function Navbar({ onFeedClick }) {
                 onClick={() => setDropdownOpen(false)}
               >
                 Mi Página
-              </Link>
-              <Link
-                to="/cuenta"
-                style={{ display: 'block', padding: '8px 16px', textDecoration: 'none', color: '#333' }}
-                onClick={() => setDropdownOpen(false)}
-              >
-                Cuenta
               </Link>
               <button
                 onClick={handleLogout}

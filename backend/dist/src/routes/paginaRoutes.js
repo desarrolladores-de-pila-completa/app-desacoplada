@@ -182,8 +182,7 @@ router.get("/comment-images/:id", async (req, res) => {
         res.status(500).json({ error: "Server error" });
     }
 });
-// Endpoint para eliminar usuario y todo su rastro
-router.delete("/usuario/:id", auth_1.authMiddleware, rateLimit_1.userRateLimit, paginaController_1.eliminarUsuarioTotal);
+// Endpoint para eliminar usuario y todo su rastro eliminado
 // Endpoint para guardar página creada con PageBuilder
 router.post("/guardar-pagina", auth_1.authMiddleware, rateLimit_1.userRateLimit, async (req, res) => {
     const { titulo, contenido, username } = req.body;
