@@ -22,7 +22,7 @@ function Privacidad() {
         <li>Garantizar la seguridad de la plataforma</li>
       </ul>
       <h2>Cookies y tecnologías similares</h2>
-      <p>Utilizamos cookies para analizar el tráfico y personalizar la experiencia. Consulta la <a href="/politica-de-cookies.html">Política de Cookies</a> para más detalles.</p>
+      <p>Utilizamos cookies para analizar el tráfico y personalizar la experiencia. Consulta la <a href="/politica-de-cookies">Política de Cookies</a> para más detalles.</p>
       <h2>Actualizaciones</h2>
       <p>Podemos actualizar esta política ocasionalmente. Te notificaremos sobre cambios significativos publicando la nueva política en esta página.</p>
       <h2>Contacto</h2>

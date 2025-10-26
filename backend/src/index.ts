@@ -596,8 +596,158 @@ app.get('/test-db', async (req, res) => {
 app.use(errorHandler);
 
 
+// Ruta para redirigir /privacidad.html a /PRIVACIDAD
+app.get('/privacidad.html', (req, res) => {
+  logger.info('Redirigiendo /privacidad.html a /PRIVACIDAD', {
+    path: req.path,
+    originalUrl: req.originalUrl,
+    method: req.method,
+    userAgent: req.get('User-Agent'),
+    context: 'privacy-redirect'
+  });
+  res.redirect('/PRIVACIDAD');
+});
+
+// Ruta para servir la política de privacidad desde el servidor
+app.get('/PRIVACIDAD', (req, res) => {
+  logger.info('Sirviendo política de privacidad desde el servidor', {
+    path: req.path,
+    originalUrl: req.originalUrl,
+    method: req.method,
+    userAgent: req.get('User-Agent'),
+    context: 'privacy-server-route'
+  });
+
+  const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Política de Privacidad</title>
+</head>
+<body>
+  <div style="max-width: 900px; margin: 0 auto; padding: 20px;">
+    <h1>Política de Privacidad</h1>
+    <p>Esta Política de Privacidad describe cómo recopilamos, utilizamos y protegemos tu información personal cuando utilizas nuestra aplicación.</p>
+    <h2>Información que recopilamos</h2>
+    <ul>
+      <li>Datos de registro y perfil</li>
+      <li>Contenido que publicas (posts, comentarios, fotos)</li>
+      <li>Datos de uso y navegación</li>
+    </ul>
+    <h2>Uso de la información</h2>
+    <ul>
+      <li>Mejorar la experiencia de usuario</li>
+      <li>Personalizar el contenido</li>
+      <li>Garantizar la seguridad de la plataforma</li>
+    </ul>
+    <h2>Cookies y tecnologías similares</h2>
+    <p>Utilizamos cookies para analizar el tráfico y personalizar la experiencia. Consulta la <a href="/politica-de-cookies">Política de Cookies</a> para más detalles.</p>
+    <h2>Actualizaciones</h2>
+    <p>Podemos actualizar esta política ocasionalmente. Te notificaremos sobre cambios significativos publicando la nueva política en esta página.</p>
+    <h2>Contacto</h2>
+    <p>Si tienes preguntas sobre esta política o deseas ejercer tus derechos, contáctanos a través del formulario de soporte.</p>
+  </div>
+</body>
+</html>`;
+
+  res.send(html);
+});
+
+// Ruta para /privacidad (lowercase)
+app.get('/privacidad', (req, res) => {
+  logger.info('Sirviendo política de privacidad desde /privacidad', {
+    path: req.path,
+    originalUrl: req.originalUrl,
+    method: req.method,
+    userAgent: req.get('User-Agent'),
+    context: 'privacy-server-route'
+  });
+
+  const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Política de Privacidad</title>
+</head>
+<body>
+  <div style="max-width: 900px; margin: 0 auto; padding: 20px;">
+    <h1>Política de Privacidad</h1>
+    <p>Esta Política de Privacidad describe cómo recopilamos, utilizamos y protegemos tu información personal cuando utilizas nuestra aplicación.</p>
+    <h2>Información que recopilamos</h2>
+    <ul>
+      <li>Datos de registro y perfil</li>
+      <li>Contenido que publicas (posts, comentarios, fotos)</li>
+      <li>Datos de uso y navegación</li>
+    </ul>
+    <h2>Uso de la información</h2>
+    <ul>
+      <li>Mejorar la experiencia de usuario</li>
+      <li>Personalizar el contenido</li>
+      <li>Garantizar la seguridad de la plataforma</li>
+    </ul>
+    <h2>Cookies y tecnologías similares</h2>
+    <p>Utilizamos cookies para analizar el tráfico y personalizar la experiencia. Consulta la <a href="/politica-de-cookies">Política de Cookies</a> para más detalles.</p>
+    <h2>Actualizaciones</h2>
+    <p>Podemos actualizar esta política ocasionalmente. Te notificaremos sobre cambios significativos publicando la nueva política en esta página.</p>
+    <h2>Contacto</h2>
+    <p>Si tienes preguntas sobre esta política o deseas ejercer tus derechos, contáctanos a través del formulario de soporte.</p>
+  </div>
+</body>
+</html>`;
+
+  res.send(html);
+});
+
+// Ruta para /politica-de-cookies
+app.get('/politica-de-cookies', (req, res) => {
+  logger.info('Sirviendo política de cookies desde /politica-de-cookies', {
+    path: req.path,
+    originalUrl: req.originalUrl,
+    method: req.method,
+    userAgent: req.get('User-Agent'),
+    context: 'cookies-server-route'
+  });
+
+  const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Política de Cookies</title>
+</head>
+<body>
+  <div style="max-width: 900px; margin: 0 auto; padding: 20px;">
+    <h1>Política de Cookies</h1>
+    <p>Esta aplicación utiliza cookies y tecnologías similares para mejorar la experiencia del usuario, analizar el tráfico y personalizar el contenido. Puedes configurar tus preferencias de cookies en la sección de ajustes de tu navegador.</p>
+    <h2>¿Qué son las cookies?</h2>
+    <p>Las cookies son pequeños archivos de texto que se almacenan en tu dispositivo cuando visitas un sitio web. Permiten recordar tus preferencias y facilitar la navegación.</p>
+    <h2>¿Cómo usamos las cookies?</h2>
+    <ul>
+      <li>Cookies técnicas y funcionales para el funcionamiento básico de la app.</li>
+      <li>Cookies de análisis para mejorar nuestros servicios.</li>
+    </ul>
+    <h2>¿Cómo puedes gestionar las cookies?</h2>
+    <p>Puedes eliminar o bloquear las cookies desde la configuración de tu navegador. Consulta la ayuda de tu navegador para más información.</p>
+    <h2>Contacto</h2>
+    <p>Si tienes dudas sobre nuestra política de cookies, contáctanos a través del formulario de soporte.</p>
+  </div>
+</body>
+</html>`;
+
+  res.send(html);
+});
+
 // Ruta SPA: sirve index.html en rutas no API
 app.get(/^\/(?!api).*/, (req, res) => {
+  // Log para debugging de solicitudes a /PRIVACIDAD
+  if (req.path === '/PRIVACIDAD' || req.path === '/privacidad.html') {
+    logger.info('Solicitud a política de privacidad detectada', {
+      path: req.path,
+      originalUrl: req.originalUrl,
+      method: req.method,
+      userAgent: req.get('User-Agent'),
+      context: 'privacy-route-debug'
+    });
+  }
   res.sendFile(path.join(rootPath, 'frontend/index.html'));
 });
 
