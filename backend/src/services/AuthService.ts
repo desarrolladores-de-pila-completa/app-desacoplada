@@ -64,7 +64,7 @@ export class AuthService {
   /**
     * Autenticar usuario para Passport
     */
-   async login(email: string, password: string): Promise<AuthResponse> {
+   async login(email: string, password: string): Promise<User> {
      // Obtener usuario con contraseña
      const userWithPassword = await this.userService.getUserWithPassword(email);
      if (!userWithPassword) {
@@ -80,41 +80,34 @@ export class AuthService {
      // Retornar usuario sin contraseña
      const { password: _, ...user } = userWithPassword;
 
-     // Generar tokens para el usuario autenticado
-     const { accessToken, refreshToken } = this.generateTokens(user.id);
-     winston.debug('Tokens generated for login', { userId: user.id });
+     winston.debug('User authenticated for login', { userId: user.id });
 
-     return {
-       user,
-       accessToken,
-       refreshToken,
-       username: user.username,
-     };
+     return user;
    }
 
   /**
-   * Generar tokens JWT (access y refresh)
-   */
-  private generateTokens(userId: string): { accessToken: string; refreshToken: string } {
-    const secret = process.env.JWT_SECRET || "clave-secreta";
-    const refreshSecret = process.env.JWT_REFRESH_SECRET || "refresh-secret";
+    * Generar tokens JWT (access y refresh)
+    */
+   generateTokens(userId: string): { accessToken: string; refreshToken: string } {
+     const secret = process.env.JWT_SECRET || "clave-secreta";
+     const refreshSecret = process.env.JWT_REFRESH_SECRET || "refresh-secret";
 
-    // Token de acceso: duración corta (15 minutos)
-    const accessToken = jwt.sign(
-      { userId, type: 'access' },
-      secret,
-      { expiresIn: '15m' }
-    );
+     // Token de acceso: duración más larga para evitar expiraciones frecuentes
+     const accessToken = jwt.sign(
+       { userId, type: 'access' },
+       secret,
+       { expiresIn: '1h' }
+     );
 
-    // Token de refresh: duración larga (7 días)
-    const refreshToken = jwt.sign(
-      { userId, type: 'refresh' },
-      refreshSecret,
-      { expiresIn: '7d' }
-    );
+     // Token de refresh: duración larga (7 días)
+     const refreshToken = jwt.sign(
+       { userId, type: 'refresh' },
+       refreshSecret,
+       { expiresIn: '7d' }
+     );
 
-    return { accessToken, refreshToken };
-  }
+     return { accessToken, refreshToken };
+   }
 
   /**
    * @deprecated Usar generateTokens en su lugar
@@ -125,17 +118,17 @@ export class AuthService {
   }
 
   /**
-   * Verificar token JWT
-   */
-  verifyToken(token: string): { userId: string } {
-    try {
-      const secret = process.env.JWT_SECRET || "clave-secreta";
-      const decoded = jwt.verify(token, secret) as { userId: string };
-      return decoded;
-    } catch (error) {
-      throw new AppError(401, 'Token inválido');
-    }
-  }
+    * Verificar token JWT
+    */
+   verifyToken(token: string): { userId: string } {
+     try {
+       const secret = process.env.JWT_SECRET || "clave-secreta";
+       const decoded = jwt.verify(token, secret) as { userId: string };
+       return decoded;
+     } catch (error) {
+       throw new AppError(401, 'Token inválido');
+     }
+   }
 
   /**
    * Refrescar tokens usando refresh token con rotación automática
@@ -180,28 +173,28 @@ export class AuthService {
   }
 
   /**
-   * Generar tokens JWT con rotación de refresh token
-   */
-  private generateTokensWithRotation(userId: string, rotationCount: number = 0): { accessToken: string; refreshToken: string } {
-    const secret = process.env.JWT_SECRET || "clave-secreta";
-    const refreshSecret = process.env.JWT_REFRESH_SECRET || "refresh-secret";
+    * Generar tokens JWT con rotación de refresh token
+    */
+   private generateTokensWithRotation(userId: string, rotationCount: number = 0): { accessToken: string; refreshToken: string } {
+     const secret = process.env.JWT_SECRET || "clave-secreta";
+     const refreshSecret = process.env.JWT_REFRESH_SECRET || "refresh-secret";
 
-    // Token de acceso: duración corta (15 minutos)
-    const accessToken = jwt.sign(
-      { userId, type: 'access' },
-      secret,
-      { expiresIn: '15m' }
-    );
+     // Token de acceso: duración más larga
+     const accessToken = jwt.sign(
+       { userId, type: 'access' },
+       secret,
+       { expiresIn: '1h' }
+     );
 
-    // Refresh token con rotación: duración larga (7 días) con contador
-    const refreshToken = jwt.sign(
-      { userId, type: 'refresh', rotationCount },
-      refreshSecret,
-      { expiresIn: '7d' }
-    );
+     // Refresh token con rotación: duración larga (7 días) con contador
+     const refreshToken = jwt.sign(
+       { userId, type: 'refresh', rotationCount },
+       refreshSecret,
+       { expiresIn: '7d' }
+     );
 
-    return { accessToken, refreshToken };
-  }
+     return { accessToken, refreshToken };
+   }
 
   /**
    * Verificar si un token está próximo a expirar (menos de 5 minutos)

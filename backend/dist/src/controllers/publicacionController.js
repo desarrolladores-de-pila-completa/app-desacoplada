@@ -8,7 +8,7 @@ const servicesConfig_1 = require("../utils/servicesConfig");
 const publicacionService = (0, servicesConfig_1.getService)('PublicacionService');
 async function crearPublicacion(req, res) {
     const { titulo, contenido } = req.body;
-    const userId = req.user.id;
+    const userId = req.userId;
     try {
         const publicacionId = await publicacionService.createPublicacion(userId, { titulo, contenido });
         res.json({ message: "Publicación creada", id: publicacionId });

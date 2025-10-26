@@ -8,7 +8,7 @@ const router = (0, express_1.Router)();
 // Crear publicación
 router.post("/", auth_1.authMiddleware, rateLimit_1.userRateLimit, async (req, res) => {
     const { titulo, contenido } = req.body;
-    const userId = req.user.id;
+    const userId = req.userId;
     try {
         // Crear la publicación
         const { pool } = require('../middlewares/db');

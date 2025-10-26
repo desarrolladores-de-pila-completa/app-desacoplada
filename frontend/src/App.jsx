@@ -3,6 +3,7 @@ import "./App.css";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/ui/Navbar";
 import OutputMenu from "./components/ui/OutputMenu";
+import { AuthProvider } from "./contexts/AuthContext";
 
 // Lazy loading de componentes de páginas
 const Feed = lazy(() => import("./components/feed/Feed"));
@@ -16,35 +17,38 @@ const PoliticaDeCookies = lazy(() => import("./components/policy/PoliticaDeCooki
 const Privacidad = lazy(() => import("./components/policy/Privacidad"));
 
 // Componente de carga para Suspense fallback
-const LoadingFallback = () => (
-  <div style={{
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: '200px',
-    fontSize: '18px',
-    color: '#666'
-  }}>
-    <div>
-      <div style={{
-        width: '40px',
-        height: '40px',
-        border: '4px solid #f3f3f3',
-        borderTop: '4px solid #3498db',
-        borderRadius: '50%',
-        animation: 'spin 1s linear infinite',
-        margin: '0 auto 10px'
-      }}></div>
-      Cargando...
+const LoadingFallback = () => {
+  console.log('[App] Mostrando LoadingFallback para Suspense');
+  return (
+    <div style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '200px',
+      fontSize: '18px',
+      color: '#666'
+    }}>
+      <div>
+        <div style={{
+          width: '40px',
+          height: '40px',
+          border: '4px solid #f3f3f3',
+          borderTop: '4px solid #3498db',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite',
+          margin: '0 auto 10px'
+        }}></div>
+        Cargando...
+      </div>
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
-    <style>{`
-      @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-      }
-    `}</style>
-  </div>
-);
+  );
+};
 
 function MainApp({ showOutput }) {
   const lastMessageRef = useRef("");
@@ -94,8 +98,9 @@ export default function App() {
   }
 
   return (
-    <Router>
-      <Routes>
+    <AuthProvider>
+      <Router>
+        <Routes>
         <Route
           path="/"
           element={
@@ -146,7 +151,7 @@ export default function App() {
           path="/pagina/:username"
           element={
             <Suspense fallback={<LoadingFallback />}>
-              <UserPage />
+              {console.log('[App] Renderizando UserPage para /pagina/:username') || <UserPage />}
             </Suspense>
           }
         />
@@ -184,13 +189,14 @@ export default function App() {
             </Suspense>
           }
         />
-      </Routes>
-      <OutputMenu
-        outputMsg={output.message}
-        outputType={output.type}
-        outputMinimized={outputMinimized}
-        toggleOutputMinimize={toggleOutputMinimize}
-      />
-    </Router>
+        </Routes>
+        <OutputMenu
+          outputMsg={output.message}
+          outputType={output.type}
+          outputMinimized={outputMinimized}
+          toggleOutputMinimize={toggleOutputMinimize}
+        />
+      </Router>
+    </AuthProvider>
   );
 }

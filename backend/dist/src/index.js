@@ -51,10 +51,13 @@ app.use(passport_1.default.session());
 // Configurar estrategia local de Passport
 passport_1.default.use(new passport_local_1.Strategy({ usernameField: 'email', passwordField: 'password' }, async (email, password, done) => {
     try {
+        logger_1.default.info('Intentando autenticar usuario', { email });
         const user = await authService.login(email, password);
+        logger_1.default.info('Usuario autenticado exitosamente', { userId: user.id });
         return done(null, user);
     }
     catch (error) {
+        logger_1.default.error('Error en autenticación Passport', { error: error.message, email });
         return done(error, false);
     }
 }));

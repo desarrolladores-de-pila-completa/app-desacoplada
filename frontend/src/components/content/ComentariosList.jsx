@@ -53,7 +53,7 @@ function ComentariosList({ comentarios, pageId, deleteCommentMutation }) {
     }
   };
   return (
-    <div style={{ marginTop: 24 }}>
+    <div style={{ marginTop: 24, textAlign: '-webkit-center' }}>
       <h4>Comentarios({comentarios.length}):</h4>
       {comentarios.length === 0 ? (
         <div style={{ color: '#888' }}>No hay comentarios aún.</div>
@@ -95,7 +95,7 @@ function ComentariosList({ comentarios, pageId, deleteCommentMutation }) {
                   allowHTML: true
                 }}
               />
-              <div style={{ fontSize: '0.9em', color: '#555' }}>
+              <div style={{ fontSize: '0.9em', color: '#555', textAlign: '-webkit-center' }}>
                 Publicado por: {(com.user_id || com.author_id) ? (
                   <Link
                     to={`/pagina/${encodeURIComponent(

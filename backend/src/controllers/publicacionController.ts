@@ -6,7 +6,7 @@ const publicacionService = getService<PublicacionService>('PublicacionService');
 
 export async function crearPublicacion(req: any, res: Response) {
   const { titulo, contenido } = req.body;
-  const userId = req.user.id;
+  const userId = req.userId;
 
   try {
     const publicacionId = await publicacionService.createPublicacion(userId, { titulo, contenido });

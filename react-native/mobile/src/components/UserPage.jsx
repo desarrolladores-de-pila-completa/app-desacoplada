@@ -7,11 +7,13 @@ import ImageGrid from './ImageGrid';
 import ComentariosList from './ComentariosList';
 import AgregarComentario from './AgregarComentario';
 import Toast from './Toast';
+import { useAuth } from '../contexts/AuthContext';
 
 const UserPage = () => {
   const [comentarioAgregado, setComentarioAgregado] = React.useState(0);
   const route = useRoute();
   const navigation = useNavigation();
+  const { logout } = useAuth();
   const username = route.params?.username;
   const [user, setUser] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
@@ -64,10 +66,11 @@ const UserPage = () => {
                 withCredentials: true,
               });
               if (res.status === 200) {
+                await logout();
                 setDeleteMsg('Tu perfil y todos tus datos han sido eliminados.');
                 setToast({ visible: true, message: 'Tu perfil y todos tus datos han sido eliminados.', type: 'success' });
                 setTimeout(() => {
-                  navigation.navigate('Feed');
+                  navigation.navigate('Login');
                 }, 1500);
               } else {
                 setDeleteMsg('Error al borrar el usuario.');

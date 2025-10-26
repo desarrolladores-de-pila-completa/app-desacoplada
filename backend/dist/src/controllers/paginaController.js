@@ -10,6 +10,8 @@ exports.obtenerPaginasPublicasPorUsuario = obtenerPaginasPublicasPorUsuario;
 exports.obtenerPaginaPorUsernameYNumero = obtenerPaginaPorUsernameYNumero;
 exports.consultarUsuarioPagina = consultarUsuarioPagina;
 exports.actualizarUsuarioPagina = actualizarUsuarioPagina;
+exports.actualizarFotoPorUsername = actualizarFotoPorUsername;
+exports.actualizarNombrePorUsername = actualizarNombrePorUsername;
 exports.eliminarUsuarioTotal = eliminarUsuarioTotal;
 exports.paginasPublicas = paginasPublicas;
 exports.guardarComentario = guardarComentario;
@@ -17,6 +19,7 @@ exports.eliminarComentario = eliminarComentario;
 const logger_1 = __importDefault(require("../utils/logger"));
 const db_1 = require("../middlewares/db");
 const servicesConfig_1 = require("../utils/servicesConfig");
+const cookieConfig_1 = require("../utils/cookieConfig");
 // Obtener página por user_id (UUID sin guiones)
 /**
  * @swagger
@@ -342,6 +345,75 @@ async function actualizarUsuarioPagina(req, res) {
         res.status(500).json({ error: "Error al actualizar usuario de página" });
     }
 }
+// Funciones eliminadas: actualizarVisibilidad, consultarVisibilidad (campo oculto eliminado)
+// Actualizar foto por username
+/**
+ * @swagger
+ * /api/pagina/{username}/foto:
+ *   put:
+ *     summary: Actualizar foto de perfil por username
+ *     tags: [Pagina]
+ */
+async function actualizarFotoPorUsername(req, res) {
+    const username = req.params.username;
+    const file = req.file;
+    const userId = req.userId;
+    if (!file) {
+        return res.status(400).json({ error: "No se recibió imagen" });
+    }
+    try {
+        // Obtener el userId por username
+        const [users] = await db_1.pool.query("SELECT id FROM users WHERE username = ?", [username]);
+        if (!users || users.length === 0) {
+            return res.status(404).json({ error: "Usuario no encontrado" });
+        }
+        const targetUserId = users[0].id;
+        // Verificar que el usuario autenticado es el propietario
+        if (String(targetUserId) !== String(userId)) {
+            return res.status(403).json({ error: "No autorizado" });
+        }
+        // Actualizar foto_perfil en users
+        await db_1.pool.query("UPDATE users SET foto_perfil = ? WHERE id = ?", [file.buffer, targetUserId]);
+        res.json({ message: "Foto actualizada correctamente" });
+    }
+    catch (err) {
+        logger_1.default.error('Error al actualizar foto por username', { error: err });
+        res.status(500).json({ error: "Error al actualizar foto" });
+    }
+}
+// Actualizar nombre por username
+/**
+ * @swagger
+ * /api/pagina/{username}/nombre:
+ *   put:
+ *     summary: Actualizar nombre de usuario por username
+ *     tags: [Pagina]
+ */
+async function actualizarNombrePorUsername(req, res) {
+    const username = req.params.username;
+    const { username: newUsername } = req.validatedData;
+    const userId = req.userId;
+    try {
+        // Obtener el userId por username
+        const [users] = await db_1.pool.query("SELECT id, username FROM users WHERE username = ?", [username]);
+        if (!users || users.length === 0) {
+            return res.status(404).json({ error: "Usuario no encontrado" });
+        }
+        const targetUserId = users[0].id;
+        // Verificar que el usuario autenticado es el propietario
+        if (String(targetUserId) !== String(userId)) {
+            return res.status(403).json({ error: "No autorizado" });
+        }
+        const usernameValue = newUsername.getValue();
+        // Actualizar display_name en users
+        await db_1.pool.query("UPDATE users SET display_name = ? WHERE id = ?", [usernameValue, targetUserId]);
+        res.json({ message: "Nombre actualizado correctamente" });
+    }
+    catch (err) {
+        logger_1.default.error('Error al actualizar nombre por username', { error: err });
+        res.status(500).json({ error: "Error al actualizar nombre" });
+    }
+}
 const userService = (0, servicesConfig_1.getService)('UserService');
 // Eliminar usuario y todo su rastro (perfil, comentarios, imágenes)
 /**
@@ -362,6 +434,7 @@ async function eliminarUsuarioTotal(req, res) {
     }
     try {
         await userService.deleteUserCompletely(userId);
+        (0, cookieConfig_1.clearAuthCookies)(res);
         res.json({ message: "Usuario y todos sus datos eliminados" });
     }
     catch (err) {
@@ -414,7 +487,7 @@ async function paginasPublicas(req, res) {
  */
 async function guardarComentario(req, res) {
     const { comentario, pageId } = req.validatedData;
-    const userId = req.user?.id;
+    const userId = req.userId;
     if (!userId)
         return sendError(res, 401, "Debes estar autenticado para comentar");
     try {
@@ -444,7 +517,7 @@ async function guardarComentario(req, res) {
  */
 async function eliminarComentario(req, res) {
     const { id: pageId, commentId } = req.params;
-    const userId = req.user?.id;
+    const userId = req.userId;
     if (!userId)
         return sendError(res, 401, "Debes estar autenticado");
     try {

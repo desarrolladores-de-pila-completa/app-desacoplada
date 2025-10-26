@@ -4,6 +4,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import './index.css'
 import App from './App.jsx'
 
+console.log('[main] Inicializando React app');
+
 // Crear cliente de React Query con configuración más robusta
 const queryClient = new QueryClient({
   defaultOptions: {

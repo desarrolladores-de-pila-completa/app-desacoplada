@@ -15,6 +15,17 @@ class AuthService {
     }
     return response.json();
   }
+
+  // Función helper para obtener headers con token
+  getAuthHeaders() {
+    const user = this.getStoredUser();
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': user?.accessToken ? `Bearer ${user.accessToken}` : '',
+    };
+    console.log('Auth headers:', headers);
+    return headers;
+  }
   constructor() {
     this.user = this.getStoredUser();
     this.isAuthenticated = !!this.user;
@@ -111,7 +122,9 @@ class AuthService {
       }
 
       const data = await response.json();
+      console.log('Login data:', data);
       this.setStoredUser(data);
+      console.log('Stored user:', this.getStoredUser());
       return { success: true, user: data };
     } catch (error) {
       console.error('Register error:', error);
@@ -134,9 +147,11 @@ class AuthService {
   }
 
   // Obtener usuario actual (verifica con el servidor)
-  async getCurrentUser() {
+  getCurrentUser() {
     if (!this.user) {
-      await this.checkAuth();
+      // Since checkAuth is async, but for simplicity, just return null if no user
+      // In future, if needed, make callers await
+      return null;
     }
     return this.user;
   }

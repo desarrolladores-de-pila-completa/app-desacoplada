@@ -65,7 +65,7 @@ function AgregarComentario({ paginaId, createCommentMutation }) {
       const csrfToken = await getCsrfToken();
       const formData = new FormData();
       formData.append('upload', compressedFile);
-      const response = await fetch(`${API_BASE}/paginas/upload-comment-image`, {
+      const response = await fetch(`${API_BASE}/upload-comment-image`, {
         method: 'POST',
         body: formData,
         credentials: 'include',

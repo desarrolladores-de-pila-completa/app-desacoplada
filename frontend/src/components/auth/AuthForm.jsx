@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import authService from "../../services/authService";
+import { useAuth } from "../../contexts/AuthContext";
 
 function validateEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -15,6 +15,7 @@ function AuthForm({ mode, showOutput, onSuccess }) {
   const [error, setError] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const { login, register } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,7 +33,7 @@ function AuthForm({ mode, showOutput, onSuccess }) {
       }
     }
 
-    const result = mode === "login" ? await authService.login(email, password) : await authService.register(email, password);
+    const result = mode === "login" ? await login(email, password) : await register(email, password);
     setIsLoading(false);
 
     if (result.success) {

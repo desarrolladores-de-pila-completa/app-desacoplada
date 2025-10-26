@@ -97,16 +97,24 @@ async function login(req, res) {
                 return res.status(401).json({ error: "Credenciales inválidas" });
             }
             // Iniciar sesión con Passport
-            req.logIn(user, (err) => {
+            req.logIn(user, async (err) => {
                 if (err) {
-                    logger_1.default.error('Error al iniciar sesión', { error: err });
+                    logger_1.default.error('Error al iniciar sesión', { error: err, userId: user.id });
                     return res.status(500).json({ error: "Error al iniciar sesión" });
                 }
+                logger_1.default.info('Sesión iniciada exitosamente', { userId: user.id });
+                // Generar tokens para el usuario
+                const { accessToken, refreshToken } = authService.generateTokens(user.id);
+                // Establecer cookies con tokens
+                res.cookie("token", accessToken, (0, cookieConfig_1.getAuthCookieOptions)());
+                res.cookie("refreshToken", refreshToken, (0, cookieConfig_1.getRefreshTokenCookieOptions)());
                 res.json({
                     message: "Login exitoso",
                     id: user.id,
                     username: user.username,
-                    display_name: user.display_name
+                    display_name: user.display_name,
+                    accessToken,
+                    refreshToken
                 });
             });
         })(req, res);
@@ -132,6 +140,8 @@ async function logout(req, res) {
             logger_1.default.error('Error al cerrar sesión', { error: err });
             return res.status(500).json({ error: "Error al cerrar sesión" });
         }
+        // Limpiar cookies
+        (0, cookieConfig_1.clearAuthCookies)(res);
         res.json({ message: "Sesión cerrada exitosamente" });
     });
 }
@@ -544,11 +554,15 @@ async function eliminarUsuario(req, res) {
         if (!userId) {
             throw new interfaces_1.AppError(400, "Falta el id de usuario");
         }
+        logger_1.default.info('Iniciando eliminación de usuario', { userId });
         await userServiceAuth.deleteUserCompletely(userId);
+        logger_1.default.info('Usuario eliminado de la base de datos', { userId });
+        (0, cookieConfig_1.clearAuthCookies)(res);
+        logger_1.default.info('Cookies limpiadas para usuario eliminado', { userId });
         res.json({ message: "Usuario, perfil, comentarios e imágenes eliminados correctamente" });
     }
     catch (error) {
-        logger_1.default.error('Error al eliminar usuario', { error });
+        logger_1.default.error('Error al eliminar usuario', { error, userId: req.params.id });
         if (error instanceof interfaces_1.AppError) {
             throw error;
         }

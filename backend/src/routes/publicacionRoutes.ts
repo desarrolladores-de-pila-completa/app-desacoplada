@@ -10,7 +10,7 @@ const router = Router();
 // Crear publicación
 router.post("/", authMiddleware, userRateLimit, async (req: any, res: any) => {
   const { titulo, contenido } = req.body;
-  const userId = req.user.id;
+  const userId = req.userId;
 
   try {
     // Crear la publicación

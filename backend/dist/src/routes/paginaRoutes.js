@@ -16,7 +16,7 @@ const router = (0, express_1.Router)();
 // Endpoint para crear nueva página (simplificado)
 router.post("/", auth_1.authMiddleware, async (req, res) => {
     const { usuario } = req.body;
-    const userId = req.user.id;
+    const userId = req.userId;
     try {
         // Crear la página
         const [result] = await db_1.pool.query("INSERT INTO paginas (user_id, usuario) VALUES (?, ?)", [userId, usuario]);
@@ -31,7 +31,7 @@ router.post("/", auth_1.authMiddleware, async (req, res) => {
 // Ruta eliminada: consultarVisibilidadCampos (función eliminada)
 const upload = multer();
 // Endpoint para obtener comentarios de una página
-router.get("/:id/comentarios", async (req, res) => {
+router.get("/paginas/:id/comentarios", async (req, res) => {
     const { id } = req.params;
     try {
         const [rows] = await db_1.pool.query(`SELECT c.*, u.username FROM comentarios c LEFT JOIN users u ON c.user_id = u.id WHERE c.pagina_id = ? ORDER BY c.creado_en DESC`, [id]);
@@ -57,12 +57,16 @@ router.get("/pagina/:username", paginaController_1.paginaUnificadaPorUsername);
 router.get("/pagina/id/:user_id", paginaController_1.obtenerPaginaPorUserId);
 // Endpoint para actualizar el nombre de usuario de la página
 router.post("/:id/usuario", auth_1.authMiddleware, (0, ValidationService_1.validateRequest)(ValidationService_1.ValidationService.validateUpdateUsername), paginaController_1.actualizarUsuarioPagina);
+// Endpoint para actualizar nombre por username
+router.put("/pagina/:username/nombre", auth_1.authMiddleware, (0, ValidationService_1.validateRequest)(ValidationService_1.ValidationService.validateUpdateUsername), paginaController_1.actualizarNombrePorUsername);
+// Endpoint para actualizar foto por username
+router.put("/pagina/:username/foto", auth_1.authMiddleware, upload.single("photo"), paginaController_1.actualizarFotoPorUsername);
 // Rutas eliminadas: actualizarPropietario, actualizarDescripcion, consultarPropietario, actualizarVisibilidad, consultarVisibilidad (campos eliminados)
 // Comentarios
-router.post("/:id/comentarios", auth_1.authMiddleware, rateLimit_1.userRateLimit, (0, ValidationService_1.validateRequest)(ValidationService_1.ValidationService.validateCreateComment), paginaController_1.guardarComentario);
-router.delete("/:id/comentarios/:commentId", auth_1.authMiddleware, rateLimit_1.userRateLimit, paginaController_1.eliminarComentario);
+router.post("/paginas/:id/comentarios", auth_1.authMiddleware, rateLimit_1.userRateLimit, (0, ValidationService_1.validateRequest)(ValidationService_1.ValidationService.validateCreateComment), paginaController_1.guardarComentario);
+router.delete("/paginas/:id/comentarios/:commentId", auth_1.authMiddleware, rateLimit_1.userRateLimit, paginaController_1.eliminarComentario);
 // Endpoint para subir imágenes a una página (BLOB)
-router.post("/:id/imagenes", auth_1.authMiddleware, rateLimit_1.userRateLimit, upload.single("imagen"), async (req, res) => {
+router.post("/paginas/:id/imagenes", auth_1.authMiddleware, rateLimit_1.userRateLimit, upload.single("imagen"), async (req, res) => {
     const paginaId = req.params.id;
     // Usar multer para procesar todos los campos del formulario
     const file = req.file;
@@ -80,7 +84,7 @@ router.post("/:id/imagenes", auth_1.authMiddleware, rateLimit_1.userRateLimit, u
         const [rows] = await db_1.pool.query("SELECT user_id FROM paginas WHERE id = ?", [paginaId]);
         if (!rows || rows.length === 0)
             return res.status(404).json({ error: "Página no encontrada" });
-        if (String(rows[0].user_id) !== String(req.user.id))
+        if (String(rows[0].user_id) !== String(req.userId))
             return res.status(403).json({ error: "Solo el dueño puede subir imágenes" });
         // Guardar imagen en la base de datos
         await db_1.pool.query("REPLACE INTO imagenes (pagina_id, idx, imagen) VALUES (?, ?, ?)", [paginaId, idx, file.buffer]);
@@ -92,7 +96,7 @@ router.post("/:id/imagenes", auth_1.authMiddleware, rateLimit_1.userRateLimit, u
     }
 });
 // Endpoint para obtener todas las imágenes de una página
-router.get("/:id/imagenes", async (req, res) => {
+router.get("/paginas/:id/imagenes", async (req, res) => {
     const paginaId = req.params.id;
     console.log('=== IMAGES REQUEST DEBUG ===', {
         paginaId,
@@ -154,7 +158,7 @@ router.post("/upload-comment-image", auth_1.authMiddleware, rateLimit_1.userRate
     if (!file)
         return res.status(400).json({ error: "No file uploaded" });
     try {
-        const [result] = await db_1.pool.query("INSERT INTO imagenes_comentarios (user_id, comentario_id, imagen, filename, mimetype, size) VALUES (?, ?, ?, ?, ?, ?)", [req.user.id, null, file.buffer, file.originalname, file.mimetype, file.size]);
+        const [result] = await db_1.pool.query("INSERT INTO imagenes_comentarios (user_id, comentario_id, imagen, filename, mimetype, size) VALUES (?, ?, ?, ?, ?, ?)", [req.userId, null, file.buffer, file.originalname, file.mimetype, file.size]);
         const imageId = result.insertId;
         res.json({ url: `/api/comment-images/${imageId}` });
     }
@@ -183,7 +187,7 @@ router.delete("/usuario/:id", auth_1.authMiddleware, rateLimit_1.userRateLimit, 
 // Endpoint para guardar página creada con PageBuilder
 router.post("/guardar-pagina", auth_1.authMiddleware, rateLimit_1.userRateLimit, async (req, res) => {
     const { titulo, contenido, username } = req.body;
-    const userId = req.user.id;
+    const userId = req.userId;
     try {
         // Verificar que el usuario autenticado es el propietario
         const { getService } = require('../utils/servicesConfig');
