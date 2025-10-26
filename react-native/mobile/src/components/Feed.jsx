@@ -24,7 +24,15 @@ const Feed = () => {
       links.push({ href: match[1], text: match[2] });
     }
     // Quitar imagen y enlaces del texto
-    let textOnly = item.mensaje?.replace(/<img[^>]*>/g, '').replace(linkRegex, '').replace(/<[^>]+>/g, '');
+    let textOnlyRaw = item.mensaje?.replace(/<img[^>]*>/g, '').replace(linkRegex, '');
+    // Repeatedly strip all remaining tags (e.g. <script>, edge cases) until none remain
+    let previousText;
+    let textOnly = textOnlyRaw;
+    do {
+      previousText = textOnly;
+      textOnly = textOnly.replace(/<[^>]+>/g, '');
+    } while (textOnly !== previousText);
+
     return (
       <View style={styles.post}>
         {imgMatch && (
