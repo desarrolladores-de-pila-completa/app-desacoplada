@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import ComentariosList from "../content/ComentariosList";
 import AgregarComentario from "../content/AgregarComentario";
 
-function UserComments({ paginaUser, comentarios, isAuthenticated, createCommentMutation, deleteCommentMutation }) {
+function UserComments({ paginaUser, comentarios, isAuthenticated, createCommentMutation, deleteCommentMutation, username }) {
   return (
     <div style={{
       width: '100%',
@@ -50,7 +50,7 @@ function UserComments({ paginaUser, comentarios, isAuthenticated, createCommentM
             borderRadius: '12px',
             border: '1px solid #e3e8ff'
           }}>
-            <AgregarComentario paginaId={paginaUser?.pagina?.id} createCommentMutation={createCommentMutation} />
+            <AgregarComentario paginaId={paginaUser?.pagina?.id} createCommentMutation={createCommentMutation} username={username} />
           </div>
         ) : (
           <div style={{
@@ -68,7 +68,7 @@ function UserComments({ paginaUser, comentarios, isAuthenticated, createCommentM
         <div style={{
           marginTop: '8px'
         }}>
-          <ComentariosList comentarios={comentarios} pageId={paginaUser?.pagina?.id} deleteCommentMutation={deleteCommentMutation} />
+          <ComentariosList comentarios={comentarios} pageId={paginaUser?.pagina?.id} deleteCommentMutation={deleteCommentMutation} username={username} />
         </div>
       </div>
     </div>

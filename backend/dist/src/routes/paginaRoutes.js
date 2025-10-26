@@ -1,20 +1,14 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const db_1 = require("../middlewares/db");
 const express_1 = require("express");
-const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
 const paginaController_1 = require("../controllers/paginaController");
 const auth_1 = require("../middlewares/auth");
 const ValidationService_1 = require("../services/ValidationService");
-const rateLimit_1 = require("../middlewares/rateLimit");
 const multer = require("multer");
-const limiter = (0, express_rate_limit_1.default)({ windowMs: 60 * 1000, max: 100 });
 const router = (0, express_1.Router)();
 // Endpoint para crear nueva página (simplificado)
-router.post("/", auth_1.authMiddleware, async (req, res) => {
+router.post("/pagina", auth_1.authMiddleware, async (req, res) => {
     const { usuario } = req.body;
     const userId = req.userId;
     try {
@@ -31,7 +25,7 @@ router.post("/", auth_1.authMiddleware, async (req, res) => {
 // Ruta eliminada: consultarVisibilidadCampos (función eliminada)
 const upload = multer();
 // Endpoint para obtener comentarios de una página
-router.get("/paginas/:id/comentarios", async (req, res) => {
+router.get("/pagina/:id/comentarios", async (req, res) => {
     const { id } = req.params;
     try {
         const [rows] = await db_1.pool.query(`SELECT c.*, u.username FROM comentarios c LEFT JOIN users u ON c.user_id = u.id WHERE c.pagina_id = ? ORDER BY c.creado_en DESC`, [id]);
@@ -41,7 +35,7 @@ router.get("/paginas/:id/comentarios", async (req, res) => {
         res.status(500).json({ error: "Error al obtener comentarios" });
     }
 });
-router.get("/", limiter, paginaController_1.paginasPublicas);
+router.get("/", paginaController_1.paginasPublicas);
 // Ruta eliminada: GET /:id - obtenerPagina (solicitud del usuario)
 // Endpoint unificado para todas las operaciones de páginas por username
 // Soporta diferentes acciones mediante parámetros de query:
@@ -63,10 +57,10 @@ router.put("/pagina/:username/nombre", auth_1.authMiddleware, (0, ValidationServ
 router.put("/pagina/:username/foto", auth_1.authMiddleware, upload.single("photo"), paginaController_1.actualizarFotoPorUsername);
 // Rutas eliminadas: actualizarPropietario, actualizarDescripcion, consultarPropietario, actualizarVisibilidad, consultarVisibilidad (campos eliminados)
 // Comentarios
-router.post("/paginas/:id/comentarios", auth_1.authMiddleware, rateLimit_1.userRateLimit, (0, ValidationService_1.validateRequest)(ValidationService_1.ValidationService.validateCreateComment), paginaController_1.guardarComentario);
-router.delete("/paginas/:id/comentarios/:commentId", auth_1.authMiddleware, rateLimit_1.userRateLimit, paginaController_1.eliminarComentario);
+router.post("/pagina/:id/comentarios", auth_1.authMiddleware, (0, ValidationService_1.validateRequest)(ValidationService_1.ValidationService.validateCreateComment), paginaController_1.guardarComentario);
+router.delete("/pagina/:id/comentarios/:commentId", auth_1.authMiddleware, paginaController_1.eliminarComentario);
 // Endpoint para subir imágenes a una página (BLOB)
-router.post("/paginas/:id/imagenes", auth_1.authMiddleware, rateLimit_1.userRateLimit, upload.single("imagen"), async (req, res) => {
+router.post("/pagina/:id/imagenes", auth_1.authMiddleware, upload.single("imagen"), async (req, res) => {
     const paginaId = req.params.id;
     // Usar multer para procesar todos los campos del formulario
     const file = req.file;
@@ -95,8 +89,59 @@ router.post("/paginas/:id/imagenes", auth_1.authMiddleware, rateLimit_1.userRate
         res.status(500).json({ error: "Error al guardar imagen" });
     }
 });
+// Endpoint para eliminar una imagen específica de una página
+router.delete("/pagina/:id/imagenes/:idx", auth_1.authMiddleware, async (req, res) => {
+    const paginaId = req.params.id;
+    const idx = Number(req.params.idx);
+    if (isNaN(idx))
+        return res.status(400).json({ error: "Índice de imagen inválido" });
+    console.log('=== DELETE IMAGE REQUEST DEBUG ===', {
+        paginaId,
+        idx,
+        userId: req.userId,
+        method: req.method,
+        url: req.originalUrl,
+        context: 'delete-image-debug',
+        timestamp: new Date().toISOString()
+    });
+    try {
+        // Verificar que el usuario autenticado es el dueño de la página
+        const [rows] = await db_1.pool.query("SELECT user_id FROM paginas WHERE id = ?", [paginaId]);
+        if (!rows || rows.length === 0) {
+            console.log('=== DELETE IMAGE ERROR ===', { paginaId, error: 'Página no encontrada', context: 'delete-image-debug' });
+            return res.status(404).json({ error: "Página no encontrada" });
+        }
+        if (String(rows[0].user_id) !== String(req.userId)) {
+            console.log('=== DELETE IMAGE ERROR ===', { paginaId, userId: req.userId, ownerId: rows[0].user_id, error: 'No autorizado', context: 'delete-image-debug' });
+            return res.status(403).json({ error: "Solo el dueño puede eliminar imágenes" });
+        }
+        // Eliminar la imagen de la base de datos
+        const [deleteResult] = await db_1.pool.query("DELETE FROM imagenes WHERE pagina_id = ? AND idx = ?", [paginaId, idx]);
+        console.log('=== DELETE IMAGE DB RESULT ===', {
+            paginaId,
+            idx,
+            affectedRows: deleteResult.affectedRows,
+            context: 'delete-image-debug'
+        });
+        if (deleteResult.affectedRows === 0) {
+            console.log('=== DELETE IMAGE ERROR ===', { paginaId, idx, error: 'Imagen no encontrada', context: 'delete-image-debug' });
+            return res.status(404).json({ error: "Imagen no encontrada" });
+        }
+        res.json({ message: "Imagen eliminada" });
+    }
+    catch (err) {
+        console.error("=== DELETE IMAGE ERROR ===:", {
+            paginaId,
+            idx,
+            error: err.message,
+            stack: err.stack,
+            context: 'delete-image-debug'
+        });
+        res.status(500).json({ error: "Error al eliminar imagen" });
+    }
+});
 // Endpoint para obtener todas las imágenes de una página
-router.get("/paginas/:id/imagenes", async (req, res) => {
+router.get("/pagina/:id/imagenes", async (req, res) => {
     const paginaId = req.params.id;
     console.log('=== IMAGES REQUEST DEBUG ===', {
         paginaId,
@@ -153,7 +198,7 @@ router.get("/paginas/:id/imagenes", async (req, res) => {
     }
 });
 // Endpoint para subir imágenes para comentarios
-router.post("/upload-comment-image", auth_1.authMiddleware, rateLimit_1.userRateLimit, upload.single("upload"), async (req, res) => {
+router.post("/upload-comment-image", auth_1.authMiddleware, upload.single("upload"), async (req, res) => {
     const file = req.file;
     if (!file)
         return res.status(400).json({ error: "No file uploaded" });
@@ -184,7 +229,7 @@ router.get("/comment-images/:id", async (req, res) => {
 });
 // Endpoint para eliminar usuario y todo su rastro eliminado
 // Endpoint para guardar página creada con PageBuilder
-router.post("/guardar-pagina", auth_1.authMiddleware, rateLimit_1.userRateLimit, async (req, res) => {
+router.post("/guardar-pagina", auth_1.authMiddleware, async (req, res) => {
     const { titulo, contenido, username } = req.body;
     const userId = req.userId;
     try {

@@ -452,7 +452,9 @@ exports.corsOptions = {
         'X-API-Key',
         'x-csrf-token',
         'expires',
-        'Expires'
+        'Expires',
+        'cache-control',
+        'Cache-Control'
     ]
 };
 /**

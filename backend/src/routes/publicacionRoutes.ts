@@ -1,6 +1,5 @@
 import { Router } from "express";
 import { authMiddleware } from "../middlewares/auth";
-import { userRateLimit } from '../middlewares/rateLimit';
 import {
   obtenerTodasLasPublicaciones
 } from "../controllers/publicacionController";
@@ -8,7 +7,7 @@ import {
 const router = Router();
 
 // Crear publicación
-router.post("/", authMiddleware, userRateLimit, async (req: any, res: any) => {
+router.post("/", authMiddleware, async (req: any, res: any) => {
   const { titulo, contenido } = req.body;
   const userId = req.userId;
 
@@ -28,9 +27,6 @@ router.post("/", authMiddleware, userRateLimit, async (req: any, res: any) => {
     res.status(500).json({ error: "Error al crear publicación" });
   }
 });
-
-// ❌ ELIMINADAS: Rutas para obtener publicaciones específicas
-// Estas funcionalidades pueden ser manejadas por la ruta general o por páginas
 
 // Obtener todas las publicaciones
 router.get("/", obtenerTodasLasPublicaciones);

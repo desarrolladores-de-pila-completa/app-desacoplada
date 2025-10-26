@@ -11,7 +11,7 @@ function formatUUID(uuid) {
   return `${uuid.slice(0,8)}-${uuid.slice(8,12)}-${uuid.slice(12,16)}-${uuid.slice(16,20)}-${uuid.slice(20)}`;
 }
 
-function ComentariosList({ comentarios, pageId, deleteCommentMutation }) {
+function ComentariosList({ comentarios, pageId, deleteCommentMutation, username }) {
   const user = authService.getCurrentUser();
 
   const openImageInWinBox = (src, alt) => {
@@ -45,7 +45,7 @@ function ComentariosList({ comentarios, pageId, deleteCommentMutation }) {
   const handleDelete = async (commentId) => {
     if (window.confirm('¿Estás seguro de que quieres eliminar este comentario?')) {
       try {
-        await deleteCommentMutation.mutateAsync({ pageId, commentId });
+        await deleteCommentMutation.mutateAsync({ pageId, commentId, username });
       } catch (error) {
         console.error('Error deleting comment:', error);
         alert('Error al eliminar el comentario');

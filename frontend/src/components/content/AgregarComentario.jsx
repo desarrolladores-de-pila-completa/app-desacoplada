@@ -7,7 +7,7 @@ import imageCompression from 'browser-image-compression';
 import authService from "../../services/authService";
 import { API_BASE } from '../../config/api';
 
-function AgregarComentario({ paginaId, createCommentMutation }) {
+function AgregarComentario({ paginaId, createCommentMutation, username }) {
   const isAuthenticated = authService.isLoggedIn();
   const [comentario, setComentario] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -93,7 +93,8 @@ function AgregarComentario({ paginaId, createCommentMutation }) {
     try {
       await createCommentMutation.mutateAsync({
         pageId: paginaId,
-        comentario: comentario.trim()
+        comentario: comentario.trim(),
+        username: username
       });
 
       setComentario("");

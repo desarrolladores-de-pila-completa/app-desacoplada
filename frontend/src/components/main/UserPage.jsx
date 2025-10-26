@@ -47,12 +47,12 @@ const useUserPage = (path) => {
 const useCreateComment = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ pageId, comentario }) => {
+    mutationFn: async ({ pageId, comentario, username }) => {
       const csrfRes = await fetch(`${API_BASE}/csrf-token`, { credentials: 'include' });
       const csrfData = await csrfRes.json();
       const csrfToken = csrfData.csrfToken;
       const authHeaders = authService.getAuthHeaders();
-      const response = await fetch(`${API_BASE}/paginas/${pageId}/comentarios`, {
+      const response = await fetch(`${API_BASE}/pagina/${pageId}/comentarios`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -68,7 +68,7 @@ const useCreateComment = () => {
       return response.json();
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['userPage', variables.pageId] });
+      queryClient.invalidateQueries({ queryKey: ['userPage', variables.username] });
     },
   });
 };
@@ -77,12 +77,12 @@ const useCreateComment = () => {
 const useDeleteComment = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ pageId, commentId }) => {
+    mutationFn: async ({ pageId, commentId, username }) => {
       const csrfRes = await fetch(`${API_BASE}/csrf-token`, { credentials: 'include' });
       const csrfData = await csrfRes.json();
       const csrfToken = csrfData.csrfToken;
       const authHeaders = authService.getAuthHeaders();
-      const response = await fetch(`${API_BASE}/paginas/${pageId}/comentarios/${commentId}`, {
+      const response = await fetch(`${API_BASE}/pagina/${pageId}/comentarios/${commentId}`, {
         method: 'DELETE',
         headers: {
           'X-CSRF-Token': csrfToken,
@@ -96,7 +96,7 @@ const useDeleteComment = () => {
       return response.json();
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['userPage', variables.pageId] });
+      queryClient.invalidateQueries({ queryKey: ['userPage', variables.username] });
     },
   });
 };
@@ -436,6 +436,7 @@ function UserPage() {
           isAuthenticated={isAuthenticated}
           createCommentMutation={createCommentMutation}
           deleteCommentMutation={deleteCommentMutation}
+          username={params.username}
         />
       </div>
         {/* Delete User Section */}

@@ -14,7 +14,7 @@ const ComentariosList = ({ postId, comentarioAgregado }) => {
   React.useEffect(() => {
     const fetchComentarios = async () => {
       try {
-        const response = await api.get(`/paginas/${postId}/comentarios`);
+        const response = await api.get(`/pagina/${postId}/comentarios`);
         console.log('Comentarios recibidos:', response.data);
         setComentarios(response.data);
         setError('');

@@ -67,25 +67,25 @@ function ImageGrid({ username, pageId, editable, images: externalImages }) {
 
     // Si no, usar datos del hook useUserPage
     if (pageData?.galeria && username) {
-      // Convertir el array de galería al formato esperado por el componente
-      const imgs = [];
-      pageData.galeria.forEach(img => {
-        imgs[img.idx] = img.src;
-      });
+      // Convertir el array de galería a una lista densa de objetos con idx y src
+      const imgs = pageData.galeria.map(img => ({ idx: img.idx, src: img.src }));
       setImages(imgs);
     } else {
       setImages([]);
     }
   }, [username, externalImages, pageData]);
 
-  const handleImageChange = async (index, event) => {
+  const handleImageChange = async (event) => {
     const file = event.target.files[0];
     if (!file || !pageId) return;
+
+    // Calcular el siguiente índice disponible
+    const nextIdx = images.length > 0 ? Math.max(...images.map(img => img.idx)) + 1 : 0;
 
     // Crear FormData para subir la imagen
     const formData = new FormData();
     formData.append("imagen", file);
-    formData.append("index", index);
+    formData.append("index", nextIdx);
 
     try {
       // Obtener token CSRF usando el endpoint estándar
@@ -94,7 +94,7 @@ function ImageGrid({ username, pageId, editable, images: externalImages }) {
       const csrfToken = csrfData.csrfToken;
 
       // Subir imagen usando la API estándar
-      const uploadResponse = await fetch(`${API_BASE}/paginas/${pageId}/imagenes`, {
+      const uploadResponse = await fetch(`${API_BASE}/pagina/${pageId}/imagenes`, {
         method: "POST",
         headers: {
           "X-CSRF-Token": csrfToken
@@ -112,6 +112,44 @@ function ImageGrid({ username, pageId, editable, images: externalImages }) {
     }
   };
 
+  const handleDeleteImage = async (index) => {
+    if (!pageId) return;
+
+    console.log('=== DELETE IMAGE FRONTEND DEBUG ===', {
+      pageId,
+      index,
+      context: 'delete-image-frontend-debug',
+      timestamp: new Date().toISOString()
+    });
+
+    try {
+      // Obtener token CSRF
+      const csrfResponse = await fetch(`${API_BASE}/csrf-token`, { credentials: "include" });
+      const csrfData = await csrfResponse.json();
+      const csrfToken = csrfData.csrfToken;
+
+      // Eliminar imagen
+      const deleteResponse = await fetch(`${API_BASE}/pagina/${pageId}/imagenes/${index}`, {
+        method: "DELETE",
+        headers: {
+          "X-CSRF-Token": csrfToken
+        },
+        credentials: "include"
+      });
+
+      if (deleteResponse.ok) {
+        console.log('=== DELETE IMAGE SUCCESS ===', { pageId, index, context: 'delete-image-frontend-debug' });
+        // Refrescar los datos
+        refetch();
+      } else {
+        const errorData = await deleteResponse.json();
+        console.error('=== DELETE IMAGE ERROR ===', { pageId, index, error: errorData, context: 'delete-image-frontend-debug' });
+      }
+    } catch (error) {
+      console.error("Error al eliminar imagen:", error);
+    }
+  };
+
   return (
     <div style={{ maxWidth: 900, margin: "32px auto", padding: '0 2vw' }}>
       <div style={{ background: "#fff", borderRadius: 16, boxShadow: "0 2px 16px #0001", padding: 'clamp(12px, 3vw, 24px)' }}>
@@ -121,22 +159,48 @@ function ImageGrid({ username, pageId, editable, images: externalImages }) {
           gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
           gap: "clamp(8px, 2vw, 16px)"
         }}>
-          {images.map((img, idx) => (
-            <div key={idx} style={{
+          {images.map((img, arrayIdx) => (
+            <div key={img.idx} style={{
               aspectRatio: "1",
               border: "2px solid #1976d2",
               borderRadius: 8,
               background: "#f7f7f7",
               display: "flex",
               alignItems: "center",
-              justifyContent: "center"
+              justifyContent: "center",
+              position: "relative"
             }}>
               <img
                 src={img.src}
-                alt={`Imagen ${idx + 1}`}
+                alt={`Imagen ${img.idx + 1}`}
                 style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 6, cursor: "pointer" }}
-                onClick={() => openImageInWinBox(img.src, `Imagen ${idx + 1}`)}
+                onClick={() => openImageInWinBox(img.src, `Imagen ${img.idx + 1}`)}
               />
+              {editable && (
+                <button
+                  onClick={() => handleDeleteImage(img.idx)}
+                  style={{
+                    position: "absolute",
+                    top: "4px",
+                    right: "4px",
+                    background: "rgba(255, 0, 0, 0.8)",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "50%",
+                    width: "24px",
+                    height: "24px",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                    fontWeight: "bold",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center"
+                  }}
+                  title="Eliminar imagen"
+                >
+                  ×
+                </button>
+              )}
             </div>
           ))}
           {editable && (
@@ -160,7 +224,7 @@ function ImageGrid({ username, pageId, editable, images: externalImages }) {
                 accept="image/*"
                 style={{ display: "none" }}
                 ref={el => fileInputs.current[images.length] = el}
-                onChange={e => handleImageChange(images.length, e)}
+                onChange={handleImageChange}
                 disabled={!editable}
               />
             </div>

@@ -74,13 +74,6 @@
 - `GET /api/paginas/:username/publicar/:publicacionId` — Obtener publicación específica por ID
 - `POST /api/paginas/:username/publicar/:numeroDePagina` — Crear publicación en página específica (requiere autenticación)
 
-### 💬 Chat (WebSocket + API REST) (`/api/chat/`)
-- `GET /api/chat/global` — Obtener mensajes del chat global
-- `GET /api/chat/private/:userId` — Obtener mensajes privados con usuario específico
-- `POST /api/chat/global` — Enviar mensaje al chat global
-- `POST /api/chat/private` — Enviar mensaje privado
-
-
 ### 🔧 Utilidades
 - `GET /api/csrf-token` — Obtener token CSRF para protección de formularios
 
