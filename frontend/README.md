@@ -47,6 +47,10 @@ La aplicación estará disponible en `http://localhost:5173`.
 npm run build
 ```
 
+**Notas sobre el build:**
+- Si encuentras errores como "Could not resolve entry module", verifica que no haya referencias a paquetes no instalados en `vite.config.js` (por ejemplo, en `manualChunks`).
+- El CSS inline en `index.html` se ha movido a `src/index.css` para evitar problemas con el proxy HTML de Vite.
+
 ## Pruebas
 
 ```bash
@@ -56,11 +60,11 @@ npm run test
 ## Estructura del Proyecto
 
 - `src/components/` - Componentes React (auth, content, feed, main, ui, user)
-- `src/hooks/` - Hooks personalizados (useFeed, useUserPage, etc.)
-- `src/stores/` - Stores Zustand para estado global
+- `src/contexts/` - Contextos React para estado global (AuthContext)
 - `src/config/` - Configuración de API (api.js)
 - `src/services/` - Servicios para API (authService.js, uploadService.js)
 - `src/tests/` - Pruebas
+- `src/assets/` - Recursos estáticos (imágenes, etc.)
 
 ## Integración con Backend
 
