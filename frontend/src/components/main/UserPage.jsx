@@ -236,6 +236,7 @@ function UserPage() {
     } else if (e.target.innerText !== undefined) {
       value = e.target.innerText.trim(); // h2
     }
+    console.log('[UserPage] handleUsernameBlur iniciado', { value, currentUsername: paginaUser?.usuario?.username, currentUser: authService.getCurrentUser() });
     if (!value || value === paginaUser?.usuario?.username) {
       setNewUsername(paginaUser?.usuario?.username || "");
       setEditMode(false);
@@ -246,6 +247,7 @@ function UserPage() {
       const data = await res.json();
       const csrfToken = data.csrfToken;
       const authHeaders = authService.getAuthHeaders();
+      console.log('[UserPage] Enviando solicitud de actualización', { newUsername: value, authHeaders });
       const resp = await fetch(`${API_BASE}/pagina/${params.username}/nombre`, {
         method: "PUT",
         headers: {
@@ -256,21 +258,29 @@ function UserPage() {
         body: JSON.stringify({ username: value }),
         credentials: "include"
       });
+      console.log('[UserPage] Respuesta de actualización', { status: resp.status, ok: resp.ok });
       if (resp.ok) {
+        const responseData = await resp.json();
+        console.log('[UserPage] Respuesta exitosa', { responseData });
+        console.log('[DEBUG] Ejecutando camino de éxito en handleUsernameBlur');
         setNewUsername(value);
         setEditMode(false);
-        alert("Nombre de usuario actualizado correctamente");
-        // Navegar por el nuevo username sanitizado
-        const sanitized = String(value || '').replace(/\s+/g, '-');
-        if (sanitized.trim()) {
-          navigate(`/pagina/${sanitized}`);
+        // Actualizar el usuario en authService si se incluye en la respuesta
+        if (responseData.user) {
+          authService.setStoredUser(responseData.user);
+          console.log('[UserPage] Usuario actualizado en localStorage', { newUser: responseData.user });
         }
+        alert("Nombre de usuario actualizado correctamente");
       } else {
+        const errorData = await resp.json();
+        console.log('[UserPage] Error en actualización', { errorData });
+        console.log('[DEBUG] Ejecutando camino de error en handleUsernameBlur');
         setNewUsername(paginaUser?.usuario?.username || "");
         setEditMode(false);
         alert("Error al actualizar el nombre de usuario");
       }
     } catch (err) {
+      console.error('[UserPage] Error en handleUsernameBlur', { error: err });
       setNewUsername(paginaUser?.usuario?.username || "");
       setEditMode(false);
       alert("Error de conexión al actualizar el nombre");

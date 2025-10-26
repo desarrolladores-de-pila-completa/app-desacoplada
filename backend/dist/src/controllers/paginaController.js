@@ -395,17 +395,32 @@ async function actualizarNombrePorUsername(req, res) {
         // Obtener el userId por username
         const [users] = await db_1.pool.query("SELECT id, username FROM users WHERE username = ?", [username]);
         if (!users || users.length === 0) {
+            logger_1.default.error('Usuario no encontrado en actualizarNombrePorUsername', { username });
             return res.status(404).json({ error: "Usuario no encontrado" });
         }
         const targetUserId = users[0].id;
         // Verificar que el usuario autenticado es el propietario
         if (String(targetUserId) !== String(userId)) {
+            logger_1.default.warn('Usuario no autorizado para actualizar nombre', { targetUserId, userId });
             return res.status(403).json({ error: "No autorizado" });
         }
         const usernameValue = newUsername.getValue();
+        logger_1.default.info('Actualizando display_name', { targetUserId, oldUsername: username, newDisplayName: usernameValue });
         // Actualizar display_name en users
         await db_1.pool.query("UPDATE users SET display_name = ? WHERE id = ?", [usernameValue, targetUserId]);
-        res.json({ message: "Nombre actualizado correctamente" });
+        // Obtener el usuario actualizado para el response
+        const [updatedUsers] = await db_1.pool.query("SELECT id, username, display_name, foto_perfil FROM users WHERE id = ?", [targetUserId]);
+        const updatedUser = updatedUsers[0];
+        logger_1.default.info('Nombre actualizado exitosamente', { targetUserId, newDisplayName: updatedUser.display_name });
+        res.json({
+            message: "Nombre actualizado correctamente",
+            user: {
+                id: updatedUser.id,
+                username: updatedUser.username,
+                display_name: updatedUser.display_name,
+                foto_perfil: updatedUser.foto_perfil ? `data:image/jpeg;base64,${Buffer.from(updatedUser.foto_perfil).toString('base64')}` : null
+            }
+        });
     }
     catch (err) {
         logger_1.default.error('Error al actualizar nombre por username', { error: err });

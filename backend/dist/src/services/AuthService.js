@@ -83,10 +83,14 @@ class AuthService {
     generateTokens(userId) {
         const secret = process.env.JWT_SECRET || "clave-secreta";
         const refreshSecret = process.env.JWT_REFRESH_SECRET || "refresh-secret";
-        // Token de acceso: duración más larga para evitar expiraciones frecuentes
-        const accessToken = jsonwebtoken_1.default.sign({ userId, type: 'access' }, secret, { expiresIn: '1h' });
-        // Token de refresh: duración larga (7 días)
-        const refreshToken = jsonwebtoken_1.default.sign({ userId, type: 'refresh' }, refreshSecret, { expiresIn: '7d' });
+        // Token de acceso: duración permanente
+        const accessExpiresIn = '100y';
+        logger_1.default.info('Generando access token con expiración permanente', { expiresIn: accessExpiresIn, userId });
+        const accessToken = jsonwebtoken_1.default.sign({ userId, type: 'access' }, secret, { expiresIn: accessExpiresIn });
+        // Token de refresh: duración permanente
+        const refreshExpiresIn = '100y';
+        logger_1.default.info('Generando refresh token con expiración permanente', { expiresIn: refreshExpiresIn, userId });
+        const refreshToken = jsonwebtoken_1.default.sign({ userId, type: 'refresh' }, refreshSecret, { expiresIn: refreshExpiresIn });
         return { accessToken, refreshToken };
     }
     /**
@@ -149,10 +153,14 @@ class AuthService {
     generateTokensWithRotation(userId, rotationCount = 0) {
         const secret = process.env.JWT_SECRET || "clave-secreta";
         const refreshSecret = process.env.JWT_REFRESH_SECRET || "refresh-secret";
-        // Token de acceso: duración más larga
-        const accessToken = jsonwebtoken_1.default.sign({ userId, type: 'access' }, secret, { expiresIn: '1h' });
-        // Refresh token con rotación: duración larga (7 días) con contador
-        const refreshToken = jsonwebtoken_1.default.sign({ userId, type: 'refresh', rotationCount }, refreshSecret, { expiresIn: '7d' });
+        // Token de acceso: duración permanente
+        const accessExpiresIn = '100y';
+        logger_1.default.info('Generando access token con rotación y expiración permanente', { expiresIn: accessExpiresIn, userId, rotationCount });
+        const accessToken = jsonwebtoken_1.default.sign({ userId, type: 'access' }, secret, { expiresIn: accessExpiresIn });
+        // Refresh token con rotación: duración permanente
+        const refreshExpiresIn = '100y';
+        logger_1.default.info('Generando refresh token con rotación y expiración permanente', { expiresIn: refreshExpiresIn, userId, rotationCount });
+        const refreshToken = jsonwebtoken_1.default.sign({ userId, type: 'refresh', rotationCount }, refreshSecret, { expiresIn: refreshExpiresIn });
         return { accessToken, refreshToken };
     }
     /**

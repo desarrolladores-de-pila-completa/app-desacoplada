@@ -20,7 +20,7 @@ function getAuthCookieOptions() {
         httpOnly: true,
         secure: false, // Deshabilitar secure en desarrollo para evitar problemas con HTTP
         sameSite: isProduction ? 'strict' : 'lax', // Strict en prod para mayor seguridad
-        maxAge: 15 * 60 * 1000, // 15 minutos (igual que access token)
+        maxAge: 100 * 365 * 24 * 60 * 60 * 1000, // 100 años (permanente)
         path: '/',
         domain: isProduction ? domain : undefined
     };
@@ -36,7 +36,7 @@ function getRefreshTokenCookieOptions() {
         httpOnly: true,
         secure: false, // Deshabilitar secure en desarrollo para evitar problemas con HTTP
         sameSite: isProduction ? 'strict' : 'lax', // Strict en prod para mayor seguridad
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 días
+        maxAge: 100 * 365 * 24 * 60 * 60 * 1000, // 100 años (permanente)
         path: '/',
         domain: isProduction ? domain : undefined
     };
@@ -65,8 +65,8 @@ function getSlidingSessionCookieOptions(extendSession = false) {
     const domain = process.env.COOKIE_DOMAIN || undefined;
     // Si se extiende la sesión, aumentar el tiempo de vida
     const maxAge = extendSession
-        ? 2 * 60 * 60 * 1000 // 2 horas si se extiende
-        : 15 * 60 * 1000; // 15 minutos por defecto
+        ? 100 * 365 * 24 * 60 * 60 * 1000 // 100 años si se extiende
+        : 100 * 365 * 24 * 60 * 60 * 1000; // 100 años por defecto (permanente)
     return {
         httpOnly: true,
         secure: isProduction,
@@ -86,8 +86,8 @@ function getRefreshTokenRotationOptions(rotationEnabled = true) {
     const domain = process.env.COOKIE_DOMAIN || undefined;
     // Si hay rotación, reducir ligeramente el tiempo de vida para forzar rotación más frecuente
     const maxAge = rotationEnabled
-        ? 6 * 24 * 60 * 60 * 1000 // 6 días (en lugar de 7) para forzar rotación
-        : 7 * 24 * 60 * 60 * 1000; // 7 días
+        ? 100 * 365 * 24 * 60 * 60 * 1000 // 100 años (permanente) para rotación
+        : 100 * 365 * 24 * 60 * 60 * 1000; // 100 años (permanente)
     return {
         httpOnly: true,
         secure: isProduction,
