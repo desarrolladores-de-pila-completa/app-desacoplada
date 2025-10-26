@@ -4,7 +4,7 @@ Aplicación web React construida con Vite para el proyecto app-desacoplada.
 
 ## Características
 
-- **React 19** con hooks modernos
+- **React 18.3.1** con hooks modernos
 - **Vite** para desarrollo rápido y build optimizado
 - **React Router** para navegación SPA
 - **React Query (TanStack Query)** para gestión de estado del servidor

@@ -40,8 +40,6 @@ router.get("/", paginaController_1.paginasPublicas);
 // Endpoint unificado para todas las operaciones de páginas por username
 // Soporta diferentes acciones mediante parámetros de query:
 // - action=info (default): Información completa del usuario y página principal
-// - action=publicaciones: Lista de publicaciones del usuario
-// - action=publicacion&publicacionId=X: Publicación específica
 // - action=galeria: Galería de imágenes del usuario
 // - action=comentarios: Comentarios de la página principal
 // - action=lista&pageNumber=X: Página específica por número

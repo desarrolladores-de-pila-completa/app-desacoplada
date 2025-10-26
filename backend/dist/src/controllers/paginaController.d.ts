@@ -1,60 +1,8 @@
 import { Request, Response } from "express";
-/**
- * @swagger
- * /api/pagina/user/{user_id}:
- *   get:
- *     summary: Obtener página por user_id
- *     tags: [Pagina]
- */
-/**
- * @swagger
- * /api/pagina/user/{user_id}:
- *   get:
- *     summary: Obtener página por user_id
- *     tags: [Pagina]
- */
 export declare function obtenerPaginaPorUserId(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
-/**
- * @swagger
- * /api/pagina/{username}:
- *   get:
- *     summary: Obtener información de página por username con soporte para diferentes acciones
- *     tags: [Pagina]
- *     parameters:
- *       - in: query
- *         name: action
- *         schema:
- *           type: string
- *           enum: [info, publicaciones, galeria, comentarios, lista]
- *         description: Tipo de acción a realizar
- *       - in: query
- *         name: publicacionId
- *         schema:
- *           type: integer
- *         description: ID específico de publicación (para action=publicacion)
- *       - in: query
- *         name: pageNumber
- *         schema:
- *           type: integer
- *         description: Número de página específico (para action=lista)
- */
 export declare function paginaUnificadaPorUsername(req: Request, res: Response): Promise<void | Response<any, Record<string, any>>>;
 export declare function obtenerPaginaPorUsername(req: Request, res: Response): Promise<void | Response<any, Record<string, any>>>;
-/**
- * @swagger
- * /api/pagina/publicas/{username}:
- *   get:
- *     summary: Obtener páginas públicas de un usuario
- *     tags: [Pagina]
- */
 export declare function obtenerPaginasPublicasPorUsuario(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
-/**
- * @swagger
- * /api/pagina/username/{username}/numero/{pageNumber}:
- *   get:
- *     summary: Obtener página por username y número de página
- *     tags: [Pagina]
- */
 export declare function obtenerPaginaPorUsernameYNumero(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
 /**
  * @swagger

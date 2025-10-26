@@ -421,10 +421,8 @@ app.use(["/api", "/api/auth"], (req, res, next) => {
     next();
 });
 const paginaRoutes_1 = __importDefault(require("./routes/paginaRoutes"));
-const publicacionRoutes_1 = __importDefault(require("./routes/publicacionRoutes"));
 app.use("/api/auth", authRoutes_1.router);
 app.use("/api", paginaRoutes_1.default);
-app.use("/api/publicaciones", publicacionRoutes_1.default);
 // Endpoint para verificar esquema de tabla
 app.get('/test-db', async (req, res) => {
     try {

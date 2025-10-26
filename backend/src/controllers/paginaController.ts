@@ -3,24 +3,8 @@ import { pool } from "../middlewares/db";
 import { Request, Response } from "express";
 import { UserService } from "../services/UserService";
 import { getService } from '../utils/servicesConfig';
-import { clearAuthCookies } from '../utils/cookieConfig';
 
-// Obtener página por user_id (UUID sin guiones)
-/**
- * @swagger
- * /api/pagina/user/{user_id}:
- *   get:
- *     summary: Obtener página por user_id
- *     tags: [Pagina]
- */
-// Obtener página por user_id (UUID sin guiones)
-/**
- * @swagger
- * /api/pagina/user/{user_id}:
- *   get:
- *     summary: Obtener página por user_id
- *     tags: [Pagina]
- */
+
 export async function obtenerPaginaPorUserId(req: Request, res: Response) {
   const userId = req.params.user_id;
   try {
@@ -33,40 +17,13 @@ export async function obtenerPaginaPorUserId(req: Request, res: Response) {
   }
 }
 
-// Función unificada para manejar todas las operaciones de páginas por username
-/**
- * @swagger
- * /api/pagina/{username}:
- *   get:
- *     summary: Obtener información de página por username con soporte para diferentes acciones
- *     tags: [Pagina]
- *     parameters:
- *       - in: query
- *         name: action
- *         schema:
- *           type: string
- *           enum: [info, publicaciones, galeria, comentarios, lista]
- *         description: Tipo de acción a realizar
- *       - in: query
- *         name: publicacionId
- *         schema:
- *           type: integer
- *         description: ID específico de publicación (para action=publicacion)
- *       - in: query
- *         name: pageNumber
- *         schema:
- *           type: integer
- *         description: Número de página específico (para action=lista)
- */
-// Función unificada para manejar todas las operaciones de páginas por username
 export async function paginaUnificadaPorUsername(req: Request, res: Response) {
   const username = req.params.username;
-  const { action = 'info', publicacionId, pageNumber } = req.query;
+  const { action = 'info', pageNumber } = req.query;
 
   console.log('=== UNIFIED PAGE REQUEST DEBUG ===', {
     username,
     action,
-    publicacionId,
     pageNumber,
     method: req.method,
     url: req.originalUrl,
@@ -106,16 +63,6 @@ export async function paginaUnificadaPorUsername(req: Request, res: Response) {
         // Información completa del usuario y página principal
         return await obtenerInformacionCompletaUsuario(user, res);
 
-      case 'publicaciones':
-        // Lista de publicaciones del usuario
-        return await obtenerPublicacionesUsuario(userId, res);
-
-      case 'publicacion':
-        // Publicación específica
-        if (!publicacionId) {
-          return res.status(400).json({ error: "Se requiere publicacionId para obtener publicación específica" });
-        }
-        return await obtenerPublicacionEspecifica(userId, publicacionId as string, res);
 
       case 'galeria':
         // Galería de imágenes del usuario
@@ -195,28 +142,6 @@ async function obtenerInformacionCompletaUsuario(user: any, res: Response) {
   res.json(respuesta);
 }
 
-// Función auxiliar para obtener publicaciones del usuario
-async function obtenerPublicacionesUsuario(userId: string, res: Response) {
-  const [rows]: any = await pool.query(
-    "SELECT id, titulo, contenido, created_at FROM publicaciones WHERE user_id = ? ORDER BY created_at DESC",
-    [userId]
-  );
-  res.json({ publicaciones: rows });
-}
-
-// Función auxiliar para obtener publicación específica
-async function obtenerPublicacionEspecifica(userId: string, publicacionId: string, res: Response) {
-  const [rows]: any = await pool.query(
-    "SELECT id, titulo, contenido, created_at FROM publicaciones WHERE id = ? AND user_id = ?",
-    [publicacionId, userId]
-  );
-
-  if (rows.length === 0) {
-    return res.status(404).json({ error: "Publicación no encontrada" });
-  }
-
-  res.json({ publicacion: rows[0] });
-}
 
 // Función auxiliar para obtener galería del usuario
 async function obtenerGaleriaUsuario(userId: string, res: Response) {
@@ -293,15 +218,6 @@ export async function obtenerPaginaPorUsername(req: Request, res: Response) {
   return paginaUnificadaPorUsername(req, res);
 }
 
-// Obtener página por username y número de página
-// Obtener lista de páginas públicas de un usuario
-/**
- * @swagger
- * /api/pagina/publicas/{username}:
- *   get:
- *     summary: Obtener páginas públicas de un usuario
- *     tags: [Pagina]
- */
 export async function obtenerPaginasPublicasPorUsuario(req: Request, res: Response) {
   const username = req.params.username;
   try {
@@ -319,13 +235,6 @@ export async function obtenerPaginasPublicasPorUsuario(req: Request, res: Respon
   }
 }
 
-/**
- * @swagger
- * /api/pagina/username/{username}/numero/{pageNumber}:
- *   get:
- *     summary: Obtener página por username y número de página
- *     tags: [Pagina]
- */
 export async function obtenerPaginaPorUsernameYNumero(req: Request, res: Response) {
   const { username, pageNumber } = req.params;
   if (!pageNumber) return res.status(400).json({ error: "Número de página requerido" });

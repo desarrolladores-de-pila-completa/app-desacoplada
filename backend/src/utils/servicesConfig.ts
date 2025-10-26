@@ -9,14 +9,12 @@ import {
   UserRepository,
   PageRepository,
   CommentRepository,
-  PublicacionRepository,
   PrivateMessageRepository,
   IUserRepository,
   IPageRepository,
   ICommentRepository,
   IPrivateMessageRepository
 } from '../repositories';
-import { PublicacionService } from '../services/PublicacionService';
 import { PrivateMessageService } from '../services/PrivateMessageService';
 
 /**
@@ -57,10 +55,6 @@ export function configureServices(): void {
     return new PrivateMessageService(privateMessageRepository);
   });
 
-  container.registerSingleton('PublicacionService', (c) => {
-    const publicacionRepository = new PublicacionRepository();
-    return new PublicacionService(publicacionRepository);
-  });
 
   // Servicios con dependencias
   container.registerSingleton('AuthService', (c) => {

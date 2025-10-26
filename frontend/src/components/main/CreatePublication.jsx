@@ -32,28 +32,8 @@ function CreatePublication() {
       const csrfData = await csrfRes.json();
       const csrfToken = csrfData.csrfToken;
 
-      // Crear la publicación usando la ruta correcta
-      const response = await fetch(`/api/publicaciones/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': csrfToken,
-        },
-        body: JSON.stringify({
-          titulo,
-          contenido: puckData,
-        }),
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Error al crear publicación');
-      }
-
-      const result = await response.json();
-
-      // Redirigir a la página de usuario para ver todas las publicaciones
+      // Funcionalidad de publicaciones eliminada
+      // Redirigir a la página de usuario
       const sanitizedUsername = String(username || '').replace(/\s+/g, '-');
       if (sanitizedUsername.trim()) {
         navigate(`/pagina/${sanitizedUsername}`);
