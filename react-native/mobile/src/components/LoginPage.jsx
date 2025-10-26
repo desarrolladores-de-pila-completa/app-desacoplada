@@ -1,9 +1,8 @@
 import * as React from 'react';
 import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
-import api from '../utils/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import Toast from './Toast';
+import { useAuth } from '../contexts/AuthContext';
 
 const LoginPage = () => {
   const [email, setEmail] = React.useState('');
@@ -11,42 +10,23 @@ const LoginPage = () => {
   const [error, setError] = React.useState('');
   const [toast, setToast] = React.useState({ visible: false, message: '', type: 'info' });
   const navigation = useNavigation();
+  const { login } = useAuth();
 
-  const BASE_URL = 'http://10.0.2.2:3000';
   const handleLogin = async () => {
-    try {
-      // Obtener CSRF
-      const res = await fetch(BASE_URL + '/api/csrf-token', { credentials: 'include' });
-      const data = await res.json();
-      const csrfToken = data.csrfToken;
-      const response = await api.post('/auth/login', { email, password }, {
-        headers: {
-          'X-CSRF-Token': csrfToken || '',
-          'Cookie': `_csrf=${csrfToken}`,
-        },
-        withCredentials: true,
-      });
-      console.log('[LOGIN] Respuesta:', response);
-      await AsyncStorage.setItem('token', response.data.token);
-      setError('');
+    setError('');
+    const result = await login(email, password);
+    if (result.success) {
       setToast({ visible: true, message: 'Login exitoso', type: 'success' });
       // Navegar a la página de usuario si el backend devuelve username
-      const username = response.data.username;
+      const username = result.user?.username;
       if (username) {
         navigation.replace('UserPage', { username });
       } else {
         navigation.replace('Feed');
       }
-    } catch (err) {
-      console.log('[LOGIN] Error:', err);
-      if (err.response) {
-        console.log('[LOGIN] Error response data:', err.response.data);
-        setError('Credenciales incorrectas: ' + (err.response.data?.error || ''));
-        setToast({ visible: true, message: 'Credenciales incorrectas', type: 'error' });
-      } else {
-        setError('Error de red o servidor');
-        setToast({ visible: true, message: 'Error de red o servidor', type: 'error' });
-      }
+    } else {
+      setError(result.error || 'Error en login');
+      setToast({ visible: true, message: result.error || 'Error en login', type: 'error' });
     }
   };
 

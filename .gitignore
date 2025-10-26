@@ -12,5 +12,6 @@ node_modules/
 **/.bundle/
 **/android/app/build/
 **/android/app/.cxx/
+**/dist/
 # Logs
 *.log

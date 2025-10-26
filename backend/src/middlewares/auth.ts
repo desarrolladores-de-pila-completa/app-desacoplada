@@ -1,47 +1,36 @@
 
 import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
+import logger from "../utils/logger";
+import jwt from 'jsonwebtoken';
+import { getService } from "../utils/servicesConfig";
+import { AuthService } from "../services/AuthService";
 
-const SECRET = process.env.JWT_SECRET || "clave-secreta";
-
-import { pool } from "./db";
+const authService = getService<AuthService>('AuthService');
 
 export async function authMiddleware(req: Request, res: Response, next: NextFunction) {
-  const token = req.cookies.token;
-  console.log("[AUTH] Cookie token:", token);
-  if (!token) {
-    console.log("[AUTH] No se recibió token en la cookie");
-    console.log("[AUTH] Headers:", req.headers);
-    return res.status(401).json({ error: "No autenticado (sin token)" });
-  }
+   const token = req.cookies.token || req.headers.authorization?.replace('Bearer ', '');
+
+   logger.debug('Verificando autenticación', {
+     hasCookieToken: !!req.cookies.token,
+     hasAuthHeader: !!req.headers.authorization,
+     authHeader: req.headers.authorization,
+     context: 'auth'
+   });
+
+   logger.debug('Detalles de token en middleware', { cookieToken: req.cookies.token, authHeader: req.headers.authorization });
+
+   if (!token) {
+     logger.warn('No token provided', { context: 'auth' });
+     return res.status(401).json({ error: "No autenticado" });
+   }
+
   try {
-    const payload = jwt.verify(token, SECRET) as jwt.JwtPayload;
-    console.log("[AUTH] Payload JWT:", payload);
-    if (payload?.userId) {
-      // Buscar el usuario en la base de datos
-      const [rows]: any = await pool.query("SELECT id, email, username FROM users WHERE id = ?", [payload.userId]);
-      console.log("[AUTH] Resultado query usuario:", rows);
-      if (rows && rows.length > 0) {
-        (req as any).user = rows[0];
-        (req as any).userId = rows[0].id;
-        return next();
-      }
-      console.log("[AUTH] Usuario no encontrado en la base de datos. userId:", payload.userId);
-      return res.status(401).json({ error: "Usuario no encontrado", userId: payload.userId });
-    }
-    console.log("[AUTH] Token sin userId válido. Payload:", payload);
-    return res.status(401).json({ error: "Token inválido", payload });
-  } catch (err) {
-    console.log("[AUTH] Error al verificar token:", err);
-    if (err && typeof err === "object" && "name" in err) {
-      const errorObj = err as { name: string; expiredAt?: Date; message?: string };
-      if (errorObj.name === "TokenExpiredError") {
-        console.log("[AUTH] Token expirado. Exp:", errorObj.expiredAt);
-        return res.status(401).json({ error: "Token expirado", expiredAt: errorObj.expiredAt });
-      }
-      console.log("[AUTH] Headers:", req.headers);
-      return res.status(401).json({ error: "Token inválido", details: errorObj.message });
-    }
-    return res.status(401).json({ error: "Token inválido", details: String(err) });
+    const decoded = authService.verifyToken(token);
+    (req as any).userId = decoded.userId;
+    logger.debug('Usuario autenticado via JWT', { userId: decoded.userId, context: 'auth' });
+    return next();
+  } catch (error) {
+    logger.warn('Token inválido', { error: (error as Error).message, context: 'auth' });
+    return res.status(401).json({ error: "Token inválido" });
   }
 }

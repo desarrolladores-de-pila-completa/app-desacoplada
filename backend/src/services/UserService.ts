@@ -1,54 +1,97 @@
-import { QueryResult, User, UserCreateData, CreateUserDTO } from '../types/interfaces';
+import { User, UserCreateData, AppError } from '../types/interfaces';
+import winston from '../utils/logger';
+import { IUserRepository, IPageRepository } from '../repositories';
+import { cacheService } from './CacheService';
 const bcrypt = require("bcryptjs");
 const { randomUUID } = require("crypto");
-const { getPool } = require("../middlewares/db");
-const generarAvatarBuffer = require("../utils/generarAvatarBuffer");
+import { pool } from "../middlewares/db";
+const { generarAvatarBuffer } = require("../utils/generarAvatarBuffer");
 
 export class UserService {
+  constructor(
+    private userRepository: IUserRepository,
+    private pageRepository: IPageRepository
+  ) {}
+  /**
+   * Crear un nuevo usuario con página personal
+   */
   /**
    * Crear un nuevo usuario con página personal
    */
   async createUser(userData: UserCreateData): Promise<User> {
+    winston.info('UserService.createUser called');
     const { email, password, username, file } = userData;
-    
+
     // Verificar si el usuario ya existe
-    const existingUser = await this.getUserByEmail(email);
+    winston.debug('Checking existing user', { email });
+    const existingUser = await this.userRepository.findByEmail(email);
     if (existingUser) {
-      throw new Error("El email ya está registrado");
+      winston.warn('Email ya registrado', { email });
+      throw new AppError(409, "email ya registrado");
     }
 
     // Verificar username único
-    const existingUsername = await this.getUserByUsername(username);
+    winston.debug('Checking existing username', { username });
+    const existingUsername = await this.userRepository.findByUsername(username);
     if (existingUsername) {
-      throw new Error("El username ya está en uso");
+      winston.warn('Username ya está en uso', { username });
+      throw new AppError(409, "El username ya está en uso");
     }
 
     // Hash de contraseña
+    winston.debug('Hashing password');
     const hashedPassword = await bcrypt.hash(password, 10);
     const userId = randomUUID();
+    winston.debug('UserId generated', { userId });
 
     // Generar avatar
     let avatarBuffer: Buffer;
     if (file && file.buffer) {
       avatarBuffer = file.buffer;
     } else {
+      console.log('Generating avatar');
       avatarBuffer = await generarAvatarBuffer(username);
     }
+    console.log('Avatar generated');
 
-    // Insertar usuario
-    await getPool().query(
-      "INSERT INTO users (id, email, password, username, foto_perfil) VALUES (?, ?, ?, ?, ?)",
-      [userId, email, hashedPassword, username, avatarBuffer]
-    );
+    // Usar transacción para asegurar atomicidad
+    console.log('Getting connection');
+    const conn = await pool.getConnection();
+    try {
+      console.log('Beginning transaction');
+      await conn.beginTransaction();
 
-    // Crear página personal
-    await this.createUserPage(userId, username, email);
+      // Insertar usuario
+      console.log('Inserting user');
+      await conn.query(
+        "INSERT INTO users (id, email, password, username, display_name, foto_perfil) VALUES (?, ?, ?, ?, ?, ?)",
+        [userId, email, hashedPassword, username, username, avatarBuffer]
+      );
+      console.log('User inserted');
+
+      // Crear página personal
+      console.log('Creating user page');
+      await this.createUserPage(userId, username, email, conn);
+      console.log('User page created');
+
+      console.log('Committing transaction');
+      await conn.commit();
+      console.log('Transaction committed');
+    } catch (err) {
+      console.log('Rolling back transaction');
+      await conn.rollback();
+      throw err;
+    } finally {
+      conn.release();
+    }
 
     // Retornar usuario creado (sin contraseña)
-    const user = await this.getUserById(userId);
+    console.log('Finding user by id');
+    const user = await this.userRepository.findById(userId);
     if (!user) {
-      throw new Error("Error al crear usuario");
+      throw new AppError(500, "Error al crear usuario");
     }
+    console.log('User found');
     return user;
   }
 
@@ -56,99 +99,117 @@ export class UserService {
    * Obtener usuario por ID
    */
   async getUserById(userId: string): Promise<User | null> {
-    const [rows]: QueryResult<User> = await getPool().query(
-      "SELECT id, email, username, foto_perfil, creado_en FROM users WHERE id = ?",
-      [userId]
-    );
-    return rows.length > 0 ? (rows[0] ?? null) : null;
+    const cacheKey = `user:id:${userId}`;
+    const cached = cacheService.get<User>(cacheKey);
+    if (cached) return cached;
+
+    const user = await this.userRepository.findById(userId);
+    if (user) {
+      cacheService.set(cacheKey, user);
+    }
+    return user;
   }
 
   /**
    * Obtener usuario por email
    */
   async getUserByEmail(email: string): Promise<User | null> {
-    const [rows]: QueryResult<User> = await getPool().query(
-      "SELECT id, email, username, foto_perfil, creado_en FROM users WHERE email = ?",
-      [email]
-    );
-    return rows.length > 0 ? (rows[0] ?? null) : null;
+    const cacheKey = `user:email:${email}`;
+    const cached = cacheService.get<User>(cacheKey);
+    if (cached) return cached;
+
+    const user = await this.userRepository.findByEmail(email);
+    if (user) {
+      cacheService.set(cacheKey, user);
+    }
+    return user;
   }
 
   /**
    * Obtener usuario por username
    */
   async getUserByUsername(username: string): Promise<User | null> {
-    const [rows]: QueryResult<User> = await getPool().query(
-      "SELECT id, email, username, foto_perfil, creado_en FROM users WHERE username = ?",
-      [username]
-    );
-    return rows.length > 0 ? (rows[0] ?? null) : null;
+    const cacheKey = `user:username:${username}`;
+    const cached = cacheService.get<User>(cacheKey);
+    if (cached) return cached;
+
+    const user = await this.userRepository.findByUsername(username);
+    if (user) {
+      cacheService.set(cacheKey, user);
+    }
+    return user;
   }
 
   /**
    * Obtener usuario con contraseña para login
    */
   async getUserWithPassword(email: string): Promise<(User & { password: string }) | null> {
-    const [rows]: QueryResult<User & { password: string }> = await getPool().query(
-      "SELECT * FROM users WHERE email = ?",
-      [email]
-    );
-    return rows.length > 0 ? (rows[0] ?? null) : null;
+    return await this.userRepository.findWithPassword(email);
   }
 
   /**
-   * Actualizar foto de perfil
+   * Obtener todos los usuarios
    */
-  async updateProfilePhoto(userId: string, photoBuffer: Buffer): Promise<void> {
-    await getPool().query(
-      "UPDATE users SET foto_perfil = ? WHERE id = ?",
-      [photoBuffer, userId]
-    );
+  async getAllUsers(): Promise<User[]> {
+    const cacheKey = `users:all`;
+    const cached = cacheService.get<User[]>(cacheKey);
+    if (cached) return cached;
+
+    const users = await this.userRepository.findAll();
+    cacheService.set(cacheKey, users);
+    return users;
   }
+
+  /**
+     * Actualizar foto de perfil
+     */
+   async updateProfilePhoto(userId: string, photoBuffer: Buffer): Promise<void> {
+     // Obtener información del usuario antes de actualizar para conocer username y email
+     const user = await this.userRepository.findById(userId);
+     if (!user) {
+       throw new AppError(404, "Usuario no encontrado");
+     }
+
+     await this.userRepository.updateProfilePhoto(userId, photoBuffer);
+
+     // Invalidar todos los patrones de caché relacionados con este usuario
+     cacheService.invalidatePattern(`user:id:${userId}`);
+     cacheService.invalidatePattern(`user:username:${user.username}`);
+     cacheService.invalidatePattern(`user:email:${user.email}`);
+   }
 
   /**
    * Actualizar username
    */
   async updateUsername(userId: string, newUsername: string): Promise<void> {
     // Verificar que el username no esté en uso
-    const existing = await this.getUserByUsername(newUsername);
+    const existing = await this.userRepository.findByUsername(newUsername);
     if (existing && existing.id !== userId) {
-      throw new Error("El username ya está en uso");
+      throw new AppError(409, "El username ya está en uso");
     }
 
-    await getPool().query(
-      "UPDATE users SET username = ? WHERE id = ?",
-      [newUsername, userId]
-    );
+    await this.userRepository.updateUsername(userId, newUsername);
+    // Invalidar caché del usuario
+    cacheService.invalidatePattern(`user:id:${userId}`);
   }
 
   /**
    * Eliminar usuario completamente (cascada)
    */
   async deleteUserCompletely(userId: string): Promise<void> {
-    // Eliminar en orden para respetar foreign keys
-    await getPool().query("DELETE FROM comentarios WHERE user_id = ?", [userId]);
-    
-    await getPool().query(
-      "DELETE FROM imagenes WHERE pagina_id IN (SELECT id FROM paginas WHERE user_id = ?)",
-      [userId]
-    );
-    
-    await getPool().query("DELETE FROM feed WHERE user_id = ?", [userId]);
-    await getPool().query("DELETE FROM paginas WHERE user_id = ?", [userId]);
-    await getPool().query("DELETE FROM users WHERE id = ?", [userId]);
+    await this.userRepository.delete(userId);
+    // Invalidar caché del usuario
+    cacheService.invalidatePattern(`user:id:${userId}`);
   }
 
   /**
    * Crear página personal para usuario nuevo
    */
-  private async createUserPage(userId: string, username: string, email: string): Promise<void> {
-    const titulo = `Página de ${username}`;
-    const contenido = `¡Hola! Esta es la página de ${username}.`;
-    
-    await getPool().query(
-      "INSERT INTO paginas (user_id, propietario, titulo, contenido, descripcion, usuario, comentarios) VALUES (?, 1, ?, ?, 'visible', ?, '')",
-      [userId, titulo, contenido, username]
+  private async createUserPage(userId: string, username: string, email: string, conn?: any): Promise<void> {
+    const queryConn = conn || pool;
+    await queryConn.query(
+      "INSERT INTO paginas (user_id, usuario) VALUES (?, ?)",
+      [userId, username]
     );
   }
 
@@ -156,12 +217,6 @@ export class UserService {
    * Verificar si un usuario es propietario de una página
    */
   async isPageOwner(userId: string, pageId: number): Promise<boolean> {
-    const [rows]: QueryResult<{ user_id: string }> = await getPool().query(
-      "SELECT user_id FROM paginas WHERE id = ?",
-      [pageId]
-    );
-    
-    if (rows.length === 0) return false;
-    return (rows[0]?.user_id ?? '') === userId;
+    return await this.userRepository.isPageOwner(userId, pageId);
   }
 }

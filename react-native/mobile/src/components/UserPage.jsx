@@ -7,11 +7,13 @@ import ImageGrid from './ImageGrid';
 import ComentariosList from './ComentariosList';
 import AgregarComentario from './AgregarComentario';
 import Toast from './Toast';
+import { useAuth } from '../contexts/AuthContext';
 
 const UserPage = () => {
   const [comentarioAgregado, setComentarioAgregado] = React.useState(0);
   const route = useRoute();
   const navigation = useNavigation();
+  const { logout } = useAuth();
   const username = route.params?.username;
   const [user, setUser] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
@@ -23,7 +25,7 @@ const UserPage = () => {
     const fetchUser = async () => {
       try {
         // Consultar el usuario por username (ruta corregida)
-        const response = await api.get(`/paginas/pagina/${username}`);
+        const response = await api.get(`/pagina/${username}`);
         setUser(response.data);
         setError('');
         // Ya no se cargan comentarios aquí, ComentariosList lo hace por sí mismo
@@ -59,15 +61,16 @@ const UserPage = () => {
               const csrfRes = await api.get('/csrf-token');
               const csrfToken = csrfRes.data.csrfToken;
               // Petición DELETE
-              const res = await api.delete(`/paginas/usuario/${user?.user_id}`, {
+              const res = await api.delete(`/pagina/usuario/${user?.user_id}`, {
                 headers: { 'X-CSRF-Token': csrfToken },
                 withCredentials: true,
               });
               if (res.status === 200) {
+                await logout();
                 setDeleteMsg('Tu perfil y todos tus datos han sido eliminados.');
                 setToast({ visible: true, message: 'Tu perfil y todos tus datos han sido eliminados.', type: 'success' });
                 setTimeout(() => {
-                  navigation.navigate('Feed');
+                  navigation.navigate('Login');
                 }, 1500);
               } else {
                 setDeleteMsg('Error al borrar el usuario.');

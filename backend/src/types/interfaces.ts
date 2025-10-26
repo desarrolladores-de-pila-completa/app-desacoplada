@@ -2,6 +2,7 @@
 
 // Define Multer File type
 import { Readable } from 'stream';
+import { Request, Response } from 'express';
 
 export interface MulterFile {
   fieldname: string;
@@ -20,6 +21,7 @@ export interface User {
   id: string;
   email: string;
   username: string;
+  display_name?: string;
   foto_perfil?: Buffer;
   creado_en: Date;
 }
@@ -34,26 +36,12 @@ export interface UserCreateData {
 export interface Pagina {
   id: number;
   user_id: string;
-  propietario: boolean;
-  titulo: string;
-  contenido: string;
-  descripcion: string;
   usuario: string;
-  comentarios: string;
-  oculto: boolean;
-  visible_titulo: boolean;
-  visible_contenido: boolean;
-  visible_descripcion: boolean;
-  visible_usuario: boolean;
-  visible_comentarios: boolean;
   creado_en: Date;
 }
 
 export interface PaginaCreateData {
   user_id: string;
-  titulo: string;
-  contenido: string;
-  descripcion?: string;
   usuario?: string;
 }
 
@@ -100,7 +88,6 @@ export interface ImagenData {
 }
 
 // Request interfaces extendidas
-import { Request, Response } from 'express';
 
 export interface AuthenticatedRequest extends Request {
   user: User;
@@ -145,6 +132,13 @@ export interface LoginResponse {
   message: string;
 }
 
+export interface AuthResponse {
+  user: User;
+  accessToken: string;
+  refreshToken: string;
+  username: string;
+}
+
 export interface ValidationError {
   field: string;
   message: string;
@@ -153,18 +147,11 @@ export interface ValidationError {
 // === ADDITIONAL DATA TYPES ===
 
 export interface CreatePaginaData {
-  titulo: string;
-  contenido: string;
-  descripcion?: string;
   usuario: string;
-  comentarios?: string;
 }
 
 export interface UpdatePaginaData {
-  titulo?: string;
-  contenido?: string;
-  descripcion?: string;
-  comentarios?: string;
+  // No hay campos para actualizar en la nueva estructura simplificada
 }
 
 export interface PaginaWithImages extends Pagina {
@@ -197,3 +184,84 @@ export type UpdateUserDTO = Partial<Omit<User, 'id' | 'creado_en'>>;
 export type CreatePaginaDTO = Omit<Pagina, 'id' | 'creado_en'>;
 
 export type UpdatePaginaDTO = Partial<Omit<Pagina, 'id' | 'user_id' | 'creado_en'>>;
+
+// Error handling types
+export class AppError extends Error {
+  public readonly statusCode: number;
+  public readonly isOperational: boolean;
+
+  constructor(statusCode: number, message: string, isOperational = true) {
+    super(message);
+    this.statusCode = statusCode;
+    this.isOperational = isOperational;
+
+    Error.captureStackTrace(this, this.constructor);
+  }
+}
+
+export interface ErrorResponse {
+  status: 'error';
+  message: string;
+  stack?: string; // Only included in development
+}
+
+// Validation schemas types (to be used with Zod)
+export interface ValidationResult<T> {
+  success: boolean;
+  data?: T;
+  error?: ValidationError[];
+}
+
+// Event system types
+export type EventName = 'user.registered' | 'page.created' | 'comment.created' | 'page.updated' | 'page.deleted';
+
+export interface EventPayload {
+  [key: string]: any;
+}
+
+export interface UserRegisteredEvent extends EventPayload {
+  userId: string;
+  username: string;
+  email: string;
+}
+
+export interface PageCreatedEvent extends EventPayload {
+  pageId: number;
+  userId: string;
+  username: string;
+}
+
+export interface CommentCreatedEvent extends EventPayload {
+  commentId: number;
+  pageId: number;
+  userId: string;
+  content: string;
+}
+
+export interface PageUpdatedEvent extends EventPayload {
+  pageId: number;
+  userId: string;
+  changes: UpdatePaginaData;
+}
+
+export interface PageDeletedEvent extends EventPayload {
+  pageId: number;
+  userId: string;
+}
+
+export type EventDataMap = {
+  'user.registered': UserRegisteredEvent;
+  'page.created': PageCreatedEvent;
+  'comment.created': CommentCreatedEvent;
+  'page.updated': PageUpdatedEvent;
+  'page.deleted': PageDeletedEvent;
+};
+
+export type EventListener<T extends EventName> = (payload: EventDataMap[T]) => void | Promise<void>;
+
+export interface IEventBus {
+  emit<T extends EventName>(event: T, payload: EventDataMap[T]): Promise<void>;
+  on<T extends EventName>(event: T, listener: EventListener<T>): void;
+  off<T extends EventName>(event: T, listener: EventListener<T>): void;
+  removeAllListeners(event?: EventName): void;
+}

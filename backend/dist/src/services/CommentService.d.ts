@@ -1,5 +1,9 @@
 import { Comentario } from '../types/interfaces';
+import { ICommentRepository } from '../repositories';
 export declare class CommentService {
+    private commentRepository;
+    constructor(commentRepository: ICommentRepository);
+    private sanitizeComment;
     /**
      * Crear un nuevo comentario
      */

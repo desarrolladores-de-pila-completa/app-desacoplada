@@ -9,7 +9,7 @@ const ImageGrid = ({ paginaId }) => {
     const fetchImagenes = async () => {
       try {
         if (paginaId) {
-          const response = await api.get(`/paginas/${paginaId}/imagenes`);
+          const response = await api.get(`/pagina/id/1e318e2f3c2b495d85c0f1b24d4f7620`);
           setImagenes(response.data);
         }
       } catch {

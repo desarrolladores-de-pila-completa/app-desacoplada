@@ -9,67 +9,52 @@ describe('App - Feed', () => {
     setupDefaultFetchMocks();
   });
 
-  test('displays feed data when available', async () => {
-    // Mock feed con datos
+  test('displays users data when available', async () => {
+    // Mock usuarios con datos
     createFeedMockWithData(mockFeedData);
-    
+
     render(<App />);
-    
-    // Esperar a que aparezcan los datos del feed
+
+    // Esperar a que aparezcan los datos de usuarios
     await waitFor(() => {
-      expect(screen.getByText('Test Page')).toBeInTheDocument();
-      expect(screen.getByText('Test content')).toBeInTheDocument();
-      expect(screen.getByText('Another Page')).toBeInTheDocument();
-      expect(screen.getByText('More content')).toBeInTheDocument();
+      expect(screen.getByText('testuser')).toBeInTheDocument();
+      expect(screen.getByText('anotheruser')).toBeInTheDocument();
     });
-    
-    // Verificar que aparece la tabla con headers
-    expect(screen.getByText('ID')).toBeInTheDocument();
-    expect(screen.getByText('User ID')).toBeInTheDocument();
-    expect(screen.getByText('Título')).toBeInTheDocument();
-    expect(screen.getByText('Contenido')).toBeInTheDocument();
-    expect(screen.getByText('Creado en')).toBeInTheDocument();
-    expect(screen.getByText('Elementos')).toBeInTheDocument();
+
+    // Verificar que aparece la sección de usuarios
+    expect(screen.getByText('Usuarios registrados')).toBeInTheDocument();
   });
 
-  test('shows empty message when feed is empty', async () => {
+  test('shows empty message when no users available', async () => {
     render(<App />);
-    
-    // Verificar mensaje de feed vacío
+
+    // Verificar mensaje de usuarios vacío
     await waitFor(() => {
-      expect(screen.getByText(/No hay textos completos disponibles en el feed/i)).toBeInTheDocument();
+      expect(screen.getByText(/No hay usuarios registrados/i)).toBeInTheDocument();
     });
-    
-    // Verificar que no aparece la tabla
-    expect(screen.queryByText('ID')).not.toBeInTheDocument();
-    expect(screen.queryByText('User ID')).not.toBeInTheDocument();
   });
 
-  test('displays feed section title', async () => {
+  test('displays users section title', async () => {
     render(<App />);
-    
+
     // Verificar título de la sección
-    expect(screen.getByText(/Feed público/i)).toBeInTheDocument();
+    expect(screen.getByText(/Usuarios registrados/i)).toBeInTheDocument();
   });
 
-  test('renders feed table with correct data structure', async () => {
+  test('renders users list with correct data structure', async () => {
     createFeedMockWithData([mockFeedData[0]]); // Solo un elemento para testing
-    
+
     render(<App />);
-    
+
     await waitFor(() => {
-      // Verificar datos específicos del primer elemento
-      expect(screen.getByText('Test Page')).toBeInTheDocument(); // Título
-      expect(screen.getByText('Test content')).toBeInTheDocument(); // Contenido
-      expect(screen.getByText('2023-01-01')).toBeInTheDocument(); // Fecha
-      
-      // Verificar que la tabla aparece con el header
-      expect(screen.getByText('ID')).toBeInTheDocument();
+      // Verificar datos específicos del primer usuario
+      expect(screen.getByText('testuser')).toBeInTheDocument(); // Username
+      expect(screen.getByText('1/1/2023')).toBeInTheDocument(); // Fecha formateada
     });
   });
 
-  test('handles feed loading error gracefully', async () => {
-    // Mock error en la carga del feed
+  test('handles users loading error gracefully', async () => {
+    // Mock error en la carga de usuarios
     window.fetch.mockImplementation((url) => {
       if (url.includes('/csrf-token')) {
         return Promise.resolve({
@@ -77,7 +62,7 @@ describe('App - Feed', () => {
           json: () => Promise.resolve({ csrfToken: 'test-csrf-token' })
         });
       }
-      if (url.includes('/paginas')) {
+      if (url.includes('/api/auth/users')) {
         return Promise.reject(new Error('Network error'));
       }
       return Promise.resolve({
@@ -85,33 +70,37 @@ describe('App - Feed', () => {
         json: () => Promise.resolve({ message: 'Success' })
       });
     });
-    
+
     render(<App />);
-    
-    // Verificar que aparece mensaje de feed vacío (el comportamiento por defecto al fallar)
+
+    // Verificar que aparece mensaje de error
     await waitFor(() => {
-      expect(screen.getByText(/No hay textos completos disponibles en el feed/i)).toBeInTheDocument();
+      expect(screen.getByText(/Error: Network error/i)).toBeInTheDocument();
     });
   });
 
-  test('displays elements field correctly when present', async () => {
-    createFeedMockWithData([mockFeedData[1]]); // Segundo elemento tiene elementos JSON
-    
+  test('displays user profile photo when available', async () => {
+    const userWithPhoto = [{
+      ...mockFeedData[0],
+      foto_perfil: Buffer.from('fake-image-data')
+    }];
+    createFeedMockWithData(userWithPhoto);
+
     render(<App />);
-    
+
     await waitFor(() => {
-      // Verificar que los elementos JSON se muestran
-      expect(screen.getByText(/test.*data/i)).toBeInTheDocument();
+      // Verificar que se muestra el enlace al perfil del usuario
+      expect(screen.getByText('testuser')).toBeInTheDocument();
     });
   });
 
-  test('calls API to load feed on component mount', async () => {
+  test('calls API to load users on component mount', async () => {
     render(<App />);
-    
-    // Verificar que se hizo la llamada a la API del feed
+
+    // Verificar que se hizo la llamada a la API de usuarios
     await waitFor(() => {
       expect(window.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/paginas'),
+        expect.stringContaining('/api/auth/users'),
         expect.objectContaining({
           method: 'GET',
           credentials: 'include'
@@ -120,12 +109,12 @@ describe('App - Feed', () => {
     });
   });
 
-  test('shows feed loading message initially', async () => {
+  test('shows users loading message initially', async () => {
     render(<App />);
-    
+
     // Verificar mensaje inicial de carga
     await waitFor(() => {
-      expect(screen.getByText(/Cargando feed/i)).toBeInTheDocument();
+      expect(screen.getByText(/Cargando usuarios/i)).toBeInTheDocument();
     });
   });
 });

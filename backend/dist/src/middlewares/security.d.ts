@@ -1,8 +1,4 @@
 /**
- * Configuración de Helmet para headers de seguridad
- */
-export declare const helmetConfig: any;
-/**
  * Rate limiting general para la API
  */
 export declare const generalRateLimit: any;
@@ -43,6 +39,18 @@ export declare function additionalSecurityHeaders(req: any, res: any, next: any)
  */
 export declare function botProtection(req: any, res: any, next: any): void;
 /**
+ * Middleware para validación de archivos subidos
+ */
+export declare function validateFileUpload(req: any, res: any, next: any): void;
+/**
+ * Función para sanitizar datos sensibles en logs
+ */
+export declare function sanitizeForLogging(data: any): any;
+/**
+ * Middleware para logging detallado de headers CORS
+ */
+export declare function corsHeaderLogger(req: any, res: any, next: any): void;
+/**
  * Configuración de CORS segura
  */
 export declare const corsOptions: {
@@ -52,4 +60,8 @@ export declare const corsOptions: {
     methods: string[];
     allowedHeaders: string[];
 };
+/**
+ * Función para validar diagnóstico CORS con logging detallado
+ */
+export declare function corsDiagnosticLogger(req: any, res: any, next: any): void;
 //# sourceMappingURL=security.d.ts.map

@@ -1,20 +1,67 @@
-export declare function obtenerPaginaPorUserId(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
-export declare function obtenerPaginaPorUsername(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
-export declare function consultarVisibilidadCampos(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
-export declare function actualizarVisibilidadCampos(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
-export declare function consultarPropietario(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
-export declare function consultarDescripcion(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
-export declare function consultarUsuarioPagina(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
-export declare function consultarComentariosPagina(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
-export declare function actualizarPropietario(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
-export declare function actualizarDescripcion(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
-export declare function actualizarUsuarioPagina(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
-export declare function actualizarComentariosPagina(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
 import { Request, Response } from "express";
-export declare function actualizarVisibilidad(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
-export declare function consultarVisibilidad(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
-export declare function obtenerPagina(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
-export declare function eliminarUsuarioTotal(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
+export declare function obtenerPaginaPorUserId(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
+export declare function paginaUnificadaPorUsername(req: Request, res: Response): Promise<void | Response<any, Record<string, any>>>;
+export declare function obtenerPaginaPorUsername(req: Request, res: Response): Promise<void | Response<any, Record<string, any>>>;
+export declare function obtenerPaginasPublicasPorUsuario(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
+export declare function obtenerPaginaPorUsernameYNumero(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
+/**
+ * @swagger
+ * /api/pagina/usuario/{id}:
+ *   get:
+ *     summary: Consultar usuario de página
+ *     tags: [Pagina]
+ */
+export declare function consultarUsuarioPagina(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
+/**
+ * @swagger
+ * /api/pagina/actualizar-usuario/{id}:
+ *   put:
+ *     summary: Actualizar usuario de página
+ *     tags: [Pagina]
+ */
+export declare function actualizarUsuarioPagina(req: RequestWithValidatedData, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
+/**
+ * @swagger
+ * /api/pagina/{username}/foto:
+ *   put:
+ *     summary: Actualizar foto de perfil por username
+ *     tags: [Pagina]
+ */
+export declare function actualizarFotoPorUsername(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
+/**
+ * @swagger
+ * /api/pagina/{username}/nombre:
+ *   put:
+ *     summary: Actualizar nombre de usuario por username
+ *     tags: [Pagina]
+ */
+export declare function actualizarNombrePorUsername(req: RequestWithValidatedData, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
+interface RequestWithValidatedData extends Request {
+    validatedData?: any;
+}
+/**
+ * @swagger
+ * /api/pagina/publicas:
+ *   get:
+ *     summary: Obtener páginas públicas
+ *     tags: [Pagina]
+ */
 export declare function paginasPublicas(req: Request, res: Response): Promise<void>;
-export declare function guardarComentario(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
+/**
+ * @swagger
+ * /api/pagina/comentario:
+ *   post:
+ *     summary: Guardar comentario en la página
+ *     tags: [Pagina]
+ */
+export declare function guardarComentario(req: RequestWithValidatedData, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
+/**
+ * @swagger
+ * /api/pagina/comentario/{id}/{commentId}:
+ *   delete:
+ *     summary: Eliminar comentario de la página
+ *     tags: [Pagina]
+ */
+export declare function eliminarComentario(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
+export {};
 //# sourceMappingURL=paginaController.d.ts.map

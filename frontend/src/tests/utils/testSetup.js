@@ -3,7 +3,7 @@
 // Función para configurar mocks por defecto
 export const setupDefaultFetchMocks = () => {
   window.fetch.mockClear();
-  
+
   // Mock por defecto para CSRF token
   window.fetch.mockImplementation((url) => {
     if (url.includes('/csrf-token')) {
@@ -12,7 +12,7 @@ export const setupDefaultFetchMocks = () => {
         json: () => Promise.resolve({ csrfToken: 'test-csrf-token' })
       });
     }
-    if (url.includes('/paginas')) {
+    if (url.includes('/api/auth/users')) {
       return Promise.resolve({
         ok: true,
         json: () => Promise.resolve([])
@@ -25,8 +25,8 @@ export const setupDefaultFetchMocks = () => {
   });
 };
 
-// Función para crear mock de feed con datos
-export const createFeedMockWithData = (feedData) => {
+// Función para crear mock de usuarios con datos
+export const createFeedMockWithData = (usersData) => {
   fetch.mockImplementation((url) => {
     if (url.includes('/csrf-token')) {
       return Promise.resolve({
@@ -34,10 +34,10 @@ export const createFeedMockWithData = (feedData) => {
         json: () => Promise.resolve({ csrfToken: 'test-csrf-token' })
       });
     }
-    if (url.includes('/paginas')) {
+    if (url.includes('/api/auth/users')) {
       return Promise.resolve({
         ok: true,
-        json: () => Promise.resolve(feedData)
+        json: () => Promise.resolve(usersData)
       });
     }
     return Promise.resolve({
@@ -71,21 +71,21 @@ export const createApiErrorMock = (endpoint, errorMessage) => {
 
 // Datos de prueba comunes
 export const mockFeedData = [
-  { 
-    id: 1, 
-    user_id: 1, 
-    titulo: 'Test Page', 
-    contenido: 'Test content', 
-    creado_en: '2023-01-01', 
-    elementos: null 
+  {
+    id: '1',
+    email: 'test@example.com',
+    username: 'testuser',
+    display_name: 'Test User',
+    foto_perfil: null,
+    creado_en: '2023-01-01T00:00:00.000Z'
   },
-  { 
-    id: 2, 
-    user_id: 2, 
-    titulo: 'Another Page', 
-    contenido: 'More content', 
-    creado_en: '2023-01-02', 
-    elementos: '{"test": "data"}' 
+  {
+    id: '2',
+    email: 'another@example.com',
+    username: 'anotheruser',
+    display_name: 'Another User',
+    foto_perfil: null,
+    creado_en: '2023-01-02T00:00:00.000Z'
   }
 ];
 

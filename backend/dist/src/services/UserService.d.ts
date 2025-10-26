@@ -1,5 +1,12 @@
 import { User, UserCreateData } from '../types/interfaces';
+import { IUserRepository, IPageRepository } from '../repositories';
 export declare class UserService {
+    private userRepository;
+    private pageRepository;
+    constructor(userRepository: IUserRepository, pageRepository: IPageRepository);
+    /**
+     * Crear un nuevo usuario con página personal
+     */
     /**
      * Crear un nuevo usuario con página personal
      */
@@ -23,8 +30,12 @@ export declare class UserService {
         password: string;
     }) | null>;
     /**
-     * Actualizar foto de perfil
+     * Obtener todos los usuarios
      */
+    getAllUsers(): Promise<User[]>;
+    /**
+       * Actualizar foto de perfil
+       */
     updateProfilePhoto(userId: string, photoBuffer: Buffer): Promise<void>;
     /**
      * Actualizar username

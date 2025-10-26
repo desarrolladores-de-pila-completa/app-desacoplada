@@ -8,7 +8,6 @@
     "start": "npm run build && concurrently \"npm run start:backend\" \"npm run dev:frontend\"",
     "start:backend": "npm run build && npm run serve:backend",
     "serve:backend": "nodemon --watch backend/src --ext ts,json --exec \"npm run build && node backend/dist/src/index.js\"",
-    "start:frontend": "cd frontend && npm run dev",
     "dev:frontend": "cd frontend && npm run dev",
     "test:backend": "jest --config jest.config.js",
     "test:frontend": "cd frontend/app-desacoplada-react && npm test",
@@ -30,12 +29,13 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.0.0",
     "@types/supertest": "^6.0.3",
+    "@types/ws": "^8.18.1",
     "concurrently": "^9.2.1",
     "jest": "^30.2.0",
     "nodemon": "^3.1.10",
     "supertest": "^7.1.4",
     "ts-jest": "^29.4.4",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.3"
   },
   "dependencies": {
     "@react-navigation/native": "^7.1.18",
@@ -57,9 +57,5 @@
     "react": "^19.1.0",
     "react-native-safe-area-context": "^5.6.1",
     "react-native-screens": "^4.16.0"
-  },
-  "workspaces": [
-    "backend",
-    "frontend"
-  ]
+  }
 }

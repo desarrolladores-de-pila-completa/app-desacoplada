@@ -1,148 +1,129 @@
-import { 
-  QueryResult, 
-  Pagina, 
-  CreatePaginaData, 
-  UpdatePaginaData, 
-  PaginaWithImages,
-  ImagenData,
-  FeedEntry 
-} from '../types/interfaces';
-const { getPool } = require("../middlewares/db");
+import { Pagina, CreatePaginaData, UpdatePaginaData, PaginaWithImages, ImagenData, IEventBus } from '../types/interfaces';
+import { IPageRepository } from '../repositories';
+import { cacheService } from './CacheService';
+import winston from '../utils/logger';
 
 export class PageService {
+  constructor(
+    private pageRepository: IPageRepository,
+    private eventBus: IEventBus
+  ) {}
   /**
    * Obtener página por ID con imágenes
    */
+  /**
+   * Obtiene una página por ID con imágenes.
+   */
   async getPageWithImages(pageId: number): Promise<PaginaWithImages | null> {
-    // Obtener datos de la página
-    const [pageRows]: QueryResult<Pagina> = await getPool().query(
-      "SELECT * FROM paginas WHERE id = ?",
-      [pageId]
-    );
+    winston.info('PageService.getPageWithImages', { pageId });
+    const cacheKey = `page:withImages:${pageId}`;
+    const cached = cacheService.get<PaginaWithImages>(cacheKey);
+    if (cached) return cached;
 
-    if (pageRows.length === 0) return null;
-    const pagina = pageRows[0];
-
-    // Obtener imágenes de la página
-    const [imageRows]: QueryResult<ImagenData> = await getPool().query(
-      "SELECT * FROM imagenes WHERE pagina_id = ? ORDER BY creado_en DESC",
-      [pageId]
-    );
-
-    return {
-      ...pagina,
-      imagenes: imageRows
-    } as PaginaWithImages;
+    const page = await this.pageRepository.findWithImages(pageId);
+    if (page) {
+      cacheService.set(cacheKey, page);
+    }
+    return page;
   }
 
   /**
-   * Obtener página por usuario (username)
-   */
+    * Obtener página por usuario (username)
+    */
   async getPageByUsername(username: string): Promise<Pagina | null> {
-    const [rows]: QueryResult<Pagina> = await getPool().query(
-      `SELECT p.* FROM paginas p 
-       INNER JOIN users u ON p.user_id = u.id 
-       WHERE u.username = ?`,
-      [username]
-    );
-    return rows.length > 0 ? (rows[0] ?? null) : null;
+    const cacheKey = `page:byUsername:${username}`;
+    const cached = cacheService.get<Pagina>(cacheKey);
+    if (cached) return cached;
+
+    const page = await this.pageRepository.findByUsername(username);
+    if (page) {
+      cacheService.set(cacheKey, page);
+    }
+    return page;
+  }
+
+  /**
+    * Obtener página por usuario y número de página
+    */
+  async getPageByUsernameAndPageNumber(username: string, pageNumber: number): Promise<Pagina | null> {
+    const cacheKey = `page:byUsernameAndPage:${username}:${pageNumber}`;
+    const cached = cacheService.get<Pagina>(cacheKey);
+    if (cached) return cached;
+
+    const page = await this.pageRepository.findByUsernameAndPageNumber(username, pageNumber);
+    if (page) {
+      cacheService.set(cacheKey, page);
+    }
+    return page;
   }
 
   /**
    * Obtener todas las páginas públicas con paginación
    */
   async getPublicPages(limit: number = 20, offset: number = 0): Promise<Pagina[]> {
-    const [rows]: QueryResult<Pagina> = await getPool().query(
-      "SELECT * FROM paginas WHERE descripcion = 'visible' ORDER BY creado_en DESC LIMIT ? OFFSET ?",
-      [limit, offset]
-    );
-    return rows;
+    const cacheKey = `page:public:${limit}:${offset}`;
+    const cached = cacheService.get<Pagina[]>(cacheKey);
+    if (cached) return cached;
+
+    const pages = await this.pageRepository.findPublic(limit, offset);
+    cacheService.set(cacheKey, pages);
+    return pages;
   }
 
   /**
    * Crear nueva página
    */
-  async createPage(userId: string, pageData: CreatePaginaData): Promise<number> {
-    const { titulo, contenido, descripcion, usuario, comentarios } = pageData;
+   async createPage(userId: string, pageData: CreatePaginaData): Promise<number> {
+     const pageId = await this.pageRepository.create(userId, pageData);
 
-    const [result] = await getPool().query(
-      "INSERT INTO paginas (user_id, propietario, titulo, contenido, descripcion, usuario, comentarios) VALUES (?, 1, ?, ?, ?, ?, ?)",
-      [userId, titulo, contenido, descripcion || 'visible', usuario, comentarios || '']
-    );
+     // Emitir evento de página creada
+     try {
+       await this.eventBus.emit('page.created', {
+         pageId,
+         userId,
+         username: pageData.usuario,
+       });
+     } catch (error) {
+       console.error('Error emitiendo evento page.created:', error);
+       // No fallar la creación por esto
+     }
 
-    return (result as any).insertId;
-  }
+     return pageId;
+   }
 
   /**
    * Actualizar página existente
    */
   async updatePage(pageId: number, updateData: UpdatePaginaData): Promise<void> {
-    const fields: string[] = [];
-    const values: any[] = [];
+    await this.pageRepository.update(pageId, updateData);
 
-    // Construir query dinámicamente
-    if (updateData.titulo !== undefined) {
-      fields.push('titulo = ?');
-      values.push(updateData.titulo);
-    }
-    if (updateData.contenido !== undefined) {
-      fields.push('contenido = ?');
-      values.push(updateData.contenido);
-    }
-    if (updateData.descripcion !== undefined) {
-      fields.push('descripcion = ?');
-      values.push(updateData.descripcion);
-    }
-    if (updateData.comentarios !== undefined) {
-      fields.push('comentarios = ?');
-      values.push(updateData.comentarios);
-    }
+    // Invalidar caché de la página
+    cacheService.invalidatePattern(`page:withImages:${pageId}`);
+    cacheService.invalidatePattern(`page:byUsername:`); // Invalidar todas las búsquedas por username, ya que podría cambiar
 
-    if (fields.length === 0) {
-      throw new Error("No hay campos para actualizar");
-    }
-
-    values.push(pageId);
-    
-    await getPool().query(
-      `UPDATE paginas SET ${fields.join(', ')} WHERE id = ?`,
-      values
-    );
+    // Nota: Las páginas ya no tienen contenido propio, solo campos básicos
   }
 
   /**
    * Eliminar página y todas sus imágenes
    */
   async deletePage(pageId: number): Promise<void> {
-    // Eliminar imágenes primero (foreign key)
-    await getPool().query("DELETE FROM imagenes WHERE pagina_id = ?", [pageId]);
-    
-    // Eliminar comentarios de la página
-    await getPool().query(
-      "DELETE FROM comentarios WHERE pagina_id = ?", 
-      [pageId]
-    );
-    
-    // Eliminar entrada del feed
-    await getPool().query("DELETE FROM feed WHERE pagina_id = ?", [pageId]);
-    
-    // Eliminar página
-    await getPool().query("DELETE FROM paginas WHERE id = ?", [pageId]);
+    await this.pageRepository.delete(pageId);
+    // Invalidar caché de la página
+    cacheService.invalidatePattern(`page:withImages:${pageId}`);
+    cacheService.invalidatePattern(`page:byUsername:`); // Invalidar búsquedas por username
+    cacheService.invalidatePattern(`page:public:`); // Invalidar listas públicas
   }
 
   /**
    * Agregar imagen a una página
    */
   async addImageToPage(pageId: number, imageBuffer: Buffer, mimeType: string): Promise<number> {
-    const [result] = await getPool().query(
-      "INSERT INTO imagenes (pagina_id, imagen_buffer, mime_type) VALUES (?, ?, ?)",
-      [pageId, imageBuffer, mimeType]
-    );
+    const imageId = await this.pageRepository.addImage(pageId, imageBuffer, mimeType);
 
-    const imageId = (result as any).insertId;
+    // Invalidar caché de la página
+    cacheService.invalidatePattern(`page:withImages:${pageId}`);
 
-    // Actualizar el feed si es necesario
-    await this.updatePageInFeed(pageId);
 
     return imageId;
   }
@@ -151,113 +132,50 @@ export class PageService {
    * Eliminar imagen específica
    */
   async removeImage(imageId: number, pageId: number): Promise<void> {
-    await getPool().query(
-      "DELETE FROM imagenes WHERE id = ? AND pagina_id = ?",
-      [imageId, pageId]
-    );
+    await this.pageRepository.removeImage(imageId, pageId);
 
-    // Actualizar el feed
-    await this.updatePageInFeed(pageId);
+    // Invalidar caché de la página
+    cacheService.invalidatePattern(`page:withImages:${pageId}`);
+
+    // Nota: Las páginas ya no tienen contenido propio para actualizar en el feed
   }
 
   /**
    * Verificar si una página existe
    */
   async pageExists(pageId: number): Promise<boolean> {
-    const [rows]: QueryResult<{ count: number }> = await getPool().query(
-      "SELECT COUNT(*) as count FROM paginas WHERE id = ?",
-      [pageId]
-    );
-    return (rows[0]?.count ?? 0) > 0;
+    return await this.pageRepository.exists(pageId);
   }
 
   /**
    * Obtener el propietario de una página
    */
   async getPageOwner(pageId: number): Promise<string | null> {
-    const [rows]: QueryResult<{ user_id: string }> = await getPool().query(
-      "SELECT user_id FROM paginas WHERE id = ?",
-      [pageId]
-    );
-    return rows.length > 0 ? (rows[0]?.user_id ?? null) : null;
-  }
-
-  /**
-   * Actualizar página en el feed (privado)
-   */
-  private async updatePageInFeed(pageId: number): Promise<void> {
-    // Obtener datos de la página
-    const [pageRows]: QueryResult<Pagina> = await getPool().query(
-      "SELECT * FROM paginas WHERE id = ?",
-      [pageId]
-    );
-
-    if (pageRows.length === 0) return;
-    const pagina = pageRows[0];
-
-    // Verificar si ya existe en el feed
-    const [feedRows]: QueryResult<FeedEntry> = await getPool().query(
-      "SELECT id FROM feed WHERE pagina_id = ?",
-      [pageId]
-    );
-
-    if (feedRows.length > 0) {
-      // Actualizar entrada existente
-      await getPool().query(
-        "UPDATE feed SET titulo = ?, contenido = ?, actualizado_en = NOW() WHERE pagina_id = ?",
-        [pagina?.titulo, pagina?.contenido, pageId]
-      );
-    } else {
-      // Crear nueva entrada en el feed
-      await getPool().query(
-        "INSERT INTO feed (user_id, pagina_id, titulo, contenido) VALUES (?, ?, ?, ?)",
-        [pagina?.user_id, pageId, pagina?.titulo, pagina?.contenido]
-      );
-    }
+    return await this.pageRepository.getOwner(pageId);
   }
 
   /**
    * Cambiar visibilidad de página
    */
   async togglePageVisibility(pageId: number): Promise<string> {
-    const [rows]: QueryResult<{ descripcion: string }> = await getPool().query(
-      "SELECT descripcion FROM paginas WHERE id = ?",
-      [pageId]
-    );
-
-    if (rows.length === 0) {
-      throw new Error("Página no encontrada");
-    }
-
-    const currentVisibility = rows[0]?.descripcion ?? 'visible';
-    const newVisibility = currentVisibility === 'visible' ? 'oculta' : 'visible';
-
-    await getPool().query(
-      "UPDATE paginas SET descripcion = ? WHERE id = ?",
-      [newVisibility, pageId]
-    );
-
-    return newVisibility;
+    const result = await this.pageRepository.toggleVisibility(pageId);
+    // Invalidar caché de la página y listas públicas
+    cacheService.invalidatePattern(`page:withImages:${pageId}`);
+    cacheService.invalidatePattern(`page:public:`);
+    return result;
   }
 
   /**
-   * Obtener estadísticas de página
-   */
+    * Obtener estadísticas de página
+    */
   async getPageStats(pageId: number): Promise<{ comentarios: number; imagenes: number; visitas: number }> {
-    const [comentariosRows]: QueryResult<{ count: number }> = await getPool().query(
-      "SELECT COUNT(*) as count FROM comentarios WHERE pagina_id = ?",
-      [pageId]
-    );
+    return await this.pageRepository.getStats(pageId);
+  }
 
-    const [imagenesRows]: QueryResult<{ count: number }> = await getPool().query(
-      "SELECT COUNT(*) as count FROM imagenes WHERE pagina_id = ?",
-      [pageId]
-    );
-
-    return {
-      comentarios: comentariosRows[0]?.count ?? 0,
-      imagenes: imagenesRows[0]?.count ?? 0,
-      visitas: 0 // TODO: Implementar contador de visitas
-    };
+  /**
+    * Obtener el número de página de una página específica
+    */
+  async getPageNumber(pageId: number): Promise<number | null> {
+    return await this.pageRepository.getPageNumber(pageId);
   }
 }

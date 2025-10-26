@@ -3,6 +3,7 @@ import { View, Text, FlatList, ActivityIndicator, StyleSheet, Image, Linking } f
 import { useNavigation } from '@react-navigation/native';
 import api from '../utils/api';
 import Toast from './Toast';
+import GlobalChat from './GlobalChat';
 
 const Feed = () => {
   const navigation = useNavigation();
@@ -23,7 +24,15 @@ const Feed = () => {
       links.push({ href: match[1], text: match[2] });
     }
     // Quitar imagen y enlaces del texto
-    let textOnly = item.mensaje?.replace(/<img[^>]*>/g, '').replace(linkRegex, '').replace(/<[^>]+>/g, '');
+    let textOnlyRaw = item.mensaje?.replace(/<img[^>]*>/g, '').replace(linkRegex, '');
+    // Repeatedly strip all remaining tags (e.g. <script>, edge cases) until none remain
+    let previousText;
+    let textOnly = textOnlyRaw;
+    do {
+      previousText = textOnly;
+      textOnly = textOnly.replace(/<[^>]+>/g, '');
+    } while (textOnly !== previousText);
+
     return (
       <View style={styles.post}>
         {imgMatch && (
@@ -92,12 +101,12 @@ const Feed = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Feed</Text>
       <FlatList
         data={posts}
         keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
         renderItem={renderFeedItem}
       />
+      <GlobalChat />
       {toast.visible && (
         <Toast
           visible={toast.visible}

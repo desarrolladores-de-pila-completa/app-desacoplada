@@ -1,39 +1,17 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.corsOptions = exports.commentRateLimit = exports.uploadRateLimit = exports.registerRateLimit = exports.authRateLimit = exports.generalRateLimit = exports.helmetConfig = void 0;
+exports.corsOptions = exports.commentRateLimit = exports.uploadRateLimit = exports.registerRateLimit = exports.authRateLimit = exports.generalRateLimit = void 0;
 exports.sanitizeInput = sanitizeInput;
 exports.securityLogger = securityLogger;
 exports.validateContentType = validateContentType;
 exports.additionalSecurityHeaders = additionalSecurityHeaders;
 exports.botProtection = botProtection;
-const helmet = require('helmet');
+exports.validateFileUpload = validateFileUpload;
+exports.sanitizeForLogging = sanitizeForLogging;
+exports.corsHeaderLogger = corsHeaderLogger;
+exports.corsDiagnosticLogger = corsDiagnosticLogger;
 const rateLimit = require('express-rate-limit');
 const { RateLimitError } = require('../errors/AppErrors');
-/**
- * Configuración de Helmet para headers de seguridad
- */
-exports.helmetConfig = helmet({
-    contentSecurityPolicy: {
-        directives: {
-            defaultSrc: ["'self'"],
-            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-            fontSrc: ["'self'", "https://fonts.gstatic.com"],
-            imgSrc: ["'self'", "data:", "https:"],
-            scriptSrc: ["'self'"],
-            connectSrc: ["'self'"],
-            frameSrc: ["'none'"],
-            objectSrc: ["'none'"],
-            mediaSrc: ["'self'"],
-            workerSrc: ["'none'"],
-        },
-    },
-    crossOriginEmbedderPolicy: false, // Permitir imágenes de diferentes orígenes
-    hsts: {
-        maxAge: 31536000,
-        includeSubDomains: true,
-        preload: true
-    }
-});
 /**
  * Rate limiting general para la API
  */
@@ -229,19 +207,21 @@ function validateContentType(req, res, next) {
  * Middleware para agregar headers de seguridad adicionales
  */
 function additionalSecurityHeaders(req, res, next) {
-    // Evitar que la página sea embebida en frames
-    res.setHeader('X-Frame-Options', 'DENY');
+    // Evitar que la página sea embebida en frames (más permisivo para desarrollo)
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
     // Evitar MIME type sniffing
     res.setHeader('X-Content-Type-Options', 'nosniff');
     // Habilitar protección XSS del navegador
     res.setHeader('X-XSS-Protection', '1; mode=block');
-    // Referrer Policy para controlar información enviada en referrers
+    // Referrer Policy para controlar información enviada en referrers (más permisivo para desarrollo)
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-    // Permissions Policy para controlar APIs del navegador
-    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-    // Cross-Origin-Opener-Policy
-    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
-    // Cross-Origin-Resource-Policy
+    // Permissions Policy para controlar APIs del navegador (más permisivo para desarrollo)
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), interest-cohort=()');
+    // Cross-Origin-Opener-Policy (más permisivo para desarrollo)
+    if (process.env.NODE_ENV === 'production') {
+        res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+    }
+    // Cross-Origin-Resource-Policy (más permisivo para desarrollo)
     res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
     next();
 }
@@ -250,6 +230,12 @@ function additionalSecurityHeaders(req, res, next) {
  */
 function botProtection(req, res, next) {
     const userAgent = req.get('User-Agent') || '';
+    console.log('=== BOT PROTECTION DEBUG ===', {
+        userAgent,
+        url: req.originalUrl,
+        ip: req.ip,
+        context: 'bot-protection'
+    });
     // Lista de user agents sospechosos
     const maliciousBots = [
         /sqlmap/i,
@@ -266,6 +252,7 @@ function botProtection(req, res, next) {
             ip: req.ip,
             userAgent,
             url: req.originalUrl,
+            context: 'bot-protection'
         });
         return res.status(403).json({
             success: false,
@@ -273,6 +260,148 @@ function botProtection(req, res, next) {
             code: 'BOT_BLOCKED'
         });
     }
+    console.log('=== BOT PROTECTION PASSED ===', {
+        userAgent,
+        url: req.originalUrl,
+        context: 'bot-protection'
+    });
+    next();
+}
+/**
+ * Middleware para validación de archivos subidos
+ */
+function validateFileUpload(req, res, next) {
+    const file = req.file;
+    if (!file) {
+        return next(); // No hay archivo, continuar
+    }
+    // Tipos MIME permitidos
+    const allowedTypes = [
+        'image/jpeg',
+        'image/png',
+        'image/gif',
+        'image/webp'
+    ];
+    // Tamaño máximo (5MB)
+    const maxSize = 5 * 1024 * 1024;
+    // Validar tipo MIME
+    if (!allowedTypes.includes(file.mimetype)) {
+        return res.status(400).json({
+            success: false,
+            error: 'Tipo de archivo no permitido. Solo se permiten imágenes JPEG, PNG, GIF y WebP.',
+            code: 'INVALID_FILE_TYPE'
+        });
+    }
+    // Validar tamaño
+    if (file.size > maxSize) {
+        return res.status(400).json({
+            success: false,
+            error: 'El archivo es demasiado grande. Máximo 5MB.',
+            code: 'FILE_TOO_LARGE'
+        });
+    }
+    // Validar que sea realmente una imagen (magic bytes)
+    const buffer = file.buffer;
+    if (buffer) {
+        const magicBytes = buffer.slice(0, 4);
+        const isValidImage = validateImageMagicBytes(magicBytes, file.mimetype);
+        if (!isValidImage) {
+            return res.status(400).json({
+                success: false,
+                error: 'El archivo no es una imagen válida.',
+                code: 'INVALID_IMAGE_FILE'
+            });
+        }
+    }
+    next();
+}
+/**
+ * Validar magic bytes de imágenes
+ */
+function validateImageMagicBytes(magicBytes, mimetype) {
+    const signatures = {
+        'image/jpeg': [[0xFF, 0xD8, 0xFF]],
+        'image/png': [[0x89, 0x50, 0x4E, 0x47]],
+        'image/gif': [[0x47, 0x49, 0x46, 0x38]],
+        'image/webp': [[0x52, 0x49, 0x46, 0x46], [0x57, 0x45, 0x42, 0x50]]
+    };
+    const expectedSignatures = signatures[mimetype];
+    if (!expectedSignatures)
+        return false;
+    return expectedSignatures.some(signature => {
+        return signature.every((byte, index) => magicBytes[index] === byte);
+    });
+}
+/**
+ * Función para sanitizar datos sensibles en logs
+ */
+function sanitizeForLogging(data) {
+    const sensitive = ['password', 'token', 'secret', 'authorization', 'cookie'];
+    const sanitizeObject = (obj) => {
+        if (typeof obj === 'string') {
+            // Ocultar datos que parecen tokens o contraseñas
+            if (obj.length > 10 && /^[a-zA-Z0-9+/=.-]+$/.test(obj)) {
+                return '[REDACTED]';
+            }
+            return obj;
+        }
+        if (Array.isArray(obj)) {
+            return obj.map(sanitizeObject);
+        }
+        if (obj && typeof obj === 'object') {
+            const sanitized = {};
+            for (const [key, value] of Object.entries(obj)) {
+                if (sensitive.some(s => key.toLowerCase().includes(s))) {
+                    sanitized[key] = '[REDACTED]';
+                }
+                else {
+                    sanitized[key] = sanitizeObject(value);
+                }
+            }
+            return sanitized;
+        }
+        return obj;
+    };
+    return sanitizeObject(data);
+}
+/**
+ * Middleware para logging detallado de headers CORS
+ */
+function corsHeaderLogger(req, res, next) {
+    console.log('=== CORS HEADERS DEBUG ===', {
+        url: req.originalUrl,
+        method: req.method,
+        origin: req.get('Origin'),
+        requestHeaders: req.headers,
+        context: 'cors-headers-debug',
+        timestamp: new Date().toISOString()
+    });
+    // Log específico para detectar problemas con header 'expires'
+    if (req.headers['expires'] || req.headers['Expires']) {
+        console.warn('🚨 HEADER EXPIRES DETECTADO EN REQUEST 🚨', {
+            url: req.originalUrl,
+            method: req.method,
+            expiresHeader: req.headers['expires'] || req.headers['Expires'],
+            allHeaders: req.headers,
+            context: 'expires-header-debug',
+            timestamp: new Date().toISOString()
+        });
+    }
+    // Interceptar respuesta para ver headers de respuesta
+    const originalSetHeader = res.setHeader;
+    res.setHeader = function (name, value) {
+        if (name.toLowerCase() === 'expires') {
+            console.warn('🚨 HEADER EXPIRES ESTABLECIDO EN RESPUESTA 🚨', {
+                url: req.originalUrl,
+                method: req.method,
+                headerName: name,
+                headerValue: value,
+                context: 'expires-response-debug',
+                timestamp: new Date().toISOString()
+            });
+        }
+        return originalSetHeader.call(this, name, value);
+    };
     next();
 }
 /**
@@ -285,15 +414,30 @@ exports.corsOptions = {
             'https://yposteriormente.com',
             'http://localhost:3000',
             'http://localhost:5173', // Vite dev server
+            'http://127.0.0.1:5173', // Vite dev server (127.0.0.1)
+            'http://localhost:5174', // Vite dev server (actual port)
+            'http://127.0.0.1:5174', // Vite dev server (127.0.0.1, actual port)
+            'http://127.0.0.1:5500', // Live Server
+            'http://localhost:5500', // Live Server
+            'http://10.0.2.2:3000', // Emulador Android
             ...(process.env.ALLOWED_ORIGINS?.split(',') || [])
         ];
+        console.log('=== CORS ORIGIN DEBUG ===', {
+            origin,
+            allowedOrigins,
+            context: 'cors-origin-debug',
+            timestamp: new Date().toISOString()
+        });
         // Permitir requests sin origin (como Postman)
-        if (!origin)
-            return callback(null, true);
-        if (allowedOrigins.includes(origin)) {
+        if (!origin) {
+            console.log('CORS: Permitiendo request sin origin');
             return callback(null, true);
         }
-        console.warn(`CORS blocked origin: ${origin}`);
+        if (allowedOrigins.includes(origin)) {
+            console.log(`CORS: Origin permitido: ${origin}`);
+            return callback(null, true);
+        }
+        console.warn(`🚨 CORS blocked origin: ${origin} 🚨`);
         callback(new Error('No permitido por CORS'));
     },
     credentials: true,
@@ -305,11 +449,42 @@ exports.corsOptions = {
         'Content-Type',
         'Accept',
         'Authorization',
-        'X-API-Key'
+        'X-API-Key',
+        'x-csrf-token',
+        'expires',
+        'Expires',
+        'cache-control',
+        'Cache-Control'
     ]
 };
+/**
+ * Función para validar diagnóstico CORS con logging detallado
+ */
+function corsDiagnosticLogger(req, res, next) {
+    console.log('=== CORS DIAGNOSTIC DEBUG ===', {
+        url: req.originalUrl,
+        method: req.method,
+        origin: req.get('Origin'),
+        requestHeaders: req.headers,
+        context: 'cors-diagnostic',
+        timestamp: new Date().toISOString()
+    });
+    // Log específico para detectar si el header 'expires' está siendo bloqueado
+    const expiresHeader = req.headers['expires'] || req.headers['Expires'];
+    if (expiresHeader) {
+        console.error('🚨 HEADER EXPIRES ENCONTRADO - POSIBLE PROBLEMA CORS 🚨', {
+            url: req.originalUrl,
+            method: req.method,
+            expiresHeader,
+            allowedHeaders: exports.corsOptions.allowedHeaders,
+            context: 'cors-expires-problem',
+            timestamp: new Date().toISOString()
+        });
+    }
+    next();
+}
+;
 module.exports = {
-    helmetConfig: exports.helmetConfig,
     generalRateLimit: exports.generalRateLimit,
     authRateLimit: exports.authRateLimit,
     registerRateLimit: exports.registerRateLimit,
@@ -320,6 +495,8 @@ module.exports = {
     validateContentType,
     additionalSecurityHeaders,
     botProtection,
-    corsOptions: exports.corsOptions
+    corsOptions: exports.corsOptions,
+    validateFileUpload,
+    sanitizeForLogging
 };
 //# sourceMappingURL=security.js.map

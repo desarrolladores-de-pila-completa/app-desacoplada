@@ -1,84 +1,86 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useRef, Suspense, lazy } from "react";
 import "./App.css";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Navbar from "./components/Navbar";
-import Feed from "./components/Feed";
-import OutputMenu from "./components/OutputMenu";
-import RegisterPage from "./components/RegisterPage";
-import LoginPage from "./components/LoginPage";
-import UserPage from "./components/UserPage";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import Navbar from "./components/ui/Navbar";
+import OutputMenu from "./components/ui/OutputMenu";
+import { AuthProvider } from "./contexts/AuthContext";
 
-const API_URL = "http://localhost:3000/api";
+// Lazy loading de componentes de páginas
+const Feed = lazy(() => import("./components/feed/Feed"));
+const RegisterPage = lazy(() => import("./components/auth/RegisterPage"));
+const LoginPage = lazy(() => import("./components/auth/LoginPage"));
+const UserPage = lazy(() => import("./components/main/UserPage"));
+const PageBuilder = lazy(() => import("./components/main/PageBuilder"));
+const PoliticaDeCookies = lazy(() => import("./components/policy/PoliticaDeCookies"));
+const Privacidad = lazy(() => import("./components/policy/Privacidad"));
+const NotFound = lazy(() => import("./components/ui/NotFound"));
+
+// Componente de carga para Suspense fallback
+const LoadingFallback = () => {
+  console.log('[App] Mostrando LoadingFallback para Suspense');
+  return (
+    <div style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '200px',
+      fontSize: '18px',
+      color: '#666'
+    }}>
+      <div>
+        <div style={{
+          width: '40px',
+          height: '40px',
+          border: '4px solid #f3f3f3',
+          borderTop: '4px solid #3498db',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite',
+          margin: '0 auto 10px'
+        }}></div>
+        Cargando...
+      </div>
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
+    </div>
+  );
+};
 
 function MainApp({ showOutput }) {
-  const [feed, setFeed] = useState([]);
-  const [showFeed, setShowFeed] = useState(true);
+  const lastMessageRef = useRef("");
 
-  // API
-  const apiCall = React.useCallback(async (url, method, { successMsg, errorMsg }) => {
-    try {
-      const response = await fetch(url, { method });
-      const data = await response.json();
-      if (!response.ok) {
-        showOutput(errorMsg, "error");
-        return { success: false, data: null };
-      }
-      showOutput(successMsg, "success");
-      return { success: true, data };
-    } catch {
-      showOutput("Error de conexión", "error");
-      return { success: false, data: null };
+  // Mostrar mensaje inicial
+  useEffect(() => {
+    const message = "Aplicación cargada correctamente.";
+    if (message !== lastMessageRef.current) {
+      showOutput(message, "success");
+      lastMessageRef.current = message;
     }
   }, [showOutput]);
 
-
-  // Feed
-  const cargarFeed = React.useCallback(async () => {
-    showOutput("Cargando feed...", "info");
-    try {
-      const res = await apiCall(`${API_URL}/feed`, "GET", {
-        successMsg: "Feed cargado correctamente.",
-        errorMsg: "Error al cargar el feed",
-      });
-      if (res.success && Array.isArray(res.data) && res.data.length > 0) {
-        setFeed(res.data);
-        showOutput(`Feed cargado: ${res.data.length}`, "success");
-      } else {
-        setFeed([]);
-        showOutput("No hay textos completos disponibles en el feed.", "info");
-      }
-    } catch {
-      showOutput("Error de conexión", "error");
-    }
-  }, [apiCall, showOutput]);
-
-  // Navegación
   const goToFeed = (e) => {
     e.preventDefault();
-    setShowFeed(true);
-    cargarFeed();
+    // El feed se maneja en el componente Feed
   };
-
-  useEffect(() => {
-    cargarFeed();
-  }, [cargarFeed]);
 
   return (
     <>
       <Navbar onFeedClick={goToFeed} />
-      {showFeed && <Feed feed={feed} />}
+      <Suspense fallback={<LoadingFallback />}>
+        <Feed />
+      </Suspense>
     </>
   );
 }
 
 export default function App() {
-  // Estados globales para registro y login
-  const [regEmail, setRegEmail] = useState("");
-  const [regPass, setRegPass] = useState("");
-  const [logEmail, setLogEmail] = useState("");
-  const [logPass, setLogPass] = useState("");
   const [output, setOutput] = React.useState({ message: "", type: "" });
   const [outputMinimized, setOutputMinimized] = React.useState(false);
+  const authInitialized = useRef(false);
+
 
   // Output global
   const showOutput = React.useCallback((message, type = "info") => {
@@ -87,58 +89,18 @@ export default function App() {
     } else {
       setOutput({ message, type });
     }
-    setOutputMinimized(false);
+    setOutputMinimized(true);
   }, []);
-
-  const getCsrfToken = async () => {
-    const res = await fetch("http://localhost:3000/api/csrf-token", { credentials: "include" });
-    const data = await res.json();
-    return data.csrfToken;
-  };
-
-  const register = async (email, password) => {
-    const csrfToken = await getCsrfToken();
-    const response = await fetch("http://localhost:3000/api/auth/register", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": csrfToken,
-      },
-      body: JSON.stringify({ email, password }),
-      credentials: "include",
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      return { error: data.error || data.message || "Error en el registro" };
-    }
-  return { message: data.message || "Registro exitoso", id: data.id, username: data.username, paginaPersonal: data.paginaPersonal };
-  };
-
-  const login = async (email, password) => {
-    const csrfToken = await getCsrfToken();
-    const response = await fetch("http://localhost:3000/api/auth/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": csrfToken,
-      },
-      body: JSON.stringify({ email, password }),
-      credentials: "include",
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      return { error: data.error || data.message || "Error en el login" };
-    }
-    return { message: data.message || "Login exitoso", id: data.id, username: data.username };
-  };
 
   function toggleOutputMinimize() {
     setOutputMinimized((min) => !min);
   }
 
   return (
-    <Router>
-      <Routes>
+    <AuthProvider>
+      <Router>
+        {console.log('[App] Router inicializado, esperando rutas')}
+        <Routes>
         <Route
           path="/"
           element={
@@ -150,37 +112,92 @@ export default function App() {
         <Route
           path="/registro"
           element={
-            <RegisterPage
-              regEmail={regEmail}
-              regPass={regPass}
-              setRegEmail={setRegEmail}
-              setRegPass={setRegPass}
-              register={register}
-              showOutput={showOutput}
-            />
+            <Suspense fallback={<LoadingFallback />}>
+              <RegisterPage
+                showOutput={showOutput}
+              />
+            </Suspense>
           }
         />
         <Route
           path="/login"
           element={
-            <LoginPage
-              logEmail={logEmail}
-              logPass={logPass}
-              setLogEmail={setLogEmail}
-              setLogPass={setLogPass}
-              login={login}
-              showOutput={showOutput}
-            />
+            <Suspense fallback={<LoadingFallback />}>
+              <LoginPage
+                showOutput={showOutput}
+              />
+            </Suspense>
           }
         />
-  <Route path="/pagina/:username" element={<UserPage />} />
-      </Routes>
-      <OutputMenu
-        outputMsg={output.message}
-        outputType={output.type}
-        outputMinimized={outputMinimized}
-        toggleOutputMinimize={toggleOutputMinimize}
-      />
-    </Router>
+        {/* Ruta para crear publicaciones - DEBE ir ANTES que las rutas con parámetros */}
+        <Route
+          path="/:username/publicar"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <PageBuilder />
+            </Suspense>
+          }
+        />
+        {/* Ruta para listas de páginas públicas */}
+        <Route
+          path="/pagina/:username"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              {console.log('[App] Renderizando UserPage para /pagina/:username') || <UserPage />}
+            </Suspense>
+          }
+        />
+        {/* Ruta para ver publicación específica por ID numérico */}
+        <Route
+          path="/:username/publicacion/:publicacionId"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <UserPage />
+            </Suspense>
+          }
+        />
+        {/* Ruta alternativa para nueva publicación */}
+        <Route
+          path="/:username/nuevapublicacion"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <PageBuilder />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/politica-de-cookies"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <PoliticaDeCookies />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/privacidad"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <Privacidad />
+            </Suspense>
+          }
+        />
+        {/* Catch-all para rutas no existentes - con logs para debug */}
+        <Route
+          path="*"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              {console.log('[App] Ruta no encontrada, renderizando NotFound') || <NotFound />}
+            </Suspense>
+          }
+        />
+        </Routes>
+        <OutputMenu
+          outputMsg={output.message}
+          outputType={output.type}
+          outputMinimized={outputMinimized}
+          toggleOutputMinimize={toggleOutputMinimize}
+        />
+      </Router>
+    </AuthProvider>
   );
 }

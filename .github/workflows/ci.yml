@@ -12,12 +12,30 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout código
-      uses: actions/checkout@v3
-
-    - name: Instalar Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18'
+      - name: Checkout código
+        uses: actions/checkout@v3
+      - name: Instalar Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - name: Instalar dependencias backend
+        run: |
+          cd backend
+          npm install
+      - name: Ejecutar tests y cobertura backend
+        run: |
+          cd backend
+          npm test -- --coverage
+        env:
+          NODE_ENV: test
+          JWT_SECRET: testsecret
+          DB_HOST: 127.0.0.1
+          DB_USER: test
+          DB_PASSWORD: test
+          DB_NAME: test
+      - name: Subir reporte de cobertura como artefacto
+        uses: actions/upload-artifact@v3
+        with:
+          name: backend-coverage
+          path: backend/coverage/
