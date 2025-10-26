@@ -107,6 +107,7 @@ Proyecto desacoplado con backend Node.js/TypeScript, frontend web (React + Vite)
 - Mensajes de éxito/error tipo Toast/Snackbar (OutputMenu).
 - Borrado de usuario con confirmación y feedback visual.
 - Lista de usuarios con enlaces a sus perfiles.
+- **Corrección de build**: Removidas referencias a paquetes no utilizados en `vite.config.js` para evitar errores de resolución durante el build.
 
 ### App móvil (React Native)
 - Interfaz y navegación adaptadas a móvil usando React Navigation.
