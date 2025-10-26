@@ -80,7 +80,7 @@ export class AuthService {
      // Retornar usuario sin contraseña
      const { password: _, ...user } = userWithPassword;
 
-     winston.debug('User authenticated for login', { userId: user.id });
+     winston.debug('User authenticated for login');
 
      return user;
    }
