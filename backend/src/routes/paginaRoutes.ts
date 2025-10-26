@@ -1,7 +1,7 @@
 import { pool } from "../middlewares/db";
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
-import { paginasPublicas, guardarComentario, eliminarComentario, actualizarUsuarioPagina, eliminarUsuarioTotal, obtenerPaginaPorUsernameYNumero, obtenerPaginasPublicasPorUsuario, obtenerPaginaPorUserId, obtenerPaginaPorUsername, paginaUnificadaPorUsername, actualizarNombrePorUsername, actualizarFotoPorUsername } from "../controllers/paginaController";
+import { paginasPublicas, guardarComentario, eliminarComentario, actualizarUsuarioPagina, obtenerPaginaPorUsernameYNumero, obtenerPaginasPublicasPorUsuario, obtenerPaginaPorUserId, obtenerPaginaPorUsername, paginaUnificadaPorUsername, actualizarNombrePorUsername, actualizarFotoPorUsername } from "../controllers/paginaController";
 import { authMiddleware } from "../middlewares/auth";
 import { ValidationService, validateRequest } from '../services/ValidationService';
 import { userRateLimit } from '../middlewares/rateLimit';
@@ -209,8 +209,7 @@ router.get("/comment-images/:id", async (req: any, res: any) => {
   }
 });
 
-// Endpoint para eliminar usuario y todo su rastro
-router.delete("/usuario/:id", authMiddleware, userRateLimit, eliminarUsuarioTotal);
+// Endpoint para eliminar usuario y todo su rastro eliminado
 
 
 // Endpoint para guardar página creada con PageBuilder

@@ -15,6 +15,7 @@ async function authMiddleware(req, res, next) {
         authHeader: req.headers.authorization,
         context: 'auth'
     });
+    logger_1.default.debug('Detalles de token en middleware', { cookieToken: req.cookies.token, authHeader: req.headers.authorization });
     if (!token) {
         logger_1.default.warn('No token provided', { context: 'auth' });
         return res.status(401).json({ error: "No autenticado" });

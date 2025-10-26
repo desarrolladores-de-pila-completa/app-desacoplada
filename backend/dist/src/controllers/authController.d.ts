@@ -110,7 +110,6 @@ export declare function updateProfilePhoto(req: RequestWithFile, res: Response):
  *         description: Error interno del servidor
  */
 export declare function getUserProfilePhoto(req: Request, res: Response): Promise<void>;
-export declare function updateUsername(req: Request, res: Response): Promise<void>;
 /**
  * @swagger
  * /api/auth/eliminar:

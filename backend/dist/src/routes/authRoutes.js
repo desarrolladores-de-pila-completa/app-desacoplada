@@ -33,7 +33,6 @@ router.post("/logout", authController_1.logout);
 router.post("/profile-photo", auth_1.authMiddleware, security_1.uploadRateLimit, upload.single("photo"), authController_1.updateProfilePhoto);
 // Ruta para obtener foto de perfil de usuario específico (pública, sin autenticación)
 router.get("/user/:id/foto", authController_1.getUserProfilePhoto);
-// Ruta para actualizar username (con rate limiting específico y validación)
-router.put("/users/:userId/username", auth_1.authMiddleware, rateLimit_1.usernameUpdateRateLimit, (0, ValidationService_1.validateRequest)(ValidationService_1.ValidationService.validateUpdateUsername), authController_1.updateUsername);
+// Ruta para actualizar username eliminada
 router.delete("/user/:id", authController_1.eliminarUsuario);
 //# sourceMappingURL=authRoutes.js.map

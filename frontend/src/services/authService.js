@@ -24,6 +24,7 @@ class AuthService {
       'Authorization': user?.accessToken ? `Bearer ${user.accessToken}` : '',
     };
     console.log('Auth headers:', headers);
+    console.log('Usuario en getAuthHeaders:', user);
     return headers;
   }
   constructor() {
@@ -122,9 +123,13 @@ class AuthService {
       }
 
       const data = await response.json();
-      console.log('Login data:', data);
+      console.log('Register data:', data);
+      console.log('Tokens recibidos en frontend register:', { accessToken: !!data.accessToken, refreshToken: !!data.refreshToken });
+      if (!data.accessToken || !data.refreshToken) {
+        throw new Error('Tokens de acceso no recibidos del servidor');
+      }
       this.setStoredUser(data);
-      console.log('Stored user:', this.getStoredUser());
+      console.log('Usuario almacenado en localStorage después de registro:', this.getStoredUser());
       return { success: true, user: data };
     } catch (error) {
       console.error('Register error:', error);
@@ -205,31 +210,6 @@ class AuthService {
     }
   }
 
-  // Actualizar username
-  async updateUsername(newUsername) {
-    try {
-      const response = await fetch(`${API_BASE_URL}/users/${this.user.id}/username`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ username: newUsername }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Update username failed');
-      }
-
-      const data = await response.json();
-      this.setStoredUser(data.user);
-      return { success: true, user: data.user };
-    } catch (error) {
-      console.error('Update username error:', error);
-      return { success: false, error: error.message };
-    }
-  }
 }
 
 // Exportar una instancia singleton

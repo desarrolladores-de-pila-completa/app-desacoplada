@@ -8,19 +8,21 @@ import { AuthService } from "../services/AuthService";
 const authService = getService<AuthService>('AuthService');
 
 export async function authMiddleware(req: Request, res: Response, next: NextFunction) {
-  const token = req.cookies.token || req.headers.authorization?.replace('Bearer ', '');
+   const token = req.cookies.token || req.headers.authorization?.replace('Bearer ', '');
 
-  logger.debug('Verificando autenticación', {
-    hasCookieToken: !!req.cookies.token,
-    hasAuthHeader: !!req.headers.authorization,
-    authHeader: req.headers.authorization,
-    context: 'auth'
-  });
+   logger.debug('Verificando autenticación', {
+     hasCookieToken: !!req.cookies.token,
+     hasAuthHeader: !!req.headers.authorization,
+     authHeader: req.headers.authorization,
+     context: 'auth'
+   });
 
-  if (!token) {
-    logger.warn('No token provided', { context: 'auth' });
-    return res.status(401).json({ error: "No autenticado" });
-  }
+   logger.debug('Detalles de token en middleware', { cookieToken: req.cookies.token, authHeader: req.headers.authorization });
+
+   if (!token) {
+     logger.warn('No token provided', { context: 'auth' });
+     return res.status(401).json({ error: "No autenticado" });
+   }
 
   try {
     const decoded = authService.verifyToken(token);

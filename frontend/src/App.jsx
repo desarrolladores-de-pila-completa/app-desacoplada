@@ -10,7 +10,6 @@ const Feed = lazy(() => import("./components/feed/Feed"));
 const RegisterPage = lazy(() => import("./components/auth/RegisterPage"));
 const LoginPage = lazy(() => import("./components/auth/LoginPage"));
 const UserPage = lazy(() => import("./components/main/UserPage"));
-const AccountPage = lazy(() => import("./components/main/AccountPage"));
 const CreatePublication = lazy(() => import("./components/main/CreatePublication"));
 const PageBuilder = lazy(() => import("./components/main/PageBuilder"));
 const PoliticaDeCookies = lazy(() => import("./components/policy/PoliticaDeCookies"));
@@ -126,14 +125,6 @@ export default function App() {
               <LoginPage
                 showOutput={showOutput}
               />
-            </Suspense>
-          }
-        />
-        <Route
-          path="/cuenta"
-          element={
-            <Suspense fallback={<LoadingFallback />}>
-              <AccountPage />
             </Suspense>
           }
         />
