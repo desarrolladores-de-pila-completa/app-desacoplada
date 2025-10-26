@@ -1,5 +1,5 @@
 import { UserService } from './UserService';
-import { UserCreateData, IEventBus, AuthResponse } from '../types/interfaces';
+import { User, UserCreateData, IEventBus, AuthResponse } from '../types/interfaces';
 export declare class AuthService {
     private userService;
     private eventBus;
@@ -15,18 +15,21 @@ export declare class AuthService {
     /**
       * Autenticar usuario para Passport
       */
-    login(email: string, password: string): Promise<AuthResponse>;
+    login(email: string, password: string): Promise<User>;
     /**
-     * Generar tokens JWT (access y refresh)
-     */
-    private generateTokens;
+      * Generar tokens JWT (access y refresh)
+      */
+    generateTokens(userId: string): {
+        accessToken: string;
+        refreshToken: string;
+    };
     /**
      * @deprecated Usar generateTokens en su lugar
      */
     private generateToken;
     /**
-     * Verificar token JWT
-     */
+      * Verificar token JWT
+      */
     verifyToken(token: string): {
         userId: string;
     };
@@ -38,8 +41,8 @@ export declare class AuthService {
         refreshToken: string;
     }>;
     /**
-     * Generar tokens JWT con rotación de refresh token
-     */
+      * Generar tokens JWT con rotación de refresh token
+      */
     private generateTokensWithRotation;
     /**
      * Verificar si un token está próximo a expirar (menos de 5 minutos)

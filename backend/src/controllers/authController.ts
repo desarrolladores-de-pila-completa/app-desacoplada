@@ -95,17 +95,28 @@ export async function login(req: RequestWithFile, res: Response): Promise<void> 
       }
 
       // Iniciar sesión con Passport
-      req.logIn(user, (err) => {
+      req.logIn(user, async (err) => {
         if (err) {
-          winston.error('Error al iniciar sesión', { error: err });
+          winston.error('Error al iniciar sesión', { error: err, userId: user.id });
           return res.status(500).json({ error: "Error al iniciar sesión" });
         }
+
+        winston.info('Sesión iniciada exitosamente', { userId: user.id });
+
+        // Generar tokens para el usuario
+        const { accessToken, refreshToken } = authService.generateTokens(user.id);
+
+        // Establecer cookies con tokens
+        res.cookie("token", accessToken, getAuthCookieOptions());
+        res.cookie("refreshToken", refreshToken, getRefreshTokenCookieOptions());
 
         res.json({
           message: "Login exitoso",
           id: user.id,
           username: user.username,
-          display_name: user.display_name
+          display_name: user.display_name,
+          accessToken,
+          refreshToken
         });
       });
     })(req, res);
@@ -126,14 +137,16 @@ export async function login(req: RequestWithFile, res: Response): Promise<void> 
  *     tags: [Auth]
  */
 export async function logout(req: Request, res: Response): Promise<void> {
-  req.logout((err) => {
-    if (err) {
-      winston.error('Error al cerrar sesión', { error: err });
-      return res.status(500).json({ error: "Error al cerrar sesión" });
-    }
-    res.json({ message: "Sesión cerrada exitosamente" });
-  });
-}
+   req.logout((err) => {
+     if (err) {
+       winston.error('Error al cerrar sesión', { error: err });
+       return res.status(500).json({ error: "Error al cerrar sesión" });
+     }
+     // Limpiar cookies
+     clearAuthCookies(res);
+     res.json({ message: "Sesión cerrada exitosamente" });
+   });
+ }
 
 
 /**
@@ -599,18 +612,22 @@ export async function updateUsername(req: Request, res: Response): Promise<void>
  *     tags: [Auth]
  */
 export async function eliminarUsuario(req: Request, res: Response): Promise<void> {
-  try {
-    const userId = req.params.id;
-    if (!userId) {
-      throw new AppError(400, "Falta el id de usuario");
-    }
-    await userServiceAuth.deleteUserCompletely(userId);
-    res.json({ message: "Usuario, perfil, comentarios e imágenes eliminados correctamente" });
-  } catch (error) {
-    winston.error('Error al eliminar usuario', { error });
-    if (error instanceof AppError) {
-      throw error;
-    }
-    throw new AppError(500, "Error al eliminar usuario");
-  }
-}
+   try {
+     const userId = req.params.id;
+     if (!userId) {
+       throw new AppError(400, "Falta el id de usuario");
+     }
+     winston.info('Iniciando eliminación de usuario', { userId });
+     await userServiceAuth.deleteUserCompletely(userId);
+     winston.info('Usuario eliminado de la base de datos', { userId });
+     clearAuthCookies(res);
+     winston.info('Cookies limpiadas para usuario eliminado', { userId });
+     res.json({ message: "Usuario, perfil, comentarios e imágenes eliminados correctamente" });
+   } catch (error) {
+     winston.error('Error al eliminar usuario', { error, userId: req.params.id });
+     if (error instanceof AppError) {
+       throw error;
+     }
+     throw new AppError(500, "Error al eliminar usuario");
+   }
+ }

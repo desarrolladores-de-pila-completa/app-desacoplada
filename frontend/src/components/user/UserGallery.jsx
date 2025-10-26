@@ -40,6 +40,7 @@ function UserGallery({ paginaUser, authUser }) {
         overflowX: 'hidden'
       }}>
         <ImageGrid
+          pageId={paginaUser?.pagina?.id}
           username={paginaUser?.usuario?.username}
           editable={authUser?.id === paginaUser?.usuario?.id}
           images={paginaUser?.galeria}

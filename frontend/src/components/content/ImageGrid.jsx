@@ -1,6 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
 import { useQuery } from '@tanstack/react-query';
-import { createRoot } from "react-dom/client";
 import WinBox from "winbox/src/js/winbox.js";
 import "winbox/dist/css/winbox.min.css";
 import { API_BASE } from "../../config/api.js";
@@ -37,7 +36,7 @@ const GRID_ROWS = 3;
 const GRID_COLS = 6;
 const TOTAL_CELLS = GRID_ROWS * GRID_COLS;
 
-function ImageGrid({ username, editable, images: externalImages }) {
+function ImageGrid({ username, pageId, editable, images: externalImages }) {
   const [images, setImages] = useState([]);
   const fileInputs = useRef([]);
 
@@ -81,7 +80,7 @@ function ImageGrid({ username, editable, images: externalImages }) {
 
   const handleImageChange = async (index, event) => {
     const file = event.target.files[0];
-    if (!file || !username) return;
+    if (!file || !pageId) return;
 
     // Crear FormData para subir la imagen
     const formData = new FormData();
@@ -95,7 +94,7 @@ function ImageGrid({ username, editable, images: externalImages }) {
       const csrfToken = csrfData.csrfToken;
 
       // Subir imagen usando la API estándar
-      const uploadResponse = await fetch(`${API_BASE}/paginas/${username}/imagenes`, {
+      const uploadResponse = await fetch(`${API_BASE}/paginas/${pageId}/imagenes`, {
         method: "POST",
         headers: {
           "X-CSRF-Token": csrfToken
@@ -133,10 +132,10 @@ function ImageGrid({ username, editable, images: externalImages }) {
               justifyContent: "center"
             }}>
               <img
-                src={img}
+                src={img.src}
                 alt={`Imagen ${idx + 1}`}
                 style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 6, cursor: "pointer" }}
-                onClick={() => openImageInWinBox(img, `Imagen ${idx + 1}`)}
+                onClick={() => openImageInWinBox(img.src, `Imagen ${idx + 1}`)}
               />
             </div>
           ))}

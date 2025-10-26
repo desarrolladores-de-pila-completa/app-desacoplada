@@ -12,6 +12,7 @@ import UserGallery from "../user/UserGallery";
 import UserComments from "../user/UserComments";
 import UserActions from "../user/UserActions";
 import UserStates from "../user/UserStates";
+import { useAuth } from "../../contexts/AuthContext";
 
 // Hook para obtener datos de la página del usuario
 const useUserPage = (path) => {
@@ -50,11 +51,13 @@ const useCreateComment = () => {
       const csrfRes = await fetch(`${API_BASE}/csrf-token`, { credentials: 'include' });
       const csrfData = await csrfRes.json();
       const csrfToken = csrfData.csrfToken;
-      const response = await fetch(`${API_BASE}/${pageId}/comentarios`, {
+      const authHeaders = authService.getAuthHeaders();
+      const response = await fetch(`${API_BASE}/paginas/${pageId}/comentarios`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-CSRF-Token': csrfToken,
+          'Authorization': authHeaders.Authorization,
         },
         body: JSON.stringify({ comentario }),
         credentials: 'include',
@@ -78,10 +81,12 @@ const useDeleteComment = () => {
       const csrfRes = await fetch(`${API_BASE}/csrf-token`, { credentials: 'include' });
       const csrfData = await csrfRes.json();
       const csrfToken = csrfData.csrfToken;
-      const response = await fetch(`${API_BASE}/${pageId}/comentarios/${commentId}`, {
+      const authHeaders = authService.getAuthHeaders();
+      const response = await fetch(`${API_BASE}/paginas/${pageId}/comentarios/${commentId}`, {
         method: 'DELETE',
         headers: {
           'X-CSRF-Token': csrfToken,
+          'Authorization': authHeaders.Authorization,
         },
         credentials: 'include',
       });
@@ -97,10 +102,13 @@ const useDeleteComment = () => {
 };
 
 function UserPage() {
+  console.log('[UserPage] Renderizando UserPage', { username: params.username });
+
   const params = useParams();
   const authUser = authService.getCurrentUser();
   const isAuthenticated = authService.isLoggedIn();
   const queryClient = useQueryClient();
+  const { logout } = useAuth();
   const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight });
   const [userData, setUserData] = useState(null);
   const [newUsername, setNewUsername] = useState(params.username || "");
@@ -237,11 +245,13 @@ function UserPage() {
       const res = await fetch(`${API_BASE}/csrf-token`, { credentials: "include" });
       const data = await res.json();
       const csrfToken = data.csrfToken;
-      const resp = await fetch(`${API_BASE}/${paginaUser?.pagina?.id}/usuario`, {
-        method: "POST",
+      const authHeaders = authService.getAuthHeaders();
+      const resp = await fetch(`${API_BASE}/pagina/${params.username}/nombre`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRF-Token": csrfToken
+          "X-CSRF-Token": csrfToken,
+          "Authorization": authHeaders.Authorization
         },
         body: JSON.stringify({ username: value }),
         credentials: "include"
@@ -272,6 +282,7 @@ function UserPage() {
 
   // Efecto para enfocar el input cuando entra en modo edición
   useEffect(() => {
+    console.log('[UserPage] EditMode changed to:', editMode);
     if (editMode && inputRef.current) {
       inputRef.current.focus();
     }
@@ -282,26 +293,38 @@ function UserPage() {
     if (!paginaUser?.usuario?.id || authUser?.id !== paginaUser.usuario.id) return;
     if (!window.confirm("¿Seguro que quieres borrar tu perfil y todo tu rastro? Esta acción es irreversible.")) return;
 
+    console.log('[UserPage] Iniciando eliminación de usuario:', { userId: paginaUser.usuario.id });
+
     try {
       const csrfRes = await fetch(`${API_BASE}/csrf-token`, { credentials: 'include' });
       const csrfData = await csrfRes.json();
       const csrfToken = csrfData.csrfToken;
 
+      const authHeaders = authService.getAuthHeaders();
+      console.log('[UserPage] Headers de auth:', authHeaders);
+
       const res = await fetch(`${API_BASE}/auth/user/${paginaUser.usuario.id}`, {
         method: 'DELETE',
         credentials: 'include',
         headers: {
-          'X-CSRF-Token': csrfToken
+          'X-CSRF-Token': csrfToken,
+          'Authorization': authHeaders.Authorization
         }
       });
 
+      console.log('[UserPage] Respuesta de eliminación:', { status: res.status, ok: res.ok });
+
       if (res.ok) {
+        console.log('[UserPage] Eliminación exitosa, limpiando localStorage y contexto');
+        authService.clearStoredUser(); // Limpiar localStorage
+        await logout(); // Limpiar contexto de autenticación
         alert("Tu perfil y todos tus datos han sido eliminados.");
         window.location.href = "/";
       } else {
         alert("Error al borrar el usuario.");
       }
-    } catch {
+    } catch (error) {
+      console.error('[UserPage] Error en eliminación:', error);
       alert("Error de conexión al borrar el usuario.");
     }
   };

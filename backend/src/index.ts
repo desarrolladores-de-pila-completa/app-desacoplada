@@ -59,9 +59,12 @@ passport.use(new LocalStrategy(
   { usernameField: 'email', passwordField: 'password' },
   async (email: string, password: string, done: any) => {
     try {
+      logger.info('Intentando autenticar usuario', { email });
       const user = await authService.login(email, password);
+      logger.info('Usuario autenticado exitosamente', { userId: user.id });
       return done(null, user);
     } catch (error) {
+      logger.error('Error en autenticación Passport', { error: (error as Error).message, email });
       return done(error, false);
     }
   }

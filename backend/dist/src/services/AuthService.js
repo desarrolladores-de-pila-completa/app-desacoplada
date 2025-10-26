@@ -74,24 +74,17 @@ class AuthService {
         }
         // Retornar usuario sin contraseña
         const { password: _, ...user } = userWithPassword;
-        // Generar tokens para el usuario autenticado
-        const { accessToken, refreshToken } = this.generateTokens(user.id);
-        logger_1.default.debug('Tokens generated for login', { userId: user.id });
-        return {
-            user,
-            accessToken,
-            refreshToken,
-            username: user.username,
-        };
+        logger_1.default.debug('User authenticated for login', { userId: user.id });
+        return user;
     }
     /**
-     * Generar tokens JWT (access y refresh)
-     */
+      * Generar tokens JWT (access y refresh)
+      */
     generateTokens(userId) {
         const secret = process.env.JWT_SECRET || "clave-secreta";
         const refreshSecret = process.env.JWT_REFRESH_SECRET || "refresh-secret";
-        // Token de acceso: duración corta (15 minutos)
-        const accessToken = jsonwebtoken_1.default.sign({ userId, type: 'access' }, secret, { expiresIn: '15m' });
+        // Token de acceso: duración más larga para evitar expiraciones frecuentes
+        const accessToken = jsonwebtoken_1.default.sign({ userId, type: 'access' }, secret, { expiresIn: '1h' });
         // Token de refresh: duración larga (7 días)
         const refreshToken = jsonwebtoken_1.default.sign({ userId, type: 'refresh' }, refreshSecret, { expiresIn: '7d' });
         return { accessToken, refreshToken };
@@ -104,8 +97,8 @@ class AuthService {
         return accessToken;
     }
     /**
-     * Verificar token JWT
-     */
+      * Verificar token JWT
+      */
     verifyToken(token) {
         try {
             const secret = process.env.JWT_SECRET || "clave-secreta";
@@ -151,13 +144,13 @@ class AuthService {
         }
     }
     /**
-     * Generar tokens JWT con rotación de refresh token
-     */
+      * Generar tokens JWT con rotación de refresh token
+      */
     generateTokensWithRotation(userId, rotationCount = 0) {
         const secret = process.env.JWT_SECRET || "clave-secreta";
         const refreshSecret = process.env.JWT_REFRESH_SECRET || "refresh-secret";
-        // Token de acceso: duración corta (15 minutos)
-        const accessToken = jsonwebtoken_1.default.sign({ userId, type: 'access' }, secret, { expiresIn: '15m' });
+        // Token de acceso: duración más larga
+        const accessToken = jsonwebtoken_1.default.sign({ userId, type: 'access' }, secret, { expiresIn: '1h' });
         // Refresh token con rotación: duración larga (7 días) con contador
         const refreshToken = jsonwebtoken_1.default.sign({ userId, type: 'refresh', rotationCount }, refreshSecret, { expiresIn: '7d' });
         return { accessToken, refreshToken };

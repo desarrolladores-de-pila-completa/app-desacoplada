@@ -298,6 +298,16 @@ function FotoPerfil({
   const [forceRefreshKey, setForceRefreshKey] = React.useState(0); // Clave adicional para forzar recarga absoluta
   const [isRefreshing, setIsRefreshing] = React.useState(false); // Estado de actualización en tiempo real
 
+  console.log('[FotoPerfil] Renderizando FotoPerfil', {
+    editable,
+    id,
+    authUserId,
+    userId: user?.id,
+    hasInputRef: !!inputRef.current,
+    isUploading,
+    preview: preview ? 'presente' : 'ausente'
+  });
+
   // Función avanzada para forzar recarga inmediata
   const forceImmediateRefresh = React.useCallback(async (targetUserId) => {
     const userIdToRefresh = targetUserId || id;
@@ -637,9 +647,13 @@ function FotoPerfil({
   }, [id, preview, forceRefreshKey]);
 
   const handleClick = () => {
+    console.log('[FotoPerfil] Clic en foto detectado', { editable, hasInputRef: !!inputRef.current, isUploading });
     if (editable && inputRef.current) {
+      console.log('[FotoPerfil] Abriendo selector de archivos');
       inputRef.current.value = "";
       inputRef.current.click();
+    } else {
+      console.log('[FotoPerfil] No se puede abrir selector: editable=', editable, 'inputRef=', !!inputRef.current);
     }
   };
 
@@ -741,8 +755,8 @@ function FotoPerfil({
 
       // Subir foto con reintento automático
       logger.info('Subiendo foto de perfil comprimida');
-      const res = await retryFetch(`${API_URL}/api/auth/profile-photo`, {
-        method: "POST",
+      const res = await retryFetch(`${API_URL}/api/pagina/${user.username}/foto`, {
+        method: "PUT",
         headers: { "X-CSRF-Token": csrfToken },
         credentials: "include",
         body: formData

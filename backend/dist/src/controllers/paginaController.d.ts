@@ -72,6 +72,22 @@ export declare function consultarUsuarioPagina(req: Request, res: Response): Pro
  *     tags: [Pagina]
  */
 export declare function actualizarUsuarioPagina(req: RequestWithValidatedData, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
+/**
+ * @swagger
+ * /api/pagina/{username}/foto:
+ *   put:
+ *     summary: Actualizar foto de perfil por username
+ *     tags: [Pagina]
+ */
+export declare function actualizarFotoPorUsername(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
+/**
+ * @swagger
+ * /api/pagina/{username}/nombre:
+ *   put:
+ *     summary: Actualizar nombre de usuario por username
+ *     tags: [Pagina]
+ */
+export declare function actualizarNombrePorUsername(req: RequestWithValidatedData, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
 interface RequestWithValidatedData extends Request {
     validatedData?: any;
 }

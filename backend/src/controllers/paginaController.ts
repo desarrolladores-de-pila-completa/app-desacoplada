@@ -3,6 +3,7 @@ import { pool } from "../middlewares/db";
 import { Request, Response } from "express";
 import { UserService } from "../services/UserService";
 import { getService } from '../utils/servicesConfig';
+import { clearAuthCookies } from '../utils/cookieConfig';
 
 // Obtener página por user_id (UUID sin guiones)
 /**
@@ -404,6 +405,83 @@ export async function actualizarUsuarioPagina(req: RequestWithValidatedData, res
 
 // Funciones eliminadas: actualizarVisibilidad, consultarVisibilidad (campo oculto eliminado)
 
+// Actualizar foto por username
+/**
+ * @swagger
+ * /api/pagina/{username}/foto:
+ *   put:
+ *     summary: Actualizar foto de perfil por username
+ *     tags: [Pagina]
+ */
+export async function actualizarFotoPorUsername(req: Request, res: Response) {
+  const username = req.params.username;
+  const file = (req as any).file;
+  const userId = (req as any).userId;
+
+  if (!file) {
+    return res.status(400).json({ error: "No se recibió imagen" });
+  }
+
+  try {
+    // Obtener el userId por username
+    const [users]: any = await pool.query("SELECT id FROM users WHERE username = ?", [username]);
+    if (!users || users.length === 0) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+    const targetUserId = users[0].id;
+
+    // Verificar que el usuario autenticado es el propietario
+    if (String(targetUserId) !== String(userId)) {
+      return res.status(403).json({ error: "No autorizado" });
+    }
+
+    // Actualizar foto_perfil en users
+    await pool.query("UPDATE users SET foto_perfil = ? WHERE id = ?", [file.buffer, targetUserId]);
+
+    res.json({ message: "Foto actualizada correctamente" });
+  } catch (err) {
+    winston.error('Error al actualizar foto por username', { error: err });
+    res.status(500).json({ error: "Error al actualizar foto" });
+  }
+}
+
+// Actualizar nombre por username
+/**
+ * @swagger
+ * /api/pagina/{username}/nombre:
+ *   put:
+ *     summary: Actualizar nombre de usuario por username
+ *     tags: [Pagina]
+ */
+export async function actualizarNombrePorUsername(req: RequestWithValidatedData, res: Response) {
+  const username = req.params.username;
+  const { username: newUsername } = req.validatedData as any;
+  const userId = (req as any).userId;
+
+  try {
+    // Obtener el userId por username
+    const [users]: any = await pool.query("SELECT id, username FROM users WHERE username = ?", [username]);
+    if (!users || users.length === 0) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+    const targetUserId = users[0].id;
+
+    // Verificar que el usuario autenticado es el propietario
+    if (String(targetUserId) !== String(userId)) {
+      return res.status(403).json({ error: "No autorizado" });
+    }
+
+    const usernameValue = newUsername.getValue();
+    // Actualizar display_name en users
+    await pool.query("UPDATE users SET display_name = ? WHERE id = ?", [usernameValue, targetUserId]);
+
+    res.json({ message: "Nombre actualizado correctamente" });
+  } catch (err) {
+    winston.error('Error al actualizar nombre por username', { error: err });
+    res.status(500).json({ error: "Error al actualizar nombre" });
+  }
+}
+
 interface RequestWithValidatedData extends Request {
   validatedData?: any;
 }
@@ -428,6 +506,7 @@ export async function eliminarUsuarioTotal(req: Request, res: Response) {
   }
   try {
     await userService.deleteUserCompletely(userId);
+    clearAuthCookies(res);
     res.json({ message: "Usuario y todos sus datos eliminados" });
   } catch (err) {
     winston.error('Error al eliminar usuario y sus datos', { error: err });
@@ -483,7 +562,7 @@ export async function paginasPublicas(req: Request, res: Response) {
  */
 export async function guardarComentario(req: RequestWithValidatedData, res: Response) {
   const { comentario, pageId } = req.validatedData as any;
-  const userId = (req as any).user?.id;
+  const userId = (req as any).userId;
   if (!userId) return sendError(res, 401, "Debes estar autenticado para comentar");
 
   try {
@@ -517,18 +596,18 @@ export async function guardarComentario(req: RequestWithValidatedData, res: Resp
  *     tags: [Pagina]
  */
 export async function eliminarComentario(req: Request, res: Response) {
-  const { id: pageId, commentId } = req.params;
-  const userId = (req as any).user?.id;
-  if (!userId) return sendError(res, 401, "Debes estar autenticado");
+   const { id: pageId, commentId } = req.params;
+   const userId = (req as any).userId;
+   if (!userId) return sendError(res, 401, "Debes estar autenticado");
 
-  try {
-    // Verificar que el comentario existe y pertenece al usuario
-    const [rows]: any = await pool.query(
-      "SELECT user_id FROM comentarios WHERE id = ? AND pagina_id = ?",
-      [commentId, pageId]
-    );
-    if (!rows || rows.length === 0) return sendError(res, 404, "Comentario no encontrado");
-    if (String(rows[0].user_id) !== String(userId)) return sendError(res, 403, "No autorizado para eliminar este comentario");
+   try {
+     // Verificar que el comentario existe y pertenece al usuario
+     const [rows]: any = await pool.query(
+       "SELECT user_id FROM comentarios WHERE id = ? AND pagina_id = ?",
+       [commentId, pageId]
+     );
+     if (!rows || rows.length === 0) return sendError(res, 404, "Comentario no encontrado");
+     if (String(rows[0].user_id) !== String(userId)) return sendError(res, 403, "No autorizado para eliminar este comentario");
 
     // Eliminar las imágenes asociadas al comentario primero
     await pool.query("DELETE FROM imagenes_comentarios WHERE comentario_id = ?", [commentId]);
