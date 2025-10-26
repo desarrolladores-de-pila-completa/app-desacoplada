@@ -37,45 +37,34 @@
 ## Endpoints API Completos
 
 ### 🔐 Autenticación (`/api/auth/`)
+- `GET /api/auth/users` — Listar todos los usuarios
 - `GET /api/auth/user/:id/foto` — Obtener foto de perfil pública por ID de usuario
 - `POST /api/auth/register` — Registro de nuevo usuario
 - `POST /api/auth/login` — Inicio de sesión de usuario
 - `POST /api/auth/refresh` — Refrescar tokens de autenticación
-- `POST /api/auth/extend-session` — Extender sesión activa (requiere autenticación)
 - `POST /api/auth/logout` — Cerrar sesión
 - `DELETE /api/auth/user/:id` — Eliminar usuario completamente
 
 ### 📄 Páginas (`/api/paginas/`)
-- `POST /api/paginas/` — Crear nueva página (requiere autenticación)
+- `POST /api/pagina` — Crear nueva página (requiere autenticación)
 - `GET /api/paginas/` — Obtener páginas públicas
 - `GET /api/paginas/pagina/:username` — Página unificada por username con acciones múltiples
 - `GET /api/paginas/:username` — Página por username (compatibilidad)
 - `GET /api/paginas/pagina/id/:user_id` — Obtener página por ID de usuario
 - `POST /api/paginas/:id/usuario` — Actualizar nombre de usuario de página (requiere autenticación)
-- `POST /api/paginas/:id/comentarios` — Agregar comentario a página (requiere autenticación)
-- `DELETE /api/paginas/:id/comentarios/:commentId` — Eliminar comentario (requiere autenticación)
-- `POST /api/paginas/:id/imagenes` — Subir imagen a página (requiere autenticación)
-- `GET /api/paginas/:id/imagenes` — Obtener imágenes de página
+- `PUT /api/paginas/pagina/:username/nombre` — Actualizar nombre de página (requiere autenticación)
+- `PUT /api/paginas/pagina/:username/foto` — Actualizar foto de página (requiere autenticación)
+- `POST /api/paginas/pagina/:id/comentarios` — Agregar comentario a página (requiere autenticación)
+- `DELETE /api/paginas/pagina/:id/comentarios/:commentId` — Eliminar comentario (requiere autenticación)
+- `POST /api/paginas/pagina/:id/imagenes` — Subir imagen a página (requiere autenticación)
+- `DELETE /api/paginas/pagina/:id/imagenes/:idx` — Eliminar imagen de página (requiere autenticación)
+- `GET /api/paginas/pagina/:id/imagenes` — Obtener imágenes de página
 - `POST /api/paginas/upload-comment-image` — Subir imagen para comentario (requiere autenticación)
 - `GET /api/paginas/comment-images/:id` — Servir imagen de comentario
-- `DELETE /api/paginas/usuario/:id` — Borrar usuario y todo su rastro (requiere autenticación)
 - `POST /api/paginas/guardar-pagina` — Guardar página creada con PageBuilder (requiere autenticación)
-
-### 📝 Publicaciones (`/api/publicaciones/`)
-- `POST /api/publicaciones/` — Crear nueva publicación (requiere autenticación)
-- `GET /api/publicaciones/:id` — Obtener publicación específica por ID
-- `GET /api/publicaciones/usuario/:username` — Listar publicaciones de usuario
-- `GET /api/publicaciones/` — Obtener todas las publicaciones
 
 ### 💬 Comentarios
 - **Nota**: Los comentarios ahora se incluyen automáticamente en la respuesta del endpoint unificado `/api/paginas/pagina/:username?action=info`
-
-### 🌐 Publicaciones específicas (`/api/paginas/`)
-- `GET /api/paginas/:username/publicar/:publicacionId` — Obtener publicación específica por ID
-- `POST /api/paginas/:username/publicar/:numeroDePagina` — Crear publicación en página específica (requiere autenticación)
-
-### 🔧 Utilidades
-- `GET /api/csrf-token` — Obtener token CSRF para protección de formularios
 
 ## Seguridad
 - Protección CSRF en operaciones POST/PUT/DELETE usando tokens sincronizados
@@ -167,11 +156,36 @@ Revisa y copia el archivo `frontend/.env.example` como `.env` en la carpeta `fro
 
 ## Pruebas y cobertura
 
-En el backend:
+### Backend
 ```sh
 npm test -- --coverage
 ```
 El reporte de cobertura se genera en la carpeta `backend/coverage` y se sube como artefacto en CI.
+
+### Frontend
+Para ejecutar las pruebas en el frontend (si están configuradas):
+```sh
+# Nota: Verifica si hay un script de test en package.json; de lo contrario, usa Jest directamente
+npm test
+```
+Las pruebas están en `frontend/src/tests/`.
+
+### React Native
+Para ejecutar las pruebas en la app móvil:
+```sh
+npm test
+```
+Además, para linting:
+```sh
+npm run lint
+```
+
+## CI/CD
+
+El proyecto utiliza GitHub Actions para automatización continua:
+
+- **CI Backend**: Ejecuta tests y genera reportes de cobertura en pushes y pull requests a la rama `desarrollo1`.
+- **Análisis de Seguridad**: Usa CodeQL para detectar vulnerabilidades y mantener la seguridad del código.
 
 ## Autor
 zarkius
