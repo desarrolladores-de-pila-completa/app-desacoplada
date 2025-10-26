@@ -34,10 +34,7 @@ export default defineConfig({
           // React ecosystem
           'react-vendor': ['react', 'react-dom'],
           'react-router': ['react-router-dom'],
-          'ui-vendor': ['@headlessui/react', 'lucide-react', 'clsx'],
           'query-vendor': ['@tanstack/react-query'],
-          'form-vendor': ['react-hook-form', 'zod'],
-          'utils-vendor': ['axios', 'date-fns', 'lodash']
         },
 
         // Estrategia de nombres para chunks
