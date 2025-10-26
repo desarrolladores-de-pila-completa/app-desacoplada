@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import path from "path";
 import { pool, initDatabase } from "./middlewares/db";
 import csrf from "csrf";
+import csurf from "csurf";
 import { configureServices } from "./utils/servicesConfig";
 import { getCsrfCookieOptions } from "./utils/cookieConfig";
 import { corsOptions } from "./middlewares/security";
@@ -52,6 +53,9 @@ app.use(session({
 // Inicializar Passport
 app.use(passport.initialize());
 app.use(passport.session());
+
+// Agregar protección CSRF a todas las rutas que usan cookies/sesión
+app.use(csurf({ cookie: true }));
 
 // Configurar estrategia local de Passport
 passport.use(new LocalStrategy(
