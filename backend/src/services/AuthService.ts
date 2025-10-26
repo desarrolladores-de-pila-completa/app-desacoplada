@@ -92,18 +92,24 @@ export class AuthService {
      const secret = process.env.JWT_SECRET || "clave-secreta";
      const refreshSecret = process.env.JWT_REFRESH_SECRET || "refresh-secret";
 
-     // Token de acceso: duración más larga para evitar expiraciones frecuentes
+     // Token de acceso: duración permanente
+     const accessExpiresIn = '100y';
+     winston.info('Generando access token con expiración permanente', { expiresIn: accessExpiresIn, userId });
+
      const accessToken = jwt.sign(
        { userId, type: 'access' },
        secret,
-       { expiresIn: '1h' }
+       { expiresIn: accessExpiresIn }
      );
 
-     // Token de refresh: duración larga (7 días)
+     // Token de refresh: duración permanente
+     const refreshExpiresIn = '100y';
+     winston.info('Generando refresh token con expiración permanente', { expiresIn: refreshExpiresIn, userId });
+
      const refreshToken = jwt.sign(
        { userId, type: 'refresh' },
        refreshSecret,
-       { expiresIn: '7d' }
+       { expiresIn: refreshExpiresIn }
      );
 
      return { accessToken, refreshToken };
@@ -179,18 +185,24 @@ export class AuthService {
      const secret = process.env.JWT_SECRET || "clave-secreta";
      const refreshSecret = process.env.JWT_REFRESH_SECRET || "refresh-secret";
 
-     // Token de acceso: duración más larga
+     // Token de acceso: duración permanente
+     const accessExpiresIn = '100y';
+     winston.info('Generando access token con rotación y expiración permanente', { expiresIn: accessExpiresIn, userId, rotationCount });
+
      const accessToken = jwt.sign(
        { userId, type: 'access' },
        secret,
-       { expiresIn: '1h' }
+       { expiresIn: accessExpiresIn }
      );
 
-     // Refresh token con rotación: duración larga (7 días) con contador
+     // Refresh token con rotación: duración permanente
+     const refreshExpiresIn = '100y';
+     winston.info('Generando refresh token con rotación y expiración permanente', { expiresIn: refreshExpiresIn, userId, rotationCount });
+
      const refreshToken = jwt.sign(
        { userId, type: 'refresh', rotationCount },
        refreshSecret,
-       { expiresIn: '7d' }
+       { expiresIn: refreshExpiresIn }
      );
 
      return { accessToken, refreshToken };

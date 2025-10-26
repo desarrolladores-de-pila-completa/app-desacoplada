@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import GlobalChat from "../chat/GlobalChat";
 import { API_BASE } from "../../config/api.js";
 
@@ -7,8 +7,13 @@ function Feed() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const hasFetched = useRef(false);
 
   useEffect(() => {
+    if (hasFetched.current) {
+      return;
+    }
+    hasFetched.current = true;
     const fetchUsers = async () => {
       try {
         const response = await fetch(`${API_BASE}/auth/users`, {

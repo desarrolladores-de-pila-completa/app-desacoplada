@@ -462,20 +462,38 @@ export async function actualizarNombrePorUsername(req: RequestWithValidatedData,
     // Obtener el userId por username
     const [users]: any = await pool.query("SELECT id, username FROM users WHERE username = ?", [username]);
     if (!users || users.length === 0) {
+      winston.error('Usuario no encontrado en actualizarNombrePorUsername', { username });
       return res.status(404).json({ error: "Usuario no encontrado" });
     }
     const targetUserId = users[0].id;
 
     // Verificar que el usuario autenticado es el propietario
     if (String(targetUserId) !== String(userId)) {
+      winston.warn('Usuario no autorizado para actualizar nombre', { targetUserId, userId });
       return res.status(403).json({ error: "No autorizado" });
     }
 
     const usernameValue = newUsername.getValue();
+    winston.info('Actualizando display_name', { targetUserId, oldUsername: username, newDisplayName: usernameValue });
+
     // Actualizar display_name en users
     await pool.query("UPDATE users SET display_name = ? WHERE id = ?", [usernameValue, targetUserId]);
 
-    res.json({ message: "Nombre actualizado correctamente" });
+    // Obtener el usuario actualizado para el response
+    const [updatedUsers]: any = await pool.query("SELECT id, username, display_name, foto_perfil FROM users WHERE id = ?", [targetUserId]);
+    const updatedUser = updatedUsers[0];
+
+    winston.info('Nombre actualizado exitosamente', { targetUserId, newDisplayName: updatedUser.display_name });
+
+    res.json({
+      message: "Nombre actualizado correctamente",
+      user: {
+        id: updatedUser.id,
+        username: updatedUser.username,
+        display_name: updatedUser.display_name,
+        foto_perfil: updatedUser.foto_perfil ? `data:image/jpeg;base64,${Buffer.from(updatedUser.foto_perfil).toString('base64')}` : null
+      }
+    });
   } catch (err) {
     winston.error('Error al actualizar nombre por username', { error: err });
     res.status(500).json({ error: "Error al actualizar nombre" });
