@@ -430,8 +430,10 @@ app.use(["/api", "/api/auth"], (req, res, next) => {
     if (req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS') {
         if (!cookieCsrf || !headerCsrf) {
             logger_1.default.error('🚨 FALTAN TOKENS CSRF 🚨', {
-                cookieCsrf: !!cookieCsrf,
-                headerCsrf: !!headerCsrf,
+                hasCookieCsrf: !!cookieCsrf,
+                hasHeaderCsrf: !!headerCsrf,
+                cookieCsrf: cookieCsrf ? '[REDACTED]' : null,
+                headerCsrf: headerCsrf ? '[REDACTED]' : null,
                 url: req.originalUrl,
                 method: req.method,
                 context: 'csrf-missing'
@@ -443,8 +445,8 @@ app.use(["/api", "/api/auth"], (req, res, next) => {
             const isValid = tokens.verify(secret, tokenToVerify);
             if (!isValid) {
                 logger_1.default.error('🚨 TOKEN CSRF INVÁLIDO 🚨', {
-                    cookieValue: cookieCsrf,
-                    headerValue: headerCsrf,
+                    cookieCsrf: cookieCsrf ? '[REDACTED]' : null,
+                    headerCsrf: headerCsrf ? '[REDACTED]' : null,
                     url: req.originalUrl,
                     method: req.method,
                     context: 'csrf-invalid'
@@ -456,8 +458,8 @@ app.use(["/api", "/api/auth"], (req, res, next) => {
         catch (error) {
             logger_1.default.error('🚨 ERROR VALIDANDO CSRF 🚨', {
                 error: error.message,
-                cookieValue: cookieCsrf,
-                headerValue: headerCsrf,
+                cookieCsrf: cookieCsrf ? '[REDACTED]' : null,
+                headerCsrf: headerCsrf ? '[REDACTED]' : null,
                 url: req.originalUrl,
                 method: req.method,
                 context: 'csrf-error'

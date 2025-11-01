@@ -109,10 +109,16 @@ class AuthService {
   // Login
   async login(email, password) {
     try {
+      // Obtener CSRF token
+      const csrfRes = await fetch(`${API_BASE}/csrf-token`, { credentials: 'include' });
+      const csrfData = await csrfRes.json();
+      const csrfToken = csrfData.csrfToken;
+
       const response = await fetch(`${API_BASE_URL}/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken,
         },
         credentials: 'include',
         body: JSON.stringify({ email, password }),
@@ -135,10 +141,16 @@ class AuthService {
   // Register
   async register(email, password) {
     try {
+      // Obtener CSRF token
+      const csrfRes = await fetch(`${API_BASE}/csrf-token`, { credentials: 'include' });
+      const csrfData = await csrfRes.json();
+      const csrfToken = csrfData.csrfToken;
+
       const response = await fetch(`${API_BASE_URL}/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken,
         },
         credentials: 'include',
         body: JSON.stringify({ email, password }),
