@@ -8,3 +8,5 @@ export * from './username';
 export * from './pageTitle';
 export * from './pageContent';
 export * from './commentText';
+export * from './publicacionTitle';
+export * from './publicacionContent';

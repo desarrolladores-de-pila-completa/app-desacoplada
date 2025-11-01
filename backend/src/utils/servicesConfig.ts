@@ -3,6 +3,7 @@ import { UserService } from '../services/UserService';
 import { PageService } from '../services/PageService';
 import { CommentService } from '../services/CommentService';
 import { AuthService } from '../services/AuthService';
+import { PublicacionService } from '../services/PublicacionService';
 import { eventBus } from './eventBus';
 import { IEventBus } from '../types/interfaces';
 import {
@@ -10,6 +11,7 @@ import {
   PageRepository,
   CommentRepository,
   PrivateMessageRepository,
+  PublicacionRepository,
   IUserRepository,
   IPageRepository,
   ICommentRepository,
@@ -30,6 +32,7 @@ export function configureServices(): void {
   container.registerSingleton('IPageRepository', () => new PageRepository());
   container.registerSingleton('ICommentRepository', () => new CommentRepository());
   container.registerSingleton('IPrivateMessageRepository', () => new PrivateMessageRepository());
+  container.registerSingleton('PublicacionRepository', () => new PublicacionRepository());
 
   // Servicios con dependencias de repositorios
   container.registerSingleton('UserService', (c) => {
@@ -55,6 +58,10 @@ export function configureServices(): void {
     return new PrivateMessageService(privateMessageRepository);
   });
 
+  container.registerSingleton('PublicacionService', (c) => {
+    const publicacionRepository = c.resolve<PublicacionRepository>('PublicacionRepository');
+    return new PublicacionService(publicacionRepository);
+  });
 
   // Servicios con dependencias
   container.registerSingleton('AuthService', (c) => {

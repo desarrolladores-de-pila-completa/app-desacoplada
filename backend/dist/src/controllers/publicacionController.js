@@ -71,7 +71,9 @@ async function obtenerPublicacionesPorUsuario(req, res) {
             count: publicaciones.length,
             context: 'publicacion-get-user-debug'
         });
-        res.json(publicaciones);
+        // Forzar respuesta JSON
+        res.setHeader('Content-Type', 'application/json');
+        res.json({ total: publicaciones.length, publicaciones });
     }
     catch (err) {
         console.error('=== DEBUG: Error in obtenerPublicacionesPorUsuario ===', {
