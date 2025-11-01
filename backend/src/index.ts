@@ -117,15 +117,15 @@ app.use((req, res, next) => {
 });
 
 // WebSocket server
-const wss = new WebSocket.Server({ port: 3003 });
+const wss = new WebSocket.Server({ port: 8080 });
 
 // Log para debugging de puerto WebSocket
-logger.info("Iniciando servidor WebSocket", { port: 3003, context: 'websocket' });
+logger.info("Iniciando servidor WebSocket", { port: 8080, context: 'websocket' });
 
 // Log detallado del estado del servidor WebSocket
 wss.on('listening', () => {
   logger.info('✅ Servidor WebSocket escuchando correctamente', {
-    port: 3003,
+    port: 8080,
     address: wss.address(),
     context: 'websocket'
   });
@@ -134,12 +134,12 @@ wss.on('listening', () => {
 // Manejar errores de binding del puerto WebSocket
 wss.on('error', (error: Error & { code?: string }) => {
   if (error.code === 'EADDRINUSE') {
-    logger.error('🚨 Puerto WebSocket 3003 ya está en uso', {
+    logger.error('🚨 Puerto WebSocket 8080 ya está en uso', {
       error: error.message,
       code: error.code,
-      port: 3003,
+      port: 8080,
       context: 'websocket',
-      suggestion: 'Detener otros servidores que puedan estar usando el puerto 3003'
+      suggestion: 'Detener otros servidores que puedan estar usando el puerto 8080'
     });
   } else {
     logger.error('🚨 Error en servidor WebSocket', {
@@ -164,7 +164,7 @@ console.log('=== WEBSOCKET SERVER INIT DEBUG ===', {
   context: 'websocket-server-init-debug'
 });
 
-logger.info('Servidor WebSocket inicializado en puerto 3003', { context: 'websocket' });
+logger.info('Servidor WebSocket inicializado en puerto 8080', { context: 'websocket' });
 
 wss.on('connection', (ws: WebSocket, request: IncomingMessage) => {
   logger.info('🔗 Nueva conexión WebSocket establecida', {

@@ -5,10 +5,10 @@
 
   // Función para conectar a WebSocket
   const connectWebSocket = (userId, onMessage) => {
-    // Conectar al servidor WebSocket en puerto 3003 (diferente al proxy)
+    // Conectar al servidor WebSocket en puerto 8080
     const wsUrl = process.env.NODE_ENV === 'production'
-      ? 'wss://api.yposteriormente.com'
-      : 'ws://localhost:3003';
+      ? 'wss://ws.yposteriormente.com'
+      : 'ws://localhost:8080';
     console.log('🔌 GlobalChat: Intentando conectar WebSocket a:', wsUrl, 'con userId:', userId);
     console.log('=== WEBSOCKET CLIENT DEBUG ===', {
       timestamp: new Date().toISOString(),
@@ -20,7 +20,7 @@
   
     console.log('📡 Configuración WebSocket:', {
       wsUrl,
-      targetPort: 3003,
+      targetPort: 8080,
       note: 'Conectando directamente al servidor WebSocket (puerto diferente al proxy API)',
       context: 'websocket-config-debug'
     });
