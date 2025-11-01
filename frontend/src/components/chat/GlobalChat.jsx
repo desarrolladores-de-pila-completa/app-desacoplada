@@ -6,7 +6,9 @@
   // Función para conectar a WebSocket
   const connectWebSocket = (userId, onMessage) => {
     // Conectar al servidor WebSocket en puerto 3003 (diferente al proxy)
-    const wsUrl = 'ws://localhost:3003';
+    const wsUrl = process.env.NODE_ENV === 'production'
+      ? 'wss://api.yposteriormente.com'
+      : 'ws://localhost:3003';
     console.log('🔌 GlobalChat: Intentando conectar WebSocket a:', wsUrl, 'con userId:', userId);
     console.log('=== WEBSOCKET CLIENT DEBUG ===', {
       timestamp: new Date().toISOString(),

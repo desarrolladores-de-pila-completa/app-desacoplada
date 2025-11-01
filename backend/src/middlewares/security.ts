@@ -237,6 +237,8 @@ export function additionalSecurityHeaders(req: any, res: any, next: any): void {
   // Cross-Origin-Opener-Policy (más permisivo para desarrollo)
   if (process.env.NODE_ENV === 'production') {
     res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+    // Strict-Transport-Security para forzar HTTPS
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
   }
 
   // Cross-Origin-Resource-Policy (más permisivo para desarrollo)
@@ -459,6 +461,7 @@ export const corsOptions = {
     // Lista de dominios permitidos
     const allowedOrigins = [
       'https://yposteriormente.com',
+      'https://api.yposteriormente.com',
       'http://localhost:3000',
       'http://localhost:5173', // Vite dev server
       'http://127.0.0.1:5173', // Vite dev server (127.0.0.1)
