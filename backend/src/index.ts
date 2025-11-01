@@ -5,7 +5,6 @@ import cookieParser from "cookie-parser";
 import path from "path";
 import { pool, initDatabase } from "./middlewares/db";
 import csrf from "csrf";
-import csurf from "csurf";
 import { configureServices } from "./utils/servicesConfig";
 import { getCsrfCookieOptions } from "./utils/cookieConfig";
 import { corsOptions } from "./middlewares/security";
@@ -54,8 +53,6 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Agregar protección CSRF a todas las rutas que usan cookies/sesión
-app.use(csurf({ cookie: true }));
 
 // Configurar estrategia local de Passport
 passport.use(new LocalStrategy(
@@ -463,7 +460,56 @@ app.get("/api/csrf-token", (req, res) => {
 app.use(["/api", "/api/auth"], (req, res, next) => {
   const cookieCsrf = req.cookies['_csrf'];
   const headerCsrf = req.headers['x-csrf-token'] || req.headers['X-CSRF-Token'] || req.headers['csrf-token'];
-  logger.debug('Verificando tokens CSRF', { cookieCsrf: cookieCsrf ? 'presente' : 'ausente', headerCsrf: headerCsrf ? 'presente' : 'ausente', context: 'csrf' });
+  logger.debug('Verificando tokens CSRF', {
+    cookieCsrf: cookieCsrf ? 'presente' : 'ausente',
+    headerCsrf: headerCsrf ? 'presente' : 'ausente',
+    cookieValue: cookieCsrf,
+    headerValue: headerCsrf,
+    url: req.originalUrl,
+    method: req.method,
+    context: 'csrf'
+  });
+
+  // Validar token CSRF si es una ruta protegida
+  if (req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS') {
+    if (!cookieCsrf || !headerCsrf) {
+      logger.error('🚨 FALTAN TOKENS CSRF 🚨', {
+        cookieCsrf: !!cookieCsrf,
+        headerCsrf: !!headerCsrf,
+        url: req.originalUrl,
+        method: req.method,
+        context: 'csrf-missing'
+      });
+      return res.status(403).json({ error: 'Faltan tokens CSRF' });
+    }
+
+    try {
+      const tokenToVerify = Array.isArray(headerCsrf) ? headerCsrf[0] : headerCsrf;
+      const isValid = tokens.verify(secret, tokenToVerify!);
+      if (!isValid) {
+        logger.error('🚨 TOKEN CSRF INVÁLIDO 🚨', {
+          cookieValue: cookieCsrf,
+          headerValue: headerCsrf,
+          url: req.originalUrl,
+          method: req.method,
+          context: 'csrf-invalid'
+        });
+        return res.status(403).json({ error: 'Token CSRF inválido' });
+      }
+      logger.debug('Token CSRF válido', { context: 'csrf-valid' });
+    } catch (error) {
+      logger.error('🚨 ERROR VALIDANDO CSRF 🚨', {
+        error: (error as Error).message,
+        cookieValue: cookieCsrf,
+        headerValue: headerCsrf,
+        url: req.originalUrl,
+        method: req.method,
+        context: 'csrf-error'
+      });
+      return res.status(403).json({ error: 'Error validando token CSRF' });
+    }
+  }
+
   next();
 });
 
@@ -608,3 +654,4 @@ export function notifyUser(userId: string, message: any) {
     logger.warn(`Cliente WebSocket no encontrado o no conectado para usuario ${userId}`, { context: 'websocket' });
   }
 }
+

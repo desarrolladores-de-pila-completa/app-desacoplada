@@ -74,7 +74,7 @@ class AuthService {
         }
         // Retornar usuario sin contraseña
         const { password: _, ...user } = userWithPassword;
-        logger_1.default.debug('User authenticated for login', { userId: user.id });
+        logger_1.default.debug('User authenticated for login');
         return user;
     }
     /**

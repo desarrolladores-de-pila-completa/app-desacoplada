@@ -417,7 +417,54 @@ app.get("/api/csrf-token", (req, res) => {
 app.use(["/api", "/api/auth"], (req, res, next) => {
     const cookieCsrf = req.cookies['_csrf'];
     const headerCsrf = req.headers['x-csrf-token'] || req.headers['X-CSRF-Token'] || req.headers['csrf-token'];
-    logger_1.default.debug('Verificando tokens CSRF', { cookieCsrf: cookieCsrf ? 'presente' : 'ausente', headerCsrf: headerCsrf ? 'presente' : 'ausente', context: 'csrf' });
+    logger_1.default.debug('Verificando tokens CSRF', {
+        cookieCsrf: cookieCsrf ? 'presente' : 'ausente',
+        headerCsrf: headerCsrf ? 'presente' : 'ausente',
+        cookieValue: cookieCsrf,
+        headerValue: headerCsrf,
+        url: req.originalUrl,
+        method: req.method,
+        context: 'csrf'
+    });
+    // Validar token CSRF si es una ruta protegida
+    if (req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS') {
+        if (!cookieCsrf || !headerCsrf) {
+            logger_1.default.error('🚨 FALTAN TOKENS CSRF 🚨', {
+                cookieCsrf: !!cookieCsrf,
+                headerCsrf: !!headerCsrf,
+                url: req.originalUrl,
+                method: req.method,
+                context: 'csrf-missing'
+            });
+            return res.status(403).json({ error: 'Faltan tokens CSRF' });
+        }
+        try {
+            const tokenToVerify = Array.isArray(headerCsrf) ? headerCsrf[0] : headerCsrf;
+            const isValid = tokens.verify(secret, tokenToVerify);
+            if (!isValid) {
+                logger_1.default.error('🚨 TOKEN CSRF INVÁLIDO 🚨', {
+                    cookieValue: cookieCsrf,
+                    headerValue: headerCsrf,
+                    url: req.originalUrl,
+                    method: req.method,
+                    context: 'csrf-invalid'
+                });
+                return res.status(403).json({ error: 'Token CSRF inválido' });
+            }
+            logger_1.default.debug('Token CSRF válido', { context: 'csrf-valid' });
+        }
+        catch (error) {
+            logger_1.default.error('🚨 ERROR VALIDANDO CSRF 🚨', {
+                error: error.message,
+                cookieValue: cookieCsrf,
+                headerValue: headerCsrf,
+                url: req.originalUrl,
+                method: req.method,
+                context: 'csrf-error'
+            });
+            return res.status(403).json({ error: 'Error validando token CSRF' });
+        }
+    }
     next();
 });
 const paginaRoutes_1 = __importDefault(require("./routes/paginaRoutes"));
