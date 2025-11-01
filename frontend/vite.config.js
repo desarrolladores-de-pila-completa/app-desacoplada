@@ -9,9 +9,11 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: process.env.NODE_ENV === 'production'
+          ? 'https://api.yposteriormente.com'
+          : 'http://localhost:3000',
         changeOrigin: true,
-        secure: false,
+        secure: process.env.NODE_ENV === 'production',
         ws: true // Habilitar WebSocket proxy
       }
     },
@@ -102,5 +104,8 @@ export default defineConfig({
   preview: {
     port: 4173,
     host: true
-  }
+  },
+
+  // Configuración de base para producción
+  base: process.env.NODE_ENV === 'production' ? '/' : '/'
 });
