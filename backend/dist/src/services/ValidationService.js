@@ -140,6 +140,27 @@ class ValidationService {
             username: usernameResult.value
         });
     }
+    static validateCreatePublicacion(body) {
+        const errors = [];
+        if (!body || typeof body !== 'object') {
+            return (0, value_objects_1.err)([{ field: 'body', message: 'Cuerpo de la solicitud inválido' }]);
+        }
+        const tituloResult = value_objects_2.PublicacionTitle.create(body.titulo);
+        if ((0, value_objects_1.isErr)(tituloResult)) {
+            errors.push({ field: 'titulo', message: tituloResult.error });
+        }
+        const contenidoResult = value_objects_2.PublicacionContent.create(body.contenido);
+        if ((0, value_objects_1.isErr)(contenidoResult)) {
+            errors.push({ field: 'contenido', message: contenidoResult.error });
+        }
+        if (errors.length > 0) {
+            return (0, value_objects_1.err)(errors);
+        }
+        return (0, value_objects_1.ok)({
+            titulo: tituloResult.value,
+            contenido: contenidoResult.value
+        });
+    }
 }
 exports.ValidationService = ValidationService;
 // Middleware de validación actualizado

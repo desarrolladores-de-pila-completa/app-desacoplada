@@ -17,6 +17,7 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import "../../components/ui/PageBuilder.css";
 
 // Componente para mensaje de sesión expirada
 const SessionExpiredMessage = ({ onClose }) => {
@@ -232,13 +233,13 @@ const SortableItem = ({
   );
 };
 
-function PageBuilder() {
+function PageBuilder({ mode = "pagina" }) {
   const { username } = useParams();
   const user = authService.getCurrentUser();
 
   // All hooks must be called before any early returns
   const [content, setContent] = useState("");
-  const [title, setTitle] = useState("Nueva Página");
+  const [title, setTitle] = useState(mode === "publicacion" ? "Nueva Publicación" : "Nueva Página");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [elements, setElements] = useState([]);
@@ -246,7 +247,7 @@ function PageBuilder() {
   const [showSessionExpired, setShowSessionExpired] = useState(false);
 
   // Nuevos estados para diseño visual avanzado
-  const [layoutMode, setLayoutMode] = useState("vertical"); // vertical, horizontal, grid
+  const [layoutMode, setLayoutMode] = useState("vertical"); // solo vertical para publicaciones
   const [selectedElement, setSelectedElement] = useState(null);
   const [showPropertiesPanel, setShowPropertiesPanel] = useState(false);
   const [elementProperties, setElementProperties] = useState({});
@@ -673,13 +674,14 @@ function PageBuilder() {
 
   const handleSave = async () => {
     // Validación básica
+    const itemType = mode === "publicacion" ? "publicación" : "página";
     if (!title.trim()) {
-      setError("El título de la página es obligatorio");
+      setError(`El título de la ${itemType} es obligatorio`);
       return;
     }
 
     if (elements.length === 0) {
-      setError("Debes agregar al menos un elemento a la página");
+      setError(`Debes agregar al menos un elemento a la ${itemType}`);
       return;
     }
 
@@ -697,20 +699,50 @@ function PageBuilder() {
       const csrfData = await csrfRes.json();
       const csrfToken = csrfData.csrfToken;
 
-      // Funcionalidad de publicaciones eliminada
-      alert("Página guardada exitosamente (sin crear publicación)");
+      if (mode === "publicacion") {
+        // Crear publicación
+        const response = await fetch(`/api/publicar/${username}/crearPublicacion`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-csrf-token": csrfToken,
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            titulo: title,
+            contenido: content,
+          }),
+        });
 
-      // Limpiar estado después de guardar exitosamente
-      setTitle("Nueva Página");
-      setElements([]);
-      setContent("");
-      setEditingElement(null);
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Error al crear publicación");
+        }
+
+        const result = await response.json();
+        alert(`Publicación creada exitosamente con ID: ${result.id}`);
+
+        // Limpiar estado después de guardar exitosamente
+        setTitle("Nueva Publicación");
+        setElements([]);
+        setContent("");
+        setEditingElement(null);
+      } else {
+        // Funcionalidad de páginas existente
+        alert("Página guardada exitosamente (sin crear publicación)");
+
+        // Limpiar estado después de guardar exitosamente
+        setTitle("Nueva Página");
+        setElements([]);
+        setContent("");
+        setEditingElement(null);
+      }
     } catch (err) {
-      console.error("Error al guardar página:", err);
+      console.error(`Error al guardar ${itemType}:`, err);
       if (err.message.includes("401") || err.message.includes("Unauthorized")) {
         setShowSessionExpired(true);
       } else {
-        setError(err.message || "Error desconocido al guardar la página");
+        setError(err.message || `Error desconocido al guardar la ${itemType}`);
       }
     } finally {
       setLoading(false);
@@ -728,43 +760,47 @@ function PageBuilder() {
       {/* Barra superior */}
       <div className="page-builder-header">
         <div>
-          <h3 className="page-builder-title">Editor de Páginas Avanzado</h3>
+          <h3 className="page-builder-title">
+            {mode === "publicacion" ? "Constructor de Publicaciones" : "Editor de Páginas Avanzado"}
+          </h3>
           <small className="page-builder-subtitle">
-            Modo: {layoutMode === 'vertical' ? 'Vertical' : layoutMode === 'horizontal' ? 'Horizontal' : 'Grid'} •
+            {mode === "publicacion" ? "Modo Vertical" : `Modo: ${layoutMode === 'vertical' ? 'Vertical' : layoutMode === 'horizontal' ? 'Horizontal' : 'Grid'}`} •
             {selectedElement ? 'Elemento seleccionado' : 'Selecciona un elemento'}
           </small>
         </div>
         <div className="page-builder-controls">
-          {/* Controles de modo de diseño */}
-          <div className="layout-mode-controls">
-            <button
-              onClick={() => changeLayoutMode('vertical')}
-              className={`layout-mode-btn ${layoutMode === 'vertical' ? 'active' : ''}`}
-              title="Modo vertical"
-            >
-              📄 Vertical
-            </button>
-            <button
-              onClick={() => changeLayoutMode('horizontal')}
-              className={`layout-mode-btn ${layoutMode === 'horizontal' ? 'active' : ''}`}
-              title="Modo horizontal"
-            >
-              ↔ Horizontal
-            </button>
-            <button
-              onClick={() => changeLayoutMode('grid')}
-              className={`layout-mode-btn ${layoutMode === 'grid' ? 'active' : ''}`}
-              title="Modo grid"
-            >
-              ⊞ Grid
-            </button>
-          </div>
+          {/* Solo mostrar controles de diseño si no es modo publicación */}
+          {mode !== "publicacion" && (
+            <div className="layout-mode-controls">
+              <button
+                onClick={() => changeLayoutMode('vertical')}
+                className={`layout-mode-btn ${layoutMode === 'vertical' ? 'active' : ''}`}
+                title="Modo vertical"
+              >
+                📄 Vertical
+              </button>
+              <button
+                onClick={() => changeLayoutMode('horizontal')}
+                className={`layout-mode-btn ${layoutMode === 'horizontal' ? 'active' : ''}`}
+                title="Modo horizontal"
+              >
+                ↔ Horizontal
+              </button>
+              <button
+                onClick={() => changeLayoutMode('grid')}
+                className={`layout-mode-btn ${layoutMode === 'grid' ? 'active' : ''}`}
+                title="Modo grid"
+              >
+                ⊞ Grid
+              </button>
+            </div>
+          )}
 
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Título de la página"
+            placeholder={mode === "publicacion" ? "Título de la publicación" : "Título de la página"}
             className="page-builder-title-input"
           />
           <button
@@ -772,7 +808,7 @@ function PageBuilder() {
             disabled={loading}
             className="page-builder-save-btn"
           >
-            {loading ? "Guardando..." : "💾 Guardar Página"}
+            {loading ? "Guardando..." : mode === "publicacion" ? "📝 Crear Publicación" : "💾 Guardar Página"}
           </button>
         </div>
       </div>

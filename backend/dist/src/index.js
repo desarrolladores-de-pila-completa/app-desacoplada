@@ -100,13 +100,13 @@ app.use((req, res, next) => {
     next();
 });
 // WebSocket server
-const wss = new ws_1.default.Server({ port: 3003 });
+const wss = new ws_1.default.Server({ port: 8080 });
 // Log para debugging de puerto WebSocket
-logger_1.default.info("Iniciando servidor WebSocket", { port: 3003, context: 'websocket' });
+logger_1.default.info("Iniciando servidor WebSocket", { port: 8080, context: 'websocket' });
 // Log detallado del estado del servidor WebSocket
 wss.on('listening', () => {
     logger_1.default.info('✅ Servidor WebSocket escuchando correctamente', {
-        port: 3003,
+        port: 8080,
         address: wss.address(),
         context: 'websocket'
     });
@@ -114,12 +114,12 @@ wss.on('listening', () => {
 // Manejar errores de binding del puerto WebSocket
 wss.on('error', (error) => {
     if (error.code === 'EADDRINUSE') {
-        logger_1.default.error('🚨 Puerto WebSocket 3003 ya está en uso', {
+        logger_1.default.error('🚨 Puerto WebSocket 8080 ya está en uso', {
             error: error.message,
             code: error.code,
-            port: 3003,
+            port: 8080,
             context: 'websocket',
-            suggestion: 'Detener otros servidores que puedan estar usando el puerto 3003'
+            suggestion: 'Detener otros servidores que puedan estar usando el puerto 8080'
         });
     }
     else {
@@ -142,7 +142,7 @@ console.log('=== WEBSOCKET SERVER INIT DEBUG ===', {
     globalRoomSize: rooms.get('global')?.size || 0,
     context: 'websocket-server-init-debug'
 });
-logger_1.default.info('Servidor WebSocket inicializado en puerto 3003', { context: 'websocket' });
+logger_1.default.info('Servidor WebSocket inicializado en puerto 8080', { context: 'websocket' });
 wss.on('connection', (ws, request) => {
     logger_1.default.info('🔗 Nueva conexión WebSocket establecida', {
         remoteAddress: request.socket.remoteAddress,
@@ -470,8 +470,10 @@ app.use(["/api", "/api/auth"], (req, res, next) => {
     next();
 });
 const paginaRoutes_1 = __importDefault(require("./routes/paginaRoutes"));
+const publicacionRoutes_1 = __importDefault(require("./routes/publicacionRoutes"));
 app.use("/api/auth", authRoutes_1.router);
 app.use("/api", paginaRoutes_1.default);
+app.use("/", publicacionRoutes_1.default);
 // Endpoint para verificar esquema de tabla
 app.get('/test-db', async (req, res) => {
     try {

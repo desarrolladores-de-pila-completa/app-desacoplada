@@ -80,8 +80,6 @@ async function initDatabase() {
         });
         await connection.query(`CREATE DATABASE IF NOT EXISTS \`${process.env.DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
         logger_1.default.info('Base de datos verificada/creada', { database: process.env.DB_NAME, context: 'db' });
-        await connection.query(`CREATE DATABASE IF NOT EXISTS vvveb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
-        logger_1.default.info('Base de datos vvveb verificada/creada', { database: 'vvveb', context: 'db' });
         await connection.end();
         logger_1.default.info('Conexión inicial cerrada. Pool ya inicializado con la base de datos', { context: 'db' });
         // Verificar que el pool está inicializado correctamente

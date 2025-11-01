@@ -23,4 +23,6 @@ __exportStar(require("./username"), exports);
 __exportStar(require("./pageTitle"), exports);
 __exportStar(require("./pageContent"), exports);
 __exportStar(require("./commentText"), exports);
+__exportStar(require("./publicacionTitle"), exports);
+__exportStar(require("./publicacionContent"), exports);
 //# sourceMappingURL=index.js.map

@@ -1,5 +1,5 @@
 import { Result, ok, err, isOk, isErr } from '../value-objects';
-import { Email, Password, Username, PageTitle, PageContent, CommentText } from '../value-objects';
+import { Email, Password, Username, PageTitle, PageContent, CommentText, PublicacionTitle, PublicacionContent } from '../value-objects';
 
 // Tipos para errores de validación
 export interface ValidationError {
@@ -37,6 +37,11 @@ export interface CreateCommentDTO {
 
 export interface UpdateUsernameDTO {
   username: Username;
+}
+
+export interface CreatePublicacionDTO {
+  titulo: PublicacionTitle;
+  contenido: PublicacionContent;
 }
 
 export class ValidationService {
@@ -208,6 +213,33 @@ export class ValidationService {
 
     return ok({
       username: usernameResult.value!
+    });
+  }
+
+  static validateCreatePublicacion(body: any): Result<CreatePublicacionDTO, ValidationError[]> {
+    const errors: ValidationError[] = [];
+
+    if (!body || typeof body !== 'object') {
+      return err([{ field: 'body', message: 'Cuerpo de la solicitud inválido' }]);
+    }
+
+    const tituloResult = PublicacionTitle.create(body.titulo);
+    if (isErr(tituloResult)) {
+      errors.push({ field: 'titulo', message: tituloResult.error });
+    }
+
+    const contenidoResult = PublicacionContent.create(body.contenido);
+    if (isErr(contenidoResult)) {
+      errors.push({ field: 'contenido', message: contenidoResult.error });
+    }
+
+    if (errors.length > 0) {
+      return err(errors);
+    }
+
+    return ok({
+      titulo: tituloResult.value!,
+      contenido: contenidoResult.value!
     });
   }
 }

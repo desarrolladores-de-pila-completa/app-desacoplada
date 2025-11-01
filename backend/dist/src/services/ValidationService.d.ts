@@ -1,5 +1,5 @@
 import { Result } from '../value-objects';
-import { Email, Password, Username, PageTitle, PageContent, CommentText } from '../value-objects';
+import { Email, Password, Username, PageTitle, PageContent, CommentText, PublicacionTitle, PublicacionContent } from '../value-objects';
 export interface ValidationError {
     field: string;
     message: string;
@@ -29,6 +29,10 @@ export interface CreateCommentDTO {
 export interface UpdateUsernameDTO {
     username: Username;
 }
+export interface CreatePublicacionDTO {
+    titulo: PublicacionTitle;
+    contenido: PublicacionContent;
+}
 export declare class ValidationService {
     static validateRegister(body: any): Result<RegisterDTO, ValidationError[]>;
     static validateLogin(body: any): Result<LoginDTO, ValidationError[]>;
@@ -36,6 +40,7 @@ export declare class ValidationService {
     static validateUpdatePage(body: any): Result<UpdatePageDTO, ValidationError[]>;
     static validateCreateComment(body: any, params: any): Result<CreateCommentDTO, ValidationError[]>;
     static validateUpdateUsername(body: any): Result<UpdateUsernameDTO, ValidationError[]>;
+    static validateCreatePublicacion(body: any): Result<CreatePublicacionDTO, ValidationError[]>;
 }
 export declare const validateRequest: (validator: (body: any, params?: any) => Result<any, ValidationError[]>) => (req: any, res: any, next: any) => any;
 //# sourceMappingURL=ValidationService.d.ts.map

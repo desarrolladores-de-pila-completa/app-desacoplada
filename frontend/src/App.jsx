@@ -11,6 +11,7 @@ const RegisterPage = lazy(() => import("./components/auth/RegisterPage"));
 const LoginPage = lazy(() => import("./components/auth/LoginPage"));
 const UserPage = lazy(() => import("./components/main/UserPage"));
 const PageBuilder = lazy(() => import("./components/main/PageBuilder"));
+const PublicationView = lazy(() => import("./components/main/PublicationView"));
 const PoliticaDeCookies = lazy(() => import("./components/policy/PoliticaDeCookies"));
 const Privacidad = lazy(() => import("./components/policy/Privacidad"));
 const NotFound = lazy(() => import("./components/ui/NotFound"));
@@ -138,6 +139,15 @@ export default function App() {
             </Suspense>
           }
         />
+        {/* Ruta específica para crear publicaciones con constructor */}
+        <Route
+          path="/publicar/:username/crearPublicacion"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <PageBuilder mode="publicacion" />
+            </Suspense>
+          }
+        />
         {/* Ruta para listas de páginas públicas */}
         <Route
           path="/pagina/:username"
@@ -153,6 +163,15 @@ export default function App() {
           element={
             <Suspense fallback={<LoadingFallback />}>
               <UserPage />
+            </Suspense>
+          }
+        />
+        {/* Ruta para ver publicación específica */}
+        <Route
+          path="/publicar/:username/publicaciones/:id"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <PublicationView />
             </Suspense>
           }
         />

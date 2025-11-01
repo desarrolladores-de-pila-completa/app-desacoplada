@@ -51,59 +51,74 @@ function Navbar({ onFeedClick }) {
       </Link>
 
       {isAuthenticated ? (
-        <div style={{ position: 'relative' }}>
-          <button
-            onClick={toggleDropdown}
+        <>
+          <Link
+            to={`/publicar/${user?.username}/crearPublicacion`}
             style={{
-              padding: '8px',
-              background: '#28a745',
+              padding: '8px 16px',
+              background: '#17a2b8',
               color: '#fff',
-              border: 'none',
+              textDecoration: 'none',
               borderRadius: 4,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center'
+              fontWeight: 'bold'
             }}
           >
-            <img src="https://cdn-icons-png.flaticon.com/512/1077/1077063.png" alt="Cuenta" style={{ width: 24, height: 24 }} />
-            {user && <span style={{ marginLeft: 8 }}>{user.display_name}</span>}
-          </button>
-          {dropdownOpen && (
-            <div style={{
-              position: 'absolute',
-              top: '100%',
-              right: 0,
-              background: '#fff',
-              border: '1px solid #ccc',
-              borderRadius: 4,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              zIndex: 1000,
-              minWidth: 150
-            }}>
-              <Link
-                to={`/pagina/${user?.username}`}
-                style={{ display: 'block', padding: '8px 16px', textDecoration: 'none', color: '#333' }}
-                onClick={() => setDropdownOpen(false)}
-              >
-                Mi Página
-              </Link>
-              <button
-                onClick={handleLogout}
-                style={{
-                  width: '100%',
-                  padding: '8px 16px',
-                  background: 'none',
-                  border: 'none',
-                  textAlign: 'left',
-                  cursor: 'pointer',
-                  color: '#dc3545'
-                }}
-              >
-                Logout
-              </button>
-            </div>
-          )}
-        </div>
+            Publicar
+          </Link>
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={toggleDropdown}
+              style={{
+                padding: '8px',
+                background: '#28a745',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 4,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+            >
+              <img src="https://cdn-icons-png.flaticon.com/512/1077/1077063.png" alt="Cuenta" style={{ width: 24, height: 24 }} />
+              {user && <span style={{ marginLeft: 8 }}>{user.display_name}</span>}
+            </button>
+            {dropdownOpen && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                right: 0,
+                background: '#fff',
+                border: '1px solid #ccc',
+                borderRadius: 4,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                zIndex: 1000,
+                minWidth: 150
+              }}>
+                <Link
+                  to={`/pagina/${user?.username}`}
+                  style={{ display: 'block', padding: '8px 16px', textDecoration: 'none', color: '#333' }}
+                  onClick={() => setDropdownOpen(false)}
+                >
+                  Mi Página
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  style={{
+                    width: '100%',
+                    padding: '8px 16px',
+                    background: 'none',
+                    border: 'none',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    color: '#dc3545'
+                  }}
+                >
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
+        </>
       ) : (
         <>
           <Link to="/registro" style={{ padding: '8px 16px', background: '#007bff', color: '#fff', textDecoration: 'none', borderRadius: 4 }}>
