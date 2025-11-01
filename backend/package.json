@@ -2,6 +2,7 @@
   "name": "backend",
   "version": "1.0.0",
   "scripts": {
+    "prod": "NODE_ENV=production node dist/src/index.js",
     "build": "tsc --project tsconfig.json",
     "dev:backend": "nodemon --watch src --exec node dist/src/index.js",
     "start": "npm run build && npm run dev:backend",
@@ -24,7 +25,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@types/csurf": "^1.11.5",
+    "express-rate-limit": "^6.7.0",
     "@types/express-session": "^1.18.2",
     "@types/passport": "^1.0.17",
     "@types/passport-local": "^1.0.38",
@@ -34,7 +35,6 @@
     "cookie-parser": "^1.4.5",
     "cors": "^2.8.5",
     "csrf": "^3.1.0",
-    "csurf": "^1.11.0",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "express-http-proxy": "^2.1.2",

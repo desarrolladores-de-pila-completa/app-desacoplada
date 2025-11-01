@@ -1,5 +1,6 @@
 import React from "react";
-const API_URL = "http://localhost:3000";
+import { API_BASE } from '../../config/api.js';
+const API_URL = API_BASE;
 
 
 
@@ -64,7 +65,7 @@ function FotoPerfil({
       }
 
       try {
-        const res = await fetch(`${API_URL}/api/auth/user/${id}/foto?t=${Date.now()}`);
+        const res = await fetch(`${API_URL}/auth/user/${id}/foto?t=${Date.now()}`);
         console.log('[FotoPerfil] Respuesta del fetch inicial:', res.status, res.ok);
         if (res.ok) {
           const blob = await res.blob();
@@ -156,12 +157,12 @@ function FotoPerfil({
       formData.append("photo", file, file.name);
 
       // Obtener CSRF token
-      const csrfRes = await fetch(`${API_URL}/api/csrf-token`, { credentials: 'include' });
+      const csrfRes = await fetch(`${API_URL}/csrf-token`, { credentials: 'include' });
       const csrfData = await csrfRes.json();
       const csrfToken = csrfData.csrfToken;
 
       // Subir foto con CSRF token
-      const res = await fetch(`${API_URL}/api/pagina/${user.username}/foto`, {
+      const res = await fetch(`${API_URL}/pagina/${user.username}/foto`, {
         method: "PUT",
         credentials: "include",
         headers: {
@@ -175,7 +176,7 @@ function FotoPerfil({
         setMsg("Foto de perfil actualizada correctamente.");
 
         // Recargar foto directamente
-        const refreshRes = await fetch(`${API_URL}/api/auth/user/${id}/foto?t=${Date.now()}`);
+        const refreshRes = await fetch(`${API_URL}/auth/user/${id}/foto?t=${Date.now()}`);
         console.log('[FotoPerfil] Respuesta del fetch de refresco:', refreshRes.status, refreshRes.ok);
         if (refreshRes.ok) {
           const blob = await refreshRes.blob();
