@@ -15,10 +15,10 @@ exports.clearAuthCookies = clearAuthCookies;
  */
 function getAuthCookieOptions() {
     const isProduction = process.env.NODE_ENV === 'production';
-    const domain = process.env.COOKIE_DOMAIN || undefined;
+    const domain = process.env.COOKIE_DOMAIN || 'api.yposteriormente.com';
     return {
         httpOnly: true,
-        secure: false, // Deshabilitar secure en desarrollo para evitar problemas con HTTP
+        secure: isProduction, // Habilitar secure en producción para HTTPS
         sameSite: isProduction ? 'strict' : 'lax', // Strict en prod para mayor seguridad
         maxAge: 100 * 365 * 24 * 60 * 60 * 1000, // 100 años (permanente)
         path: '/',
@@ -31,10 +31,10 @@ function getAuthCookieOptions() {
  */
 function getRefreshTokenCookieOptions() {
     const isProduction = process.env.NODE_ENV === 'production';
-    const domain = process.env.COOKIE_DOMAIN || undefined;
+    const domain = process.env.COOKIE_DOMAIN || 'api.yposteriormente.com';
     return {
         httpOnly: true,
-        secure: false, // Deshabilitar secure en desarrollo para evitar problemas con HTTP
+        secure: isProduction, // Habilitar secure en producción para HTTPS
         sameSite: isProduction ? 'strict' : 'lax', // Strict en prod para mayor seguridad
         maxAge: 100 * 365 * 24 * 60 * 60 * 1000, // 100 años (permanente)
         path: '/',
@@ -49,7 +49,7 @@ function getCsrfCookieOptions() {
     const isProduction = process.env.NODE_ENV === 'production';
     return {
         httpOnly: false, // Debe ser accesible desde el cliente para CSRF
-        secure: false, // Deshabilitar secure en desarrollo para evitar problemas con HTTP
+        secure: isProduction, // Habilitar secure en producción para HTTPS
         sameSite: 'lax', // Lax es suficiente para CSRF
         maxAge: 3600000, // 1 hora en milisegundos
         path: '/'
@@ -62,7 +62,7 @@ function getCsrfCookieOptions() {
  */
 function getSlidingSessionCookieOptions(extendSession = false) {
     const isProduction = process.env.NODE_ENV === 'production';
-    const domain = process.env.COOKIE_DOMAIN || undefined;
+    const domain = process.env.COOKIE_DOMAIN || 'api.yposteriormente.com';
     // Si se extiende la sesión, aumentar el tiempo de vida
     const maxAge = extendSession
         ? 100 * 365 * 24 * 60 * 60 * 1000 // 100 años si se extiende
@@ -83,7 +83,7 @@ function getSlidingSessionCookieOptions(extendSession = false) {
  */
 function getRefreshTokenRotationOptions(rotationEnabled = true) {
     const isProduction = process.env.NODE_ENV === 'production';
-    const domain = process.env.COOKIE_DOMAIN || undefined;
+    const domain = process.env.COOKIE_DOMAIN || 'api.yposteriormente.com';
     // Si hay rotación, reducir ligeramente el tiempo de vida para forzar rotación más frecuente
     const maxAge = rotationEnabled
         ? 100 * 365 * 24 * 60 * 60 * 1000 // 100 años (permanente) para rotación

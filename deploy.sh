@@ -64,6 +64,9 @@ if [ ! -d "node_modules" ]; then
     npm install
 fi
 
+# Asegurar permisos de ejecución en los binarios de node_modules
+chmod +x node_modules/.bin/vite
+
 # Construir frontend para producción
 echo "🔨 Construyendo frontend para producción..."
 NODE_ENV=production npm run build
