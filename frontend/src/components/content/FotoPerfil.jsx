@@ -155,10 +155,18 @@ function FotoPerfil({
       const formData = new FormData();
       formData.append("photo", file, file.name);
 
-      // Subir foto sin CSRF
+      // Obtener CSRF token
+      const csrfRes = await fetch(`${API_URL}/api/csrf-token`, { credentials: 'include' });
+      const csrfData = await csrfRes.json();
+      const csrfToken = csrfData.csrfToken;
+
+      // Subir foto con CSRF token
       const res = await fetch(`${API_URL}/api/pagina/${user.username}/foto`, {
         method: "PUT",
         credentials: "include",
+        headers: {
+          'X-CSRF-Token': csrfToken,
+        },
         body: formData
       });
 
